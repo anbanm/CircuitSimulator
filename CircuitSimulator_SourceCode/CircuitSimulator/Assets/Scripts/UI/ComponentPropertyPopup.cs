@@ -3,12 +3,15 @@
 
 using System;
 using UnityEngine;
-using UnityEngine.UI;
+// using UnityEngine.UI; // DISABLED - install Legacy UI package for Unity 6
 
 /// <summary>
 /// Provides a popup interface for editing circuit component properties
 /// Allows students to modify resistance values, voltage settings, etc.
+/// DISABLED: Requires Legacy UI package for Unity 6
 /// </summary>
+
+#if UNITY_UI_ENABLED
 public class ComponentPropertyPopup : MonoBehaviour
 {
     [Header("UI References")]
@@ -245,3 +248,13 @@ public class ComponentPropertyPopup : MonoBehaviour
             saveButton.interactable = isValid;
     }
 }
+#else
+// Placeholder when UI is disabled
+public class ComponentPropertyPopup : MonoBehaviour
+{
+    void Start()
+    {
+        Debug.Log("ComponentPropertyPopup: Disabled. Install Legacy UI package for Unity 6 to enable property editing.");
+    }
+}
+#endif

@@ -1,12 +1,12 @@
 using UnityEngine;
-using UnityEngine.UI;
+// using UnityEngine.UI; // DISABLED - install Legacy UI package for Unity 6
 using System.Collections.Generic;
 
 public class ConnectTool : MonoBehaviour
 {
-    [Header("Tool Buttons")]
-    public Button selectButton;
-    public Button connectButton;
+    [Header("Tool Buttons - DISABLED")]
+    // public Button selectButton;       // DISABLED - install Legacy UI package for Unity 6
+    // public Button connectButton;      // DISABLED - install Legacy UI package for Unity 6
     
     [Header("Wire Settings")]
     public Color wireColor = Color.blue;
@@ -24,11 +24,14 @@ public class ConnectTool : MonoBehaviour
     
     void SetupButtons()
     {
-        if (selectButton != null)
-            selectButton.onClick.AddListener(SetSelectMode);
+        // DISABLED - buttons require Legacy UI package for Unity 6
+        // if (selectButton != null)
+        //     selectButton.onClick.AddListener(SetSelectMode);
+        // 
+        // if (connectButton != null)
+        //     connectButton.onClick.AddListener(SetConnectMode);
         
-        if (connectButton != null)
-            connectButton.onClick.AddListener(SetConnectMode);
+        Debug.Log("ConnectTool: Use keyboard - C for Connect Mode, V for Select Mode");
     }
     
     public void SetSelectMode()
@@ -51,17 +54,18 @@ public class ConnectTool : MonoBehaviour
     
     void UpdateButtonColors()
     {
-        if (selectButton != null)
-        {
-            Image img = selectButton.GetComponent<Image>();
-            img.color = _isConnectMode ? Color.white : Color.yellow;
-        }
-        
-        if (connectButton != null)
-        {
-            Image img = connectButton.GetComponent<Image>();
-            img.color = _isConnectMode ? Color.green : Color.white;
-        }
+        // DISABLED - buttons require Legacy UI package for Unity 6
+        // if (selectButton != null)
+        // {
+        //     Image img = selectButton.GetComponent<Image>();
+        //     img.color = _isConnectMode ? Color.white : Color.yellow;
+        // }
+        // 
+        // if (connectButton != null)
+        // {
+        //     Image img = connectButton.GetComponent<Image>();
+        //     img.color = _isConnectMode ? Color.green : Color.white;
+        // }
     }
     
     public void OnComponentClicked(SelectableComponent component)
@@ -129,6 +133,18 @@ public class ConnectTool : MonoBehaviour
     
     void Update()
     {
+        // Keyboard controls for Unity 6 (no UI buttons needed)
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            SetConnectMode();
+            Debug.Log("🔌 Connect Mode activated (C key)");
+        }
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            SetSelectMode();
+            Debug.Log("👆 Select Mode activated (V key)");
+        }
+        
         // ESC to cancel connection mode
         if (Input.GetKeyDown(KeyCode.Escape) && _isConnectMode)
         {

@@ -1,6 +1,7 @@
 using UnityEngine;
-using UnityEngine.UI;
+// using UnityEngine.UI; // DISABLED - install Legacy UI package for Unity 6
 
+#if UNITY_UI_ENABLED
 public class ComponentLabel : MonoBehaviour
 {
     [Header("Label Settings")]
@@ -210,3 +211,13 @@ public class BillboardLabel : MonoBehaviour
         }
     }
 }
+#else
+// Placeholder when UI is disabled
+public class ComponentLabel : MonoBehaviour
+{
+    void Start()
+    {
+        Debug.Log("ComponentLabel: Disabled. Install Legacy UI package for Unity 6 to enable UI labels.");
+    }
+}
+#endif

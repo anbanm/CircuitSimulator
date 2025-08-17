@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+// using UnityEngine.UI; // DISABLED - install Legacy UI package to enable
 
 /// <summary>
 /// Displays real-time circuit measurements and analysis
@@ -22,14 +22,14 @@ public class CircuitDashboard : MonoBehaviour
     public Transform componentReadingsParent;
     public GameObject componentReadingPrefab;
     
-    [Header("Multimeter Simulation")]
-    public Text multimeterVoltageText;
-    public Text multimeterCurrentText;
-    public Button multimeterProbeButton;
+    [Header("Multimeter Simulation - DISABLED")]
+    // public Text multimeterVoltageText;    // DISABLED - install Legacy UI package for Unity 6
+    // public Text multimeterCurrentText;    // DISABLED - install Legacy UI package for Unity 6
+    // public Button multimeterProbeButton;  // DISABLED - install Legacy UI package for Unity 6
     
-    [Header("Circuit Analysis")]
-    public Text circuitTypeText;
-    public Text analysisText;
+    [Header("Circuit Analysis - DISABLED")]
+    // public Text circuitTypeText;          // DISABLED - install Legacy UI package for Unity 6
+    // public Text analysisText;             // DISABLED - install Legacy UI package for Unity 6
     
     private List<CircuitComponent> currentCircuitComponents;
     private Multimeter virtualMultimeter;
@@ -39,9 +39,11 @@ public class CircuitDashboard : MonoBehaviour
     {
         virtualMultimeter = new Multimeter();
         
-        // Initialize UI event handlers
-        if (multimeterProbeButton != null)
-            multimeterProbeButton.onClick.AddListener(ToggleMultimeterMode);
+        // Initialize UI event handlers - DISABLED
+        // if (multimeterProbeButton != null)
+        //     multimeterProbeButton.onClick.AddListener(ToggleMultimeterMode);
+        
+        Debug.Log("CircuitDashboard: UI components disabled. Install Legacy UI package for Unity 6 to enable.");
         
         // Initialize readings
         UpdateAllReadings();
