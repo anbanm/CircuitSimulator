@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="UserContentModel">
+    <attachedFolders />
+    <explicitIncludes>
+      <Path>CircuitSimulator/Assets</Path>
+      <Path>CircuitSimulator/Packages</Path>
+      <Path>CircuitSimulator/ProjectSettings</Path>
+    </explicitIncludes>
+    <explicitExcludes>
+      <Path>CircuitSimulator/Library</Path>
+      <Path>CircuitSimulator/Logs</Path>
+      <Path>CircuitSimulator/Temp</Path>
+      <Path>CircuitSimulator/obj</Path>
+    </explicitExcludes>
+  </component>
+</project>
