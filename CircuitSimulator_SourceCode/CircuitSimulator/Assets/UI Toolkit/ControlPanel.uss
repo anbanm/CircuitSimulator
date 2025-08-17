@@ -30,18 +30,18 @@
     font-size: 12px;
     -unity-font-style: bold;
     border-width: 0;
-    transition-property: transform;
+    transition-property: scale;
     transition-duration: 0.2s;
 }
 
 .component-btn:hover {
-    transform: scale(1.05);
+    scale: 1.05 1.05;
     border-width: 2px;
     border-color: white;
 }
 
 .component-btn:active {
-    transform: scale(0.95);
+    scale: 0.95 0.95;
 }
 
 /* Specific component colors */
@@ -80,18 +80,18 @@
     font-size: 12px;
     -unity-font-style: bold;
     border-width: 0;
-    transition-property: transform;
+    transition-property: scale;
     transition-duration: 0.2s;
 }
 
 .action-btn:hover {
-    transform: scale(1.05);
+    scale: 1.05 1.05;
     border-width: 2px;
     border-color: white;
 }
 
 .action-btn:active {
-    transform: scale(0.95);
+    scale: 0.95 0.95;
 }
 
 /* Specific action colors */
