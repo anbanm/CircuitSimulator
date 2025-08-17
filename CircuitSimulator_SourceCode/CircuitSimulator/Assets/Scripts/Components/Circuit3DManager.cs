@@ -190,104 +190,57 @@ public class Circuit3DManager : MonoBehaviour
         }
     }
     
-    [ContextMenu("Force Register All Components")]
-    public void ForceRegisterAllComponents()
+    [ContextMenu("Solve Circuit Manually")]
+    public void SolveCircuitManually()
     {
-        Debug.Log("=== FORCE REGISTERING ALL COMPONENTS ===");
+        string header = "=== MANUAL SOLVE TRIGGERED ===";
+        LogToFile(header);
+        Debug.Log(header);
         
-        // Clear existing registration
-        components.Clear();
-        wires.Clear();
+        string compInfo = $"Components registered: {components.Count}";
+        LogToFile(compInfo);
+        Debug.Log(compInfo);
         
-        // Find all CircuitComponent3D objects in scene
-        CircuitComponent3D[] allComponents = FindObjectsOfType<CircuitComponent3D>();
-        Debug.Log($"Found {allComponents.Length} CircuitComponent3D objects in scene");
+        string wireInfo = $"Wires registered: {wires.Count}";
+        LogToFile(wireInfo);
+        Debug.Log(wireInfo);
         
-        foreach (var comp in allComponents)
+        if (components.Count == 0)
         {
-            RegisterComponent(comp);
-            Debug.Log($"Registered: {comp.name} ({comp.ComponentType}) - V:{comp.voltage}V R:{comp.resistance}Ω");
+            string error = "No components registered! Check component registration.";
+            LogToFile(error);
+            Debug.LogError(error);
+            return;
         }
         
-        // Find all wire objects
-        GameObject[] allGameObjects = FindObjectsOfType<GameObject>();
-        int wireCount = 0;
-        foreach (var go in allGameObjects)
+        foreach (var comp in components)
         {
-            if (go.name.StartsWith("Wire_") || go.GetComponent<CircuitWire>() != null)
+            if (comp != null)
             {
-                RegisterWire(go);
-                wireCount++;
-                var cw = go.GetComponent<CircuitWire>();
+                string details = $"  Component: {comp.name} ({comp.ComponentType}) - V:{comp.voltage}V R:{comp.resistance}Ω";
+                LogToFile(details);
+                Debug.Log(details);
+            }
+        }
+        
+        foreach (var wire in wires)
+        {
+            if (wire != null)
+            {
+                var cw = wire.GetComponent<CircuitWire>();
                 if (cw != null)
                 {
-                    Debug.Log($"Registered wire: {go.name} ({cw.Component1?.name} <-> {cw.Component2?.name})");
+                    string wireDetails = $"  Wire: {wire.name} connects {cw.Component1?.name} to {cw.Component2?.name}";
+                    LogToFile(wireDetails);
+                    Debug.Log(wireDetails);
                 }
             }
         }
         
-        Debug.Log($"SUMMARY: Registered {components.Count} components and {wires.Count} wires");
-        
-        // Force solve circuit immediately
-        MarkCircuitChanged();
         SolveCircuit();
-        
-        Debug.Log("=====================================");
-    }
-    
-    [ContextMenu("Test Known Working Circuit")]
-    public void TestKnownWorkingCircuit()
-    {
-        Debug.Log("=== TESTING KNOWN WORKING CIRCUIT ===");
-        
-        // Make sure solver is initialized
-        if (circuitSolver == null)
-        {
-            circuitSolver = new CircuitSolver();
-            Debug.Log("Initialized circuitSolver for test");
-        }
-        
-        try
-        {
-            // This is the EXACT same test that worked in CircuitTestRunner
-            var node1 = new CircuitNode("S_Node1");
-            var node2 = new CircuitNode("S_Node2");
-            var node3 = new CircuitNode("S_Node3");
-            
-            var battery = new Battery("Battery", node1, node3, 6f);
-            var r1 = new Resistor("R1", node1, node2, 3f);
-            var r2 = new Resistor("R2", node2, node3, 3f);
-            
-            var components = new List<CircuitComponent> { battery, r1, r2 };
-            
-            Debug.Log("Testing original working series circuit: 6V battery + 3Ω + 3Ω resistors");
-            Debug.Log("Expected: Total R = 6Ω, I = 1A, V across each resistor = 3V");
-            
-            circuitSolver.Solve(components);
-            
-            Debug.Log($"Results:");
-            Debug.Log($"  Battery: V={battery.VoltageDrop:F3}V, I={battery.Current:F3}A");
-            Debug.Log($"  R1: V={r1.VoltageDrop:F3}V, I={r1.Current:F3}A");
-            Debug.Log($"  R2: V={r2.VoltageDrop:F3}V, I={r2.Current:F3}A");
-            
-            bool works = Math.Abs(battery.Current - 1.0f) < 0.01f;
-            Debug.Log($"Original solver works correctly: {works}");
-            
-            if (!works)
-            {
-                Debug.LogError("❌ CircuitCore.cs has been broken!");
-            }
-            else
-            {
-                Debug.Log("✅ CircuitCore.cs still works - issue is in 3D conversion");
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"Error: {e.Message}\n{e.StackTrace}");
-        }
-        
-        Debug.Log("==============================");
+        string footer = "=== MANUAL SOLVE COMPLETE ===";
+        LogToFile(footer);
+        Debug.Log(footer);
     }
     
     public void SolveCircuit()
@@ -558,11 +511,4 @@ public class Circuit3DManager : MonoBehaviour
             }
         }
     }
-}
-
-// Extension to CircuitComponent3D to store logical component reference
-public partial class CircuitComponent3D
-{
-    [System.NonSerialized]
-    public CircuitComponent logicalComponent; // Reference to logical component
 }
