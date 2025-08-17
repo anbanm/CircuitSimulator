@@ -13,23 +13,25 @@ using UnityEngine;
 public class CircuitDashboard : MonoBehaviour
 {
     [Header("UI References")]
-    public Text totalVoltageText;
-    public Text totalCurrentText;
-    public Text totalPowerText;
-    public Text totalResistanceText;
+    // public Text totalVoltageText;     // DISABLED - install Legacy UI package for Unity 6
+    // public Text totalCurrentText;     // DISABLED - install Legacy UI package for Unity 6  
+    // public Text totalPowerText;       // DISABLED - install Legacy UI package for Unity 6
+    // public Text totalResistanceText;  // DISABLED - install Legacy UI package for Unity 6
     
-    [Header("Component Readings")]
-    public Transform componentReadingsParent;
-    public GameObject componentReadingPrefab;
+    // [Header("Component Readings")] - DISABLED
+    // public Transform componentReadingsParent;  // DISABLED - install Legacy UI package for Unity 6
+    // public GameObject componentReadingPrefab;  // DISABLED - install Legacy UI package for Unity 6
     
-    [Header("Multimeter Simulation - DISABLED")]
+    // [Header("Multimeter Simulation - DISABLED")] - DISABLED
     // public Text multimeterVoltageText;    // DISABLED - install Legacy UI package for Unity 6
     // public Text multimeterCurrentText;    // DISABLED - install Legacy UI package for Unity 6
     // public Button multimeterProbeButton;  // DISABLED - install Legacy UI package for Unity 6
     
-    [Header("Circuit Analysis - DISABLED")]
+    // [Header("Circuit Analysis - DISABLED")] - DISABLED
     // public Text circuitTypeText;          // DISABLED - install Legacy UI package for Unity 6
     // public Text analysisText;             // DISABLED - install Legacy UI package for Unity 6
+    
+    // Private variables removed - all UI references are properly commented out
     
     private List<CircuitComponent> currentCircuitComponents;
     private Multimeter virtualMultimeter;
@@ -55,11 +57,11 @@ public class CircuitDashboard : MonoBehaviour
     public void UpdateAllReadings()
     {
         // Get current circuit from the scene
-        var circuit3DManager = FindObjectOfType<Circuit3DManager>();
-        if (circuit3DManager != null)
+        var circuitManager = FindFirstObjectByType<CircuitManager>();
+        if (circuitManager != null)
         {
             // TODO: Get circuit components from the manager
-            // currentCircuitComponents = circuit3DManager.GetAllComponents();
+            // currentCircuitComponents = circuitManager.GetAllComponents();
         }
         
         if (currentCircuitComponents == null || currentCircuitComponents.Count == 0)
@@ -87,28 +89,28 @@ public class CircuitDashboard : MonoBehaviour
         
         // Total voltage (battery voltage)
         float totalVoltage = battery.Voltage;
-        if (totalVoltageText != null)
-            totalVoltageText.text = $"{totalVoltage:F2} V";
+        // if (totalVoltageText != null)
+        //     totalVoltageText.text = $"{totalVoltage:F2} V";
         
         // Total current (battery current)
         float totalCurrent = battery.Current;
-        if (totalCurrentText != null)
-            totalCurrentText.text = $"{totalCurrent:F3} A";
+        // if (totalCurrentText != null)
+        //     totalCurrentText.text = $"{totalCurrent:F3} A";
         
         // Total power (P = V × I)
         float totalPower = totalVoltage * totalCurrent;
-        if (totalPowerText != null)
-            totalPowerText.text = $"{totalPower:F3} W";
+        // if (totalPowerText != null)
+        //     totalPowerText.text = $"{totalPower:F3} W";
         
         // Total resistance (R = V / I)
         float totalResistance = totalCurrent > 0 ? totalVoltage / totalCurrent : float.PositiveInfinity;
-        if (totalResistanceText != null)
-        {
-            if (float.IsInfinity(totalResistance))
-                totalResistanceText.text = "∞ Ω";
-            else
-                totalResistanceText.text = $"{totalResistance:F2} Ω";
-        }
+        // if (totalResistanceText != null)
+        // {
+        //     if (float.IsInfinity(totalResistance))
+        //         totalResistanceText.text = "∞ Ω";
+        //     else
+        //         totalResistanceText.text = $"{totalResistance:F2} Ω";
+        // }
     }
     
     /// <summary>
@@ -117,13 +119,13 @@ public class CircuitDashboard : MonoBehaviour
     private void UpdateComponentReadings()
     {
         // Clear existing component readings
-        if (componentReadingsParent != null)
-        {
-            foreach (Transform child in componentReadingsParent)
-            {
-                Destroy(child.gameObject);
-            }
-        }
+        // if (componentReadingsParent != null)
+        // {
+        //     foreach (Transform child in componentReadingsParent)
+        //     {
+        //         Destroy(child.gameObject);
+        //     }
+        // }
         
         // Create new component readings
         foreach (var component in currentCircuitComponents)
@@ -139,40 +141,43 @@ public class CircuitDashboard : MonoBehaviour
     /// </summary>
     private void CreateComponentReading(CircuitComponent component)
     {
-        if (componentReadingPrefab == null || componentReadingsParent == null) return;
+        // DISABLED - install Legacy UI package for Unity 6 to enable
+        Debug.Log($"Would create component reading for {component.Id}: {component.VoltageDrop:F2}V, {component.Current:F3}A, {component.Resistance:F2}Ω");
         
-        GameObject readingObject = Instantiate(componentReadingPrefab, componentReadingsParent);
-        
-        // Get UI components from the prefab
-        Text componentNameText = readingObject.transform.Find("ComponentName")?.GetComponent<Text>();
-        Text voltageText = readingObject.transform.Find("Voltage")?.GetComponent<Text>();
-        Text currentText = readingObject.transform.Find("Current")?.GetComponent<Text>();
-        Text resistanceText = readingObject.transform.Find("Resistance")?.GetComponent<Text>();
-        
-        // Update the texts
-        if (componentNameText != null)
-            componentNameText.text = component.Id;
-        
-        if (voltageText != null)
-            voltageText.text = $"{component.VoltageDrop:F2} V";
-        
-        if (currentText != null)
-            currentText.text = $"{component.Current:F3} A";
-        
-        if (resistanceText != null)
-        {
-            if (component.Resistance == float.MaxValue)
-                resistanceText.text = "∞ Ω";
-            else
-                resistanceText.text = $"{component.Resistance:F2} Ω";
-        }
-        
-        // Add click handler for multimeter measurement
-        Button componentButton = readingObject.GetComponent<Button>();
-        if (componentButton != null)
-        {
-            componentButton.onClick.AddListener(() => SelectComponentForMeasurement(component));
-        }
+        // if (componentReadingPrefab == null || componentReadingsParent == null) return;
+        // 
+        // GameObject readingObject = Instantiate(componentReadingPrefab, componentReadingsParent);
+        // 
+        // // Get UI components from the prefab
+        // Text componentNameText = readingObject.transform.Find("ComponentName")?.GetComponent<Text>();
+        // Text voltageText = readingObject.transform.Find("Voltage")?.GetComponent<Text>();
+        // Text currentText = readingObject.transform.Find("Current")?.GetComponent<Text>();
+        // Text resistanceText = readingObject.transform.Find("Resistance")?.GetComponent<Text>();
+        // 
+        // // Update the texts
+        // if (componentNameText != null)
+        //     componentNameText.text = component.Id;
+        // 
+        // if (voltageText != null)
+        //     voltageText.text = $"{component.VoltageDrop:F2} V";
+        // 
+        // if (currentText != null)
+        //     currentText.text = $"{component.Current:F3} A";
+        // 
+        // if (resistanceText != null)
+        // {
+        //     if (component.Resistance == float.MaxValue)
+        //         resistanceText.text = "∞ Ω";
+        //     else
+        //         resistanceText.text = $"{component.Resistance:F2} Ω";
+        // }
+        // 
+        // // Add click handler for multimeter measurement
+        // Button componentButton = readingObject.GetComponent<Button>();
+        // if (componentButton != null)
+        // {
+        //     componentButton.onClick.AddListener(() => SelectComponentForMeasurement(component));
+        // }
     }
     
     /// <summary>
@@ -181,12 +186,12 @@ public class CircuitDashboard : MonoBehaviour
     private void UpdateCircuitAnalysis()
     {
         string circuitType = AnalyzeCircuitType();
-        if (circuitTypeText != null)
-            circuitTypeText.text = circuitType;
+        // if (circuitTypeText != null)
+        //     circuitTypeText.text = circuitType;
         
         string analysis = GenerateCircuitAnalysis();
-        if (analysisText != null)
-            analysisText.text = analysis;
+        // if (analysisText != null)
+        //     analysisText.text = analysis;
     }
     
     /// <summary>
@@ -225,11 +230,11 @@ public class CircuitDashboard : MonoBehaviour
         selectedComponentForMeasurement = component;
         
         // Update multimeter readings
-        if (multimeterVoltageText != null)
-            multimeterVoltageText.text = $"{component.VoltageDrop:F2} V";
-        
-        if (multimeterCurrentText != null)
-            multimeterCurrentText.text = $"{component.Current:F3} A";
+        // if (multimeterVoltageText != null)
+        //     multimeterVoltageText.text = $"{component.VoltageDrop:F2} V";
+        // 
+        // if (multimeterCurrentText != null)
+        //     multimeterCurrentText.text = $"{component.Current:F3} A";
         
         Debug.Log($"[CircuitDashboard] Multimeter measuring {component.Id}");
     }
@@ -249,12 +254,13 @@ public class CircuitDashboard : MonoBehaviour
     /// </summary>
     private void ShowEmptyCircuitReadings()
     {
-        if (totalVoltageText != null) totalVoltageText.text = "0.00 V";
-        if (totalCurrentText != null) totalCurrentText.text = "0.000 A";
-        if (totalPowerText != null) totalPowerText.text = "0.000 W";
-        if (totalResistanceText != null) totalResistanceText.text = "∞ Ω";
-        if (circuitTypeText != null) circuitTypeText.text = "Empty Circuit";
-        if (analysisText != null) analysisText.text = "Build a circuit to see analysis.";
+        Debug.Log("Empty circuit - no readings to display");
+        // if (totalVoltageText != null) totalVoltageText.text = "0.00 V";
+        // if (totalCurrentText != null) totalCurrentText.text = "0.000 A";
+        // if (totalPowerText != null) totalPowerText.text = "0.000 W";
+        // if (totalResistanceText != null) totalResistanceText.text = "∞ Ω";
+        // if (circuitTypeText != null) circuitTypeText.text = "Empty Circuit";
+        // if (analysisText != null) analysisText.text = "Build a circuit to see analysis.";
     }
     
     /// <summary>
@@ -262,10 +268,11 @@ public class CircuitDashboard : MonoBehaviour
     /// </summary>
     private void ShowNoBatteryReadings()
     {
-        if (totalVoltageText != null) totalVoltageText.text = "No Battery";
-        if (totalCurrentText != null) totalCurrentText.text = "0.000 A";
-        if (totalPowerText != null) totalPowerText.text = "0.000 W";
-        if (analysisText != null) analysisText.text = "Add a battery to power the circuit.";
+        Debug.Log("No battery detected in circuit");
+        // if (totalVoltageText != null) totalVoltageText.text = "No Battery";
+        // if (totalCurrentText != null) totalCurrentText.text = "0.000 A";
+        // if (totalPowerText != null) totalPowerText.text = "0.000 W";
+        // if (analysisText != null) analysisText.text = "Add a battery to power the circuit.";
     }
     
     /// <summary>

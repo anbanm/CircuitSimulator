@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 // Component types supported by the circuit simulator
 public enum ComponentType
@@ -32,23 +33,23 @@ public class CircuitComponent3D : MonoBehaviour
     
     void Start()
     {
-        // Register with Circuit3DManager when component starts
-        if (Circuit3DManager.Instance != null)
+        // Register with CircuitManager when component starts
+        if (CircuitManager.Instance != null)
         {
-            Circuit3DManager.Instance.RegisterComponent(this);
+            CircuitManager.Instance.RegisterComponent(this);
         }
         else
         {
-            Debug.LogWarning($"Circuit3DManager not found! {name} will not be included in circuit solving.");
+            Debug.LogWarning($"CircuitManager not found! {name} will not be included in circuit solving.");
         }
     }
     
     void OnDestroy()
     {
         // Unregister when component is destroyed
-        if (Circuit3DManager.Instance != null)
+        if (CircuitManager.Instance != null)
         {
-            Circuit3DManager.Instance.UnregisterComponent(this);
+            CircuitManager.Instance.UnregisterComponent(this);
         }
     }
     

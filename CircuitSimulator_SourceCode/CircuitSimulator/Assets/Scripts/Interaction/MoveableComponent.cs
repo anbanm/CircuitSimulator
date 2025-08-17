@@ -4,7 +4,7 @@ public class MoveableComponent : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float moveSpeed = 5f;
-    public LayerMask groundLayer = 1; // Default layer
+    public int groundLayer = 1; // Default layer (LayerMask simplified)
     
     private bool _isDragging = false;
     private Vector3 _dragOffset;
@@ -97,7 +97,7 @@ public class MoveableComponent : MonoBehaviour
         transform.position = snappedPos;
         
         // Trigger circuit re-solve when component moves (for real-time feedback)
-        var manager = Circuit3DManager.Instance;
+        var manager = CircuitManager.Instance;
         if (manager != null)
         {
             manager.SolveCircuit();

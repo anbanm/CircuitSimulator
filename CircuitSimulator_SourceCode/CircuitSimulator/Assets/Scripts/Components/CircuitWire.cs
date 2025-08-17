@@ -62,10 +62,10 @@ public class CircuitWire : MonoBehaviour
     
     void RegisterWithManager()
     {
-        Circuit3DManager manager = Circuit3DManager.Instance;
+        CircuitManager manager = CircuitManager.Instance;
         if (manager == null)
         {
-            manager = FindObjectOfType<Circuit3DManager>();
+            manager = FindFirstObjectByType<CircuitManager>();
         }
         
         if (manager != null)
@@ -167,10 +167,10 @@ public class CircuitWire : MonoBehaviour
         if (component2 != null) component2.RemoveConnectedWire(gameObject);
         
         // Unregister from manager
-        Circuit3DManager manager = Circuit3DManager.Instance;
+        CircuitManager manager = CircuitManager.Instance;
         if (manager == null)
         {
-            manager = FindObjectOfType<Circuit3DManager>();
+            manager = FindFirstObjectByType<CircuitManager>();
         }
         if (manager != null)
         {

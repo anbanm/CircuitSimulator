@@ -180,7 +180,7 @@ public class ComponentPropertyPopup : MonoBehaviour
             Debug.Log($"[ComponentPropertyPopup] Properties saved for {currentCircuitComponent.Id}");
             
             // TODO: Trigger circuit re-calculation if needed
-            // FindObjectOfType<Circuit3DManager>()?.RecalculateCircuit();
+            // FindFirstObjectByType<Circuit3DManager>()?.RecalculateCircuit();
             
         }
         catch (Exception e)

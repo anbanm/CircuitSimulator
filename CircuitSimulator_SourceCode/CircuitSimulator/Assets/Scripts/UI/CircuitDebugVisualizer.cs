@@ -38,13 +38,13 @@ public class CircuitDebugVisualizer : MonoBehaviour
     
     void UpdateNodeVisualization()
     {
-        var manager = Circuit3DManager.Instance;
+        var manager = CircuitManager.Instance;
         if (manager == null) return;
         
         nodeColors.Clear();
         nodePositions.Clear();
         
-        var components = FindObjectsOfType<CircuitComponent3D>();
+        var components = FindObjectsByType<CircuitComponent3D>(FindObjectsSortMode.None);
         
         foreach (var comp in components)
         {
@@ -88,7 +88,7 @@ public class CircuitDebugVisualizer : MonoBehaviour
     {
         if (!Application.isPlaying) return;
         
-        var manager = Circuit3DManager.Instance;
+        var manager = CircuitManager.Instance;
         if (manager == null) return;
         
         float scale = enableForAR ? arScaleFactor : 1f;
@@ -120,7 +120,7 @@ public class CircuitDebugVisualizer : MonoBehaviour
     
     void DrawCurrentFlow(float scale)
     {
-        var components = FindObjectsOfType<CircuitComponent3D>();
+        var components = FindObjectsByType<CircuitComponent3D>(FindObjectsSortMode.None);
         
         foreach (var comp in components)
         {
@@ -154,8 +154,8 @@ public class CircuitDebugVisualizer : MonoBehaviour
     
     void DrawDisconnectedComponents(float scale)
     {
-        var manager = Circuit3DManager.Instance;
-        var components = FindObjectsOfType<CircuitComponent3D>();
+        var manager = CircuitManager.Instance;
+        var components = FindObjectsByType<CircuitComponent3D>(FindObjectsSortMode.None);
         
         foreach (var comp in components)
         {
@@ -233,7 +233,7 @@ public class CircuitDebugVisualizer : MonoBehaviour
     public void HighlightCircuitPath()
     {
         // Highlight the complete circuit path for educational purposes
-        var components = FindObjectsOfType<CircuitComponent3D>();
+        var components = FindObjectsByType<CircuitComponent3D>(FindObjectsSortMode.None);
         var battery = components.FirstOrDefault(c => c.ComponentType == ComponentType.Battery);
         
         if (battery != null && battery.logicalComponent != null)

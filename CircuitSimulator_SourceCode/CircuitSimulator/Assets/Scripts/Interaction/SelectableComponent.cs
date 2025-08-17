@@ -22,7 +22,7 @@ public class SelectableComponent : MonoBehaviour
     void OnMouseDown()
     {
         // Check if connect tool is active
-        ConnectTool connectTool = FindObjectOfType<ConnectTool>();
+        ConnectTool connectTool = FindFirstObjectByType<ConnectTool>();
         if (connectTool != null && connectTool.IsConnectMode())
         {
             connectTool.OnComponentClicked(this);
@@ -109,11 +109,11 @@ public class SelectableComponent : MonoBehaviour
             currentlySelected = null;
         }
         
-        // Remove from ComponentPalette list if needed
-        ComponentPalette palette = FindObjectOfType<ComponentPalette>();
-        if (palette != null)
+        // Remove from ComponentFactoryManager list if needed
+        ComponentFactoryManager factoryManager = FindFirstObjectByType<ComponentFactoryManager>();
+        if (factoryManager != null)
         {
-            palette.RemoveComponent(gameObject);
+            factoryManager.RemoveComponent(gameObject);
         }
         
         Destroy(gameObject);
@@ -124,18 +124,6 @@ public class SelectableComponent : MonoBehaviour
         return isSelected;
     }
     
-    public void Deselect()
-    {
-        if (isSelected)
-        {
-            isSelected = false;
-            if (currentlySelected == this)
-            {
-                currentlySelected = null;
-            }
-            UpdateVisualState();
-        }
-    }
     
     public static SelectableComponent GetCurrentlySelected()
     {

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using Button = UnityEngine.UIElements.Button;
 
 /// <summary>
 /// Modern UI Toolkit controller for the circuit simulator control panel
@@ -11,7 +12,7 @@ public class ControlPanelController : MonoBehaviour
     public UIDocument uiDocument;
     
     [Header("Component References")]
-    public ComponentPalette componentPalette;
+    public ComponentPaletteCoordinator paletteCoordinator;
     public ConnectTool connectTool;
     
     private VisualElement root;
@@ -33,13 +34,13 @@ public class ControlPanelController : MonoBehaviour
         // Get the root visual element
         root = uiDocument.rootVisualElement;
         
-        // Find component palette if not assigned
-        if (componentPalette == null)
-            componentPalette = FindObjectOfType<ComponentPalette>();
+        // Find component palette coordinator if not assigned
+        if (paletteCoordinator == null)
+            paletteCoordinator = FindFirstObjectByType<ComponentPaletteCoordinator>();
             
         // Find connect tool if not assigned
         if (connectTool == null)
-            connectTool = FindObjectOfType<ConnectTool>();
+            connectTool = FindFirstObjectByType<ConnectTool>();
         
         SetupButtons();
     }
@@ -90,9 +91,9 @@ public class ControlPanelController : MonoBehaviour
     // Component Placement Methods
     void PlaceComponent(string componentType)
     {
-        if (componentPalette == null)
+        if (paletteCoordinator == null)
         {
-            Debug.LogWarning("ComponentPalette not found!");
+            Debug.LogWarning("ComponentPaletteCoordinator not found!");
             return;
         }
         
@@ -101,16 +102,16 @@ public class ControlPanelController : MonoBehaviour
         switch (componentType)
         {
             case "Battery":
-                componentPalette.PlaceBattery();
+                paletteCoordinator.PlaceBattery();
                 break;
             case "Resistor":
-                componentPalette.PlaceResistor();
+                paletteCoordinator.PlaceResistor();
                 break;
             case "Bulb":
-                componentPalette.PlaceBulb();
+                paletteCoordinator.PlaceBulb();
                 break;
             case "Switch":
-                componentPalette.PlaceSwitch();
+                paletteCoordinator.PlaceSwitch();
                 break;
         }
         
@@ -137,72 +138,75 @@ public class ControlPanelController : MonoBehaviour
     void SolveCircuit()
     {
         Debug.Log("✅ Solving Circuit");
-        var manager = Circuit3DManager.Instance;
-        if (manager != null)
+        var circuitManager = CircuitManager.Instance;
+        if (circuitManager != null)
         {
-            manager.SolveCircuit();
+            circuitManager.SolveCircuit();
             ShowButtonFeedback(solveBtn);
         }
         else
         {
-            Debug.LogWarning("Circuit3DManager not found!");
+            Debug.LogWarning("CircuitManager not found!");
         }
     }
     
     void ValidateCircuit()
     {
         Debug.Log("🔍 Validating Circuit");
-        if (componentPalette != null)
+        var circuitManager = CircuitManager.Instance;
+        if (circuitManager != null)
         {
-            // Use ComponentPalette's validation method
-            var manager = componentPalette.GetManager();
-            if (manager != null)
-            {
-                manager.SolveCircuit(); // This includes validation
-                ShowButtonFeedback(validateBtn);
-            }
+            circuitManager.ValidateAndTestCircuit();
+            ShowButtonFeedback(validateBtn);
+        }
+        else
+        {
+            Debug.LogWarning("CircuitManager not found!");
         }
     }
     
     void TestCircuit()
     {
         Debug.Log("🧪 Testing Circuit");
-        if (componentPalette != null)
+        var circuitManager = CircuitManager.Instance;
+        if (circuitManager != null)
         {
-            var manager = componentPalette.GetManager();
-            if (manager != null)
-            {
-                manager.ValidateAndTestCircuit();
-                ShowButtonFeedback(testBtn);
-            }
+            circuitManager.TestCircuitComponents();
+            ShowButtonFeedback(testBtn);
+        }
+        else
+        {
+            Debug.LogWarning("CircuitManager not found!");
         }
     }
     
     void DebugCircuit()
     {
         Debug.Log("🐛 Debug Circuit Registration");
-        if (componentPalette != null)
+        var circuitManager = CircuitManager.Instance;
+        if (circuitManager != null)
         {
-            var manager = componentPalette.GetManager();
-            if (manager != null)
-            {
-                manager.DebugComponentRegistration();
-                ShowButtonFeedback(debugBtn);
-            }
+            circuitManager.DebugComponentRegistration();
+            ShowButtonFeedback(debugBtn);
+        }
+        else
+        {
+            Debug.LogWarning("CircuitManager not found!");
         }
     }
     
     void GenerateReport()
     {
         Debug.Log("📊 Generating Circuit Report");
-        if (componentPalette != null)
+        var circuitManager = CircuitManager.Instance;
+        if (circuitManager != null)
         {
-            var manager = componentPalette.GetManager();
-            if (manager != null)
-            {
-                manager.SaveDebugReport();
-                ShowButtonFeedback(reportBtn);
-            }
+            circuitManager.SaveDebugReport();
+            ShowButtonFeedback(reportBtn);
+        }
+        else
+        {
+            Debug.LogWarning("CircuitManager not found!");
         }
     }
     

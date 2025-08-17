@@ -241,14 +241,8 @@ public class CircuitValidator
         // AR-specific validations
         
         // Check component spacing (important for AR tracking)
-        const float minSpacing = 0.3f; // Minimum distance between components for AR
-        var positions = new List<(CircuitComponent comp, Vector3 pos)>();
-        
-        foreach (var comp in components)
-        {
-            // This would need to be passed in or stored differently in actual implementation
-            // For now, we'll skip the spatial validation
-        }
+        // TODO: Implement spatial validation when 3D position data is available
+        // This would check minimum spacing between components for AR tracking
         
         // Validate component count for AR performance
         if (components.Count > 20)

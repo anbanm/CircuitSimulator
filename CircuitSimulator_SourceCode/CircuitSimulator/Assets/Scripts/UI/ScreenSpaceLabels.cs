@@ -27,7 +27,7 @@ public class ScreenSpaceLabels : MonoBehaviour
     void CreateScreenSpaceLabel()
     {
         // Find or create screen space canvas
-        screenCanvas = FindObjectOfType<Canvas>();
+        screenCanvas = FindFirstObjectByType<Canvas>();
         if (screenCanvas == null || screenCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
         {
             CreateScreenCanvas();
