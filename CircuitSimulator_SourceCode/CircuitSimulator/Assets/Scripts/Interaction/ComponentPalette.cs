@@ -1,12 +1,12 @@
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
+// using UnityEngine.UI; // Commented out for now - will add back when UI package is installed
 
 public class ComponentPalette : MonoBehaviour
 {
     [Header("UI References")]
     public Transform paletteContainer;  // Parent for buttons
-    public Button buttonPrefab;         // Button prefab to duplicate
+    // public Button buttonPrefab;         // Button prefab to duplicate - DISABLED until UI package installed
     
     [Header("Component Prefabs (Optional)")]
     public GameObject batteryPrefab;    // Custom battery prefab
@@ -26,6 +26,41 @@ public class ComponentPalette : MonoBehaviour
     {
         CreatePaletteButtons();
         CacheManagerReference();
+    }
+    
+    void Update()
+    {
+        // Keyboard shortcuts while UI is disabled
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            Debug.Log("Placing Battery (B key)");
+            PlaceBattery();
+        }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            Debug.Log("Placing Resistor (R key)");
+            PlaceResistor();
+        }
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            Debug.Log("Placing Bulb (L key)");
+            PlaceBulb();
+        }
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            Debug.Log("Placing Switch (S key)");
+            PlaceSwitch();
+        }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Debug.Log("Solving Circuit (SPACE key)");
+            ManualSolve();
+        }
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            Debug.Log("Testing Circuit (T key)");
+            TestCircuit();
+        }
     }
     
     void CacheManagerReference()
@@ -48,15 +83,24 @@ public class ComponentPalette : MonoBehaviour
     
     void CreatePaletteButtons()
     {
-        CreateButton("BATTERY", Color.red, PlaceBattery);
-        CreateButton("RESISTOR", Color.yellow, PlaceResistor);
-        CreateButton("BULB", Color.white, PlaceBulb);
-        CreateButton("SWITCH", Color.gray, PlaceSwitch);
-        CreateButton("SOLVE!", Color.green, ManualSolve);
-        CreateButton("VALIDATE", Color.cyan, ValidateCircuit);
-        CreateButton("TEST", Color.cyan, TestCircuit);
-        CreateButton("DEBUG", Color.magenta, DebugRegistration);
-        CreateButton("REPORT", Color.yellow, SaveReport);
+        // DISABLED until UI package is installed
+        Debug.Log("ComponentPalette: UI buttons disabled until UnityEngine.UI package is installed");
+        Debug.Log("Use keyboard shortcuts instead:");
+        Debug.Log("- B = Place Battery");
+        Debug.Log("- R = Place Resistor"); 
+        Debug.Log("- L = Place Bulb");
+        Debug.Log("- S = Place Switch");
+        Debug.Log("- SPACE = Solve Circuit");
+        
+        // CreateButton("BATTERY", Color.red, PlaceBattery);
+        // CreateButton("RESISTOR", Color.yellow, PlaceResistor);
+        // CreateButton("BULB", Color.white, PlaceBulb);
+        // CreateButton("SWITCH", Color.gray, PlaceSwitch);
+        // CreateButton("SOLVE!", Color.green, ManualSolve);
+        // CreateButton("VALIDATE", Color.cyan, ValidateCircuit);
+        // CreateButton("TEST", Color.cyan, TestCircuit);
+        // CreateButton("DEBUG", Color.magenta, DebugRegistration);
+        // CreateButton("REPORT", Color.yellow, SaveReport);
     }
     
     void ValidateCircuit()
@@ -133,6 +177,8 @@ public class ComponentPalette : MonoBehaviour
         }
     }
     
+    /*
+    // DISABLED until UnityEngine.UI package is installed
     void CreateButton(string label, Color color, System.Action onClick)
     {
         // Create button
@@ -160,6 +206,7 @@ public class ComponentPalette : MonoBehaviour
         // Add click listener
         newButton.onClick.AddListener(() => onClick());
     }
+    */
     
     public void PlaceBattery() { PlaceComponent("Battery", Color.red); }
     public void PlaceResistor() { PlaceComponent("Resistor", Color.yellow); }
