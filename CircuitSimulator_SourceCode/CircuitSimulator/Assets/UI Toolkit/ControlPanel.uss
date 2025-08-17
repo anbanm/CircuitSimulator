@@ -28,19 +28,20 @@
     padding: 8px 12px;
     border-radius: 8px;
     font-size: 12px;
-    font-weight: bold;
+    -unity-font-style: bold;
     border-width: 0;
+    transition-property: transform;
     transition-duration: 0.2s;
 }
 
 .component-btn:hover {
-    scale: 1.05;
+    transform: scale(1.05);
     border-width: 2px;
     border-color: white;
 }
 
 .component-btn:active {
-    scale: 0.95;
+    transform: scale(0.95);
 }
 
 /* Specific component colors */
@@ -77,26 +78,27 @@
     padding: 8px 12px;
     border-radius: 8px;
     font-size: 12px;
-    font-weight: bold;
+    -unity-font-style: bold;
     border-width: 0;
+    transition-property: transform;
     transition-duration: 0.2s;
 }
 
 .action-btn:hover {
-    scale: 1.05;
+    transform: scale(1.05);
     border-width: 2px;
     border-color: white;
 }
 
 .action-btn:active {
-    scale: 0.95;
+    transform: scale(0.95);
 }
 
 /* Specific action colors */
 .solve {
     background-color: rgb(80, 180, 80);
     color: white;
-    font-weight: bold;
+    -unity-font-style: bold;
 }
 
 .validate {
