@@ -80,7 +80,7 @@ public class MoveableComponent : MonoBehaviour
     
     void SnapToGrid()
     {
-        // Snap to nearest grid position
+        // Snap to nearest grid position (AR-optimized spacing)
         float gridSize = 1f;
         Vector3 snappedPos = transform.position;
         
@@ -95,6 +95,13 @@ public class MoveableComponent : MonoBehaviour
         }
         
         transform.position = snappedPos;
+        
+        // Trigger circuit re-solve when component moves (for real-time feedback)
+        var manager = Circuit3DManager.Instance;
+        if (manager != null)
+        {
+            manager.SolveCircuit();
+        }
     }
     
     bool IsPositionOccupied(Vector3 position)

@@ -27,9 +27,25 @@ public class ComponentPalette : MonoBehaviour
         CreateButton("BULB", Color.white, PlaceBulb);
         CreateButton("SWITCH", Color.gray, PlaceSwitch);
         CreateButton("SOLVE!", Color.green, ManualSolve);
+        CreateButton("VALIDATE", Color.cyan, ValidateCircuit);
         CreateButton("TEST", Color.cyan, TestCircuit);
         CreateButton("DEBUG", Color.magenta, DebugRegistration);
         CreateButton("REPORT", Color.yellow, SaveReport);
+    }
+    
+    void ValidateCircuit()
+    {
+        Circuit3DManager manager = FindObjectOfType<Circuit3DManager>();
+        if (manager != null)
+        {
+            Debug.Log("Manual validation triggered from palette");
+            // The validation will happen automatically in SolveCircuit now
+            manager.SolveCircuit();
+        }
+        else
+        {
+            Debug.LogWarning("No Circuit3DManager found!");
+        }
     }
     
     void ManualSolve()

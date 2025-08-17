@@ -6,6 +6,11 @@ public class Simple3DLabels : MonoBehaviour
     public Vector3 labelOffset = new Vector3(0, 1.2f, 0);
     public float textSize = 0.05f; // Smaller text size
     
+    [Header("AR Optimization")]
+    public bool optimizeForAR = true;
+    public float arTextScale = 0.7f;
+    public float maxVisibilityDistance = 10f;
+    
     private CircuitComponent3D circuitComponent;
     private GameObject labelObject;
     private TextMesh textMesh;
@@ -29,9 +34,9 @@ public class Simple3DLabels : MonoBehaviour
         textMesh = labelObject.AddComponent<TextMesh>();
         textMesh.text = "V:0 I:0 R:0";
         textMesh.fontSize = 10; // Smaller font
-        textMesh.characterSize = textSize;
+        textMesh.characterSize = optimizeForAR ? textSize * arTextScale : textSize;
         textMesh.anchor = TextAnchor.MiddleCenter;
-        textMesh.color = Color.black;
+        textMesh.color = optimizeForAR ? Color.white : Color.black; // Better contrast for AR
         
         // Add MeshRenderer for visibility
         MeshRenderer renderer = labelObject.GetComponent<MeshRenderer>();
@@ -46,6 +51,26 @@ public class Simple3DLabels : MonoBehaviour
     {
         UpdateLabelText();
         FaceCamera();
+        
+        // AR visibility optimization
+        if (optimizeForAR)
+        {
+            HandleARVisibility();
+        }
+    }
+    
+    void HandleARVisibility()
+    {
+        if (mainCamera != null)
+        {
+            float distance = Vector3.Distance(mainCamera.transform.position, transform.position);
+            bool shouldShow = distance <= maxVisibilityDistance;
+            
+            if (labelObject != null)
+            {
+                labelObject.SetActive(shouldShow);
+            }
+        }
     }
     
     void UpdateLabelText()

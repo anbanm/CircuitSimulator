@@ -26,6 +26,10 @@ public class CircuitComponent3D : MonoBehaviour
     [System.NonSerialized]
     public CircuitComponent logicalComponent;
     
+    // Wire connections (used by CircuitWire system)
+    [System.NonSerialized]
+    private List<GameObject> connectedWires = new List<GameObject>();
+    
     void Start()
     {
         // Register with Circuit3DManager when component starts
@@ -48,6 +52,35 @@ public class CircuitComponent3D : MonoBehaviour
         }
     }
     
+    // Wire connection methods (used by CircuitWire system)
+    public void AddConnectedWire(GameObject wire)
+    {
+        if (wire != null && !connectedWires.Contains(wire))
+        {
+            connectedWires.Add(wire);
+            Debug.Log($"{name}: Added wire connection to {wire.name}");
+        }
+    }
+    
+    public void RemoveConnectedWire(GameObject wire)
+    {
+        if (wire != null && connectedWires.Contains(wire))
+        {
+            connectedWires.Remove(wire);
+            Debug.Log($"{name}: Removed wire connection to {wire.name}");
+        }
+    }
+    
+    public List<GameObject> GetConnectedWires()
+    {
+        return new List<GameObject>(connectedWires);
+    }
+    
+    public int GetWireCount()
+    {
+        return connectedWires.Count;
+    }
+    
     // Visual feedback methods (to be implemented in UI)
     public void UpdateVisualFeedback()
     {
@@ -57,5 +90,7 @@ public class CircuitComponent3D : MonoBehaviour
         // - Wire glow based on current
         // - Battery charge indicators
         // - Voltage/current displays
+        
+        // For AR future: could control holographic effects, particle systems, etc.
     }
 }

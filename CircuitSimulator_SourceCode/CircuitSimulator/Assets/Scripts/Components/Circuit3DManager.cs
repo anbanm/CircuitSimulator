@@ -297,6 +297,25 @@ public class Circuit3DManager : MonoBehaviour
             LogToFile(foundBattery);
             Debug.Log(foundBattery);
             
+            // Validate circuit before solving (important for AR and desktop!)
+            var validator = new CircuitValidator();
+            var validationResult = validator.ValidateCircuit(logicalComponents);
+            
+            if (!validationResult.IsValid)
+            {
+                string validationError = $"Circuit validation failed:\n{validationResult.GetSummary()}";
+                LogToFile(validationError);
+                Debug.LogError(validationError);
+                return; // Don't solve invalid circuits
+            }
+            
+            if (validationResult.HasWarnings)
+            {
+                string validationWarnings = $"Circuit validation warnings:\n{validationResult.GetSummary()}";
+                LogToFile(validationWarnings);
+                Debug.LogWarning(validationWarnings);
+            }
+            
             // Solve using your CircuitCore solver
             string calling = "Calling CircuitSolver.Solve()...";
             LogToFile(calling);
@@ -362,32 +381,78 @@ public class Circuit3DManager : MonoBehaviour
         Debug.Log("=====================");
     }
     
-    List<CircuitComponent> BuildLogicalCircuit()
+    // Spatial node system - works great for AR placement on planes!
+    Dictionary<Vector3, CircuitNode> CreateSpatialNodeSystem()
     {
-        var logicalComponents = new List<CircuitComponent>();
-        var nodeMap = new Dictionary<string, CircuitNode>();
+        var spatialNodes = new Dictionary<Vector3, CircuitNode>();
+        float connectionTolerance = 0.5f; // Unity units - adjust for AR scale
         
         if (debugSolver)
         {
-            LogToFile("=== BUILDING LOGICAL CIRCUIT ===");
-            LogToFile($"Components: {components.Count}, Wires: {wires.Count}");
+            LogToFile("=== CREATING SPATIAL NODE SYSTEM ===");
         }
         
-        // Create nodes for each component
+        // Create component terminal positions
+        var componentTerminals = new Dictionary<CircuitComponent3D, (Vector3 inputPos, Vector3 outputPos)>();
+        
         foreach (var comp3D in components)
         {
             if (comp3D == null) continue;
             
-            string nodeAId = $"{comp3D.name}_A";
-            string nodeBId = $"{comp3D.name}_B";
+            // For desktop/AR: components placed on XZ plane, terminals are left/right of center
+            Vector3 componentPos = comp3D.transform.position;
+            Vector3 inputPos = componentPos + Vector3.left * 0.3f;   // Left terminal
+            Vector3 outputPos = componentPos + Vector3.right * 0.3f; // Right terminal
             
-            if (!nodeMap.ContainsKey(nodeAId))
-                nodeMap[nodeAId] = new CircuitNode(nodeAId);
-            if (!nodeMap.ContainsKey(nodeBId))
-                nodeMap[nodeBId] = new CircuitNode(nodeBId);
+            componentTerminals[comp3D] = (inputPos, outputPos);
+            
+            if (debugSolver)
+            {
+                LogToFile($"Component {comp3D.name}: Input at {inputPos}, Output at {outputPos}");
+            }
         }
         
-        // Process wires to share nodes (simple approach)
+        // Create nodes based on spatial proximity (perfect for AR!)
+        var allTerminalPositions = new List<Vector3>();
+        foreach (var terminal in componentTerminals.Values)
+        {
+            allTerminalPositions.Add(terminal.inputPos);
+            allTerminalPositions.Add(terminal.outputPos);
+        }
+        
+        // Group nearby terminal positions into shared nodes
+        foreach (var pos in allTerminalPositions)
+        {
+            bool foundExistingNode = false;
+            
+            foreach (var existingPos in spatialNodes.Keys)
+            {
+                if (Vector3.Distance(pos, existingPos) <= connectionTolerance)
+                {
+                    // This position is close enough to an existing node
+                    foundExistingNode = true;
+                    if (debugSolver)
+                    {
+                        LogToFile($"Position {pos} shares node with {existingPos} (distance: {Vector3.Distance(pos, existingPos):F3})");
+                    }
+                    break;
+                }
+            }
+            
+            if (!foundExistingNode)
+            {
+                // Create new node for this position
+                var nodeId = $"Node_{pos.x:F1}_{pos.z:F1}";
+                spatialNodes[pos] = new CircuitNode(nodeId);
+                
+                if (debugSolver)
+                {
+                    LogToFile($"Created new node {nodeId} at position {pos}");
+                }
+            }
+        }
+        
+        // Process wires to create additional connections
         foreach (var wireObj in wires)
         {
             if (wireObj == null) continue;
@@ -395,33 +460,109 @@ public class Circuit3DManager : MonoBehaviour
             var circuitWire = wireObj.GetComponent<CircuitWire>();
             if (circuitWire != null && circuitWire.Component1 != null && circuitWire.Component2 != null)
             {
-                string comp1BId = $"{circuitWire.Component1.name}_B";
-                string comp2AId = $"{circuitWire.Component2.name}_A";
+                // Wire connects component terminals - merge their nodes
+                var comp1Terminals = componentTerminals[circuitWire.Component1];
+                var comp2Terminals = componentTerminals[circuitWire.Component2];
                 
-                if (nodeMap.ContainsKey(comp1BId) && nodeMap.ContainsKey(comp2AId))
+                // Find the closest terminal pairs and connect them
+                var wirePairs = new[]
                 {
-                    // Simple: make comp2A use the same node as comp1B
-                    var sharedNode = nodeMap[comp1BId];
-                    nodeMap[comp2AId] = sharedNode;
+                    (comp1Terminals.outputPos, comp2Terminals.inputPos),
+                    (comp1Terminals.inputPos, comp2Terminals.outputPos),
+                    (comp1Terminals.outputPos, comp2Terminals.outputPos),
+                    (comp1Terminals.inputPos, comp2Terminals.inputPos)
+                };
+                
+                foreach (var (pos1, pos2) in wirePairs)
+                {
+                    var node1 = GetSpatialNode(spatialNodes, pos1, connectionTolerance);
+                    var node2 = GetSpatialNode(spatialNodes, pos2, connectionTolerance);
                     
-                    if (debugSolver)
+                    if (node1 != null && node2 != null && node1 != node2)
                     {
-                        LogToFile($"Wire: {circuitWire.Component1.name}_B <-> {circuitWire.Component2.name}_A (shared node {sharedNode.Id})");
+                        // Merge nodes by making all references point to node1
+                        MergeSpatialNodes(spatialNodes, node1, node2);
+                        
+                        if (debugSolver)
+                        {
+                            LogToFile($"Wire connects {pos1} to {pos2} (merged nodes)");
+                        }
+                        break; // Only connect the closest pair
                     }
                 }
             }
         }
         
-        // Create logical components
+        if (debugSolver)
+        {
+            LogToFile($"Created {spatialNodes.Count} spatial nodes with {connectionTolerance} tolerance");
+        }
+        
+        return spatialNodes;
+    }
+    
+    CircuitNode GetSpatialNode(Dictionary<Vector3, CircuitNode> spatialNodes, Vector3 position, float tolerance)
+    {
+        foreach (var kvp in spatialNodes)
+        {
+            if (Vector3.Distance(kvp.Key, position) <= tolerance)
+            {
+                return kvp.Value;
+            }
+        }
+        return null;
+    }
+    
+    void MergeSpatialNodes(Dictionary<Vector3, CircuitNode> spatialNodes, CircuitNode keepNode, CircuitNode mergeNode)
+    {
+        // Replace all references to mergeNode with keepNode
+        var keysToUpdate = new List<Vector3>();
+        foreach (var kvp in spatialNodes)
+        {
+            if (kvp.Value == mergeNode)
+            {
+                keysToUpdate.Add(kvp.Key);
+            }
+        }
+        
+        foreach (var key in keysToUpdate)
+        {
+            spatialNodes[key] = keepNode;
+        }
+    }
+    
+    List<CircuitComponent> BuildLogicalCircuit()
+    {
+        var logicalComponents = new List<CircuitComponent>();
+        
+        if (debugSolver)
+        {
+            LogToFile("=== BUILDING LOGICAL CIRCUIT ===");
+            LogToFile($"Components: {components.Count}, Wires: {wires.Count}");
+        }
+        
+        // Create spatial-based node system (good for both desktop and AR)
+        var spatialNodes = CreateSpatialNodeSystem();
+        
+        // Create logical components using spatial nodes
         foreach (var comp3D in components)
         {
             if (comp3D == null) continue;
             
-            string nodeAId = $"{comp3D.name}_A";
-            string nodeBId = $"{comp3D.name}_B";
+            // Get component terminal positions
+            Vector3 componentPos = comp3D.transform.position;
+            Vector3 inputPos = componentPos + Vector3.left * 0.3f;
+            Vector3 outputPos = componentPos + Vector3.right * 0.3f;
             
-            var nodeA = nodeMap[nodeAId];
-            var nodeB = nodeMap[nodeBId];
+            // Find the spatial nodes for these positions
+            var nodeA = GetSpatialNode(spatialNodes, inputPos, 0.5f);
+            var nodeB = GetSpatialNode(spatialNodes, outputPos, 0.5f);
+            
+            if (nodeA == null || nodeB == null)
+            {
+                Debug.LogError($"Could not find spatial nodes for component {comp3D.name}");
+                continue;
+            }
             
             CircuitComponent logicalComp = null;
             switch (comp3D.ComponentType)
