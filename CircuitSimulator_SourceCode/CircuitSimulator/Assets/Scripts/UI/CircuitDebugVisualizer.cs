@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 // Debug visualization system - great for development and educational purposes!
 // Perfect for showing students how circuits actually work in 3D/AR
@@ -206,7 +209,7 @@ public class CircuitDebugVisualizer : MonoBehaviour
         // In a real implementation, you'd use GUI.Label in OnGUI() or create 3D text objects
         
         #if UNITY_EDITOR
-        UnityEditor.Handles.Label(position, text);
+        Handles.Label(position, text);
         #endif
     }
     

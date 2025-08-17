@@ -8,6 +8,12 @@ public class ComponentPalette : MonoBehaviour
     public Transform paletteContainer;  // Parent for buttons
     public Button buttonPrefab;         // Button prefab to duplicate
     
+    [Header("Component Prefabs (Optional)")]
+    public GameObject batteryPrefab;    // Custom battery prefab
+    public GameObject resistorPrefab;   // Custom resistor prefab
+    public GameObject bulbPrefab;       // Custom bulb prefab
+    public GameObject switchPrefab;     // Custom switch prefab
+    
     [Header("Placement Settings")]
     public Transform canvasPlane;       // Where to place components
     public float spacing = 2f;          // Distance between components
@@ -143,6 +149,36 @@ public class ComponentPalette : MonoBehaviour
     void PlaceBulb() { PlaceComponent("Bulb", Color.white); }
     void PlaceSwitch() { PlaceComponent("Switch", Color.gray); }
     
+    GameObject CreateComponentObject(string componentName, Vector3 position)
+    {
+        GameObject prefab = GetPrefabForComponent(componentName);
+        
+        if (prefab != null)
+        {
+            // Use custom prefab
+            Debug.Log($"Using custom prefab for {componentName}");
+            return Instantiate(prefab, position, Quaternion.identity);
+        }
+        else
+        {
+            // Create default primitive
+            Debug.Log($"Using default primitive for {componentName}");
+            return GameObject.CreatePrimitive(PrimitiveType.Cube);
+        }
+    }
+    
+    GameObject GetPrefabForComponent(string componentName)
+    {
+        switch (componentName)
+        {
+            case "Battery": return batteryPrefab;
+            case "Resistor": return resistorPrefab;
+            case "Bulb": return bulbPrefab;
+            case "Switch": return switchPrefab;
+            default: return null;
+        }
+    }
+    
     [ContextMenu("Test Simple Placement")]
     void TestSimplePlacement()
     {
@@ -179,20 +215,20 @@ public class ComponentPalette : MonoBehaviour
             Vector3 position = canvasPlane.position + new Vector3(componentCount * spacing, 0.5f, 0);
             Debug.Log($"Placing {name} at position: {position}");
             
-            // Create simple cube
-            GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            if (cube == null)
+            // Get prefab for component type or create default cube
+            GameObject componentObject = CreateComponentObject(name, position);
+            if (componentObject == null)
             {
-                Debug.LogError("Failed to create cube primitive!");
+                Debug.LogError($"Failed to create {name} component!");
                 return;
             }
             
-            cube.transform.position = position;
-            cube.transform.SetParent(canvasPlane);
-            cube.name = $"{name}_{componentCount}";
+            componentObject.transform.position = position;
+            componentObject.transform.SetParent(canvasPlane);
+            componentObject.name = $"{name}_{componentCount}";
             
             // Set color
-            var renderer = cube.GetComponent<Renderer>();
+            var renderer = componentObject.GetComponent<Renderer>();
             if (renderer != null && renderer.material != null)
             {
                 renderer.material.color = color;
@@ -203,8 +239,12 @@ public class ComponentPalette : MonoBehaviour
             }
             
             // Add circuit component capability
-            Debug.Log($"Adding CircuitComponent3D to {cube.name}");
-            CircuitComponent3D circuitComp = cube.AddComponent<CircuitComponent3D>();
+            Debug.Log($"Adding CircuitComponent3D to {componentObject.name}");
+            CircuitComponent3D circuitComp = componentObject.GetComponent<CircuitComponent3D>();
+            if (circuitComp == null)
+            {
+                circuitComp = componentObject.AddComponent<CircuitComponent3D>();
+            }
             if (circuitComp == null)
             {
                 Debug.LogError("Failed to add CircuitComponent3D!");
@@ -241,14 +281,22 @@ public class ComponentPalette : MonoBehaviour
             
             // Add selection capability
             Debug.Log("Adding SelectableComponent");
-            SelectableComponent selectable = cube.AddComponent<SelectableComponent>();
+            SelectableComponent selectable = componentObject.GetComponent<SelectableComponent>();
+            if (selectable == null)
+            {
+                selectable = componentObject.AddComponent<SelectableComponent>();
+            }
             
             // Add movement capability
             Debug.Log("Adding MoveableComponent");
-            MoveableComponent moveable = cube.AddComponent<MoveableComponent>();
+            MoveableComponent moveable = componentObject.GetComponent<MoveableComponent>();
+            if (moveable == null)
+            {
+                moveable = componentObject.AddComponent<MoveableComponent>();
+            }
             
             // Add to list
-            placedComponents.Add(cube);
+            placedComponents.Add(componentObject);
             componentCount++;
             
             Debug.Log($"Successfully placed {name} at position {position}. Total components: {componentCount}");
