@@ -1,0 +1,26 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="control-panel" class="control-panel" style="flex-direction: row; justify-content: center; align-items: center; height: 100px; background-color: rgba(40, 40, 40, 0.9);">
+        
+        <!-- Component Placement Buttons -->
+        <ui:VisualElement name="component-buttons" class="button-group" style="flex-direction: row; margin-right: 20px;">
+            <ui:Button text="🔋 BATTERY" name="battery-btn" class="component-btn battery" style="background-color: rgb(220, 80, 80); color: white; margin: 5px; padding: 10px; border-radius: 5px; font-size: 14px; min-width: 80px;" />
+            <ui:Button text="⚡ RESISTOR" name="resistor-btn" class="component-btn resistor" style="background-color: rgb(220, 180, 80); color: white; margin: 5px; padding: 10px; border-radius: 5px; font-size: 14px; min-width: 80px;" />
+            <ui:Button text="💡 BULB" name="bulb-btn" class="component-btn bulb" style="background-color: rgb(240, 240, 120); color: black; margin: 5px; padding: 10px; border-radius: 5px; font-size: 14px; min-width: 80px;" />
+            <ui:Button text="🔘 SWITCH" name="switch-btn" class="component-btn switch" style="background-color: rgb(140, 140, 140); color: white; margin: 5px; padding: 10px; border-radius: 5px; font-size: 14px; min-width: 80px;" />
+            <ui:Button text="🔌 WIRE TOOL" name="wire-btn" class="component-btn wire" style="background-color: rgb(80, 140, 220); color: white; margin: 5px; padding: 10px; border-radius: 5px; font-size: 14px; min-width: 80px;" />
+        </ui:VisualElement>
+        
+        <!-- Separator -->
+        <ui:VisualElement style="width: 2px; height: 60px; background-color: rgba(255, 255, 255, 0.3); margin: 0 10px;" />
+        
+        <!-- Action Buttons -->
+        <ui:VisualElement name="action-buttons" class="button-group" style="flex-direction: row;">
+            <ui:Button text="✅ SOLVE!" name="solve-btn" class="action-btn solve" style="background-color: rgb(80, 180, 80); color: white; margin: 5px; padding: 10px; border-radius: 5px; font-size: 14px; min-width: 80px; font-weight: bold;" />
+            <ui:Button text="🔍 VALIDATE" name="validate-btn" class="action-btn validate" style="background-color: rgb(80, 180, 180); color: white; margin: 5px; padding: 10px; border-radius: 5px; font-size: 14px; min-width: 80px;" />
+            <ui:Button text="🧪 TEST" name="test-btn" class="action-btn test" style="background-color: rgb(120, 160, 200); color: white; margin: 5px; padding: 10px; border-radius: 5px; font-size: 14px; min-width: 80px;" />
+            <ui:Button text="🐛 DEBUG" name="debug-btn" class="action-btn debug" style="background-color: rgb(180, 80, 180); color: white; margin: 5px; padding: 10px; border-radius: 5px; font-size: 14px; min-width: 80px;" />
+            <ui:Button text="📊 REPORT" name="report-btn" class="action-btn report" style="background-color: rgb(200, 160, 80); color: white; margin: 5px; padding: 10px; border-radius: 5px; font-size: 14px; min-width: 80px;" />
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+</ui:UXML>

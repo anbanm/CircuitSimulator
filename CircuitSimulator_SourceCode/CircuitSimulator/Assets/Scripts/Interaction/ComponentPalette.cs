@@ -72,7 +72,7 @@ public class ComponentPalette : MonoBehaviour
         }
     }
     
-    Circuit3DManager GetManager()
+    public Circuit3DManager GetManager()
     {
         if (cachedManager == null)
         {

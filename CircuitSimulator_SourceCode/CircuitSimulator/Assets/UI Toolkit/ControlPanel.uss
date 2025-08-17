@@ -1,0 +1,120 @@
+/* Control Panel Styles for Circuit Simulator */
+
+.control-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background-color: rgba(40, 40, 40, 0.95);
+    border-top-width: 2px;
+    border-top-color: rgba(255, 255, 255, 0.2);
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.button-group {
+    flex-direction: row;
+    align-items: center;
+}
+
+/* Component Buttons */
+.component-btn {
+    min-width: 90px;
+    min-height: 50px;
+    margin: 5px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    border-width: 0;
+    transition-duration: 0.2s;
+}
+
+.component-btn:hover {
+    scale: 1.05;
+    border-width: 2px;
+    border-color: white;
+}
+
+.component-btn:active {
+    scale: 0.95;
+}
+
+/* Specific component colors */
+.battery {
+    background-color: rgb(220, 80, 80);
+    color: white;
+}
+
+.resistor {
+    background-color: rgb(220, 180, 80);
+    color: white;
+}
+
+.bulb {
+    background-color: rgb(240, 240, 120);
+    color: black;
+}
+
+.switch {
+    background-color: rgb(140, 140, 140);
+    color: white;
+}
+
+.wire {
+    background-color: rgb(80, 140, 220);
+    color: white;
+}
+
+/* Action Buttons */
+.action-btn {
+    min-width: 90px;
+    min-height: 50px;
+    margin: 5px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    border-width: 0;
+    transition-duration: 0.2s;
+}
+
+.action-btn:hover {
+    scale: 1.05;
+    border-width: 2px;
+    border-color: white;
+}
+
+.action-btn:active {
+    scale: 0.95;
+}
+
+/* Specific action colors */
+.solve {
+    background-color: rgb(80, 180, 80);
+    color: white;
+    font-weight: bold;
+}
+
+.validate {
+    background-color: rgb(80, 180, 180);
+    color: white;
+}
+
+.test {
+    background-color: rgb(120, 160, 200);
+    color: white;
+}
+
+.debug {
+    background-color: rgb(180, 80, 180);
+    color: white;
+}
+
+.report {
+    background-color: rgb(200, 160, 80);
+    color: white;
+}
