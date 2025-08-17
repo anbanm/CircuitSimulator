@@ -1,12 +1,12 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
-// using UnityEngine.UI; // Commented out for now - will add back when UI package is installed
 
 public class ComponentPalette : MonoBehaviour
 {
     [Header("UI References")]
     public Transform paletteContainer;  // Parent for buttons
-    // public Button buttonPrefab;         // Button prefab to duplicate - DISABLED until UI package installed
+    public Button buttonPrefab;         // Button prefab to duplicate
     
     [Header("Component Prefabs (Optional)")]
     public GameObject batteryPrefab;    // Custom battery prefab
@@ -83,24 +83,16 @@ public class ComponentPalette : MonoBehaviour
     
     void CreatePaletteButtons()
     {
-        // DISABLED until UI package is installed
-        Debug.Log("ComponentPalette: UI buttons disabled until UnityEngine.UI package is installed");
-        Debug.Log("Use keyboard shortcuts instead:");
-        Debug.Log("- B = Place Battery");
-        Debug.Log("- R = Place Resistor"); 
-        Debug.Log("- L = Place Bulb");
-        Debug.Log("- S = Place Switch");
-        Debug.Log("- SPACE = Solve Circuit");
-        
-        // CreateButton("BATTERY", Color.red, PlaceBattery);
-        // CreateButton("RESISTOR", Color.yellow, PlaceResistor);
-        // CreateButton("BULB", Color.white, PlaceBulb);
-        // CreateButton("SWITCH", Color.gray, PlaceSwitch);
-        // CreateButton("SOLVE!", Color.green, ManualSolve);
-        // CreateButton("VALIDATE", Color.cyan, ValidateCircuit);
-        // CreateButton("TEST", Color.cyan, TestCircuit);
-        // CreateButton("DEBUG", Color.magenta, DebugRegistration);
-        // CreateButton("REPORT", Color.yellow, SaveReport);
+        CreateButton("BATTERY", Color.red, PlaceBattery);
+        CreateButton("RESISTOR", Color.yellow, PlaceResistor);
+        CreateButton("BULB", Color.white, PlaceBulb);
+        CreateButton("SWITCH", Color.gray, PlaceSwitch);
+        CreateButton("WIRE TOOL", Color.blue, ActivateWireTool);
+        CreateButton("SOLVE!", Color.green, ManualSolve);
+        CreateButton("VALIDATE", Color.cyan, ValidateCircuit);
+        CreateButton("TEST", Color.cyan, TestCircuit);
+        CreateButton("DEBUG", Color.magenta, DebugRegistration);
+        CreateButton("REPORT", Color.yellow, SaveReport);
     }
     
     void ValidateCircuit()
@@ -177,12 +169,17 @@ public class ComponentPalette : MonoBehaviour
         }
     }
     
-    /*
-    // DISABLED until UnityEngine.UI package is installed
     void CreateButton(string label, Color color, System.Action onClick)
     {
+        if (buttonPrefab == null || paletteContainer == null)
+        {
+            Debug.LogWarning($"Cannot create button '{label}' - buttonPrefab or paletteContainer not assigned");
+            return;
+        }
+        
         // Create button
         Button newButton = Instantiate(buttonPrefab, paletteContainer);
+        newButton.name = $"Button_{label}";
         
         // Set button text (handle both Text and TextMeshPro)
         Text buttonText = newButton.GetComponentInChildren<Text>();
@@ -206,12 +203,27 @@ public class ComponentPalette : MonoBehaviour
         // Add click listener
         newButton.onClick.AddListener(() => onClick());
     }
-    */
     
     public void PlaceBattery() { PlaceComponent("Battery", Color.red); }
     public void PlaceResistor() { PlaceComponent("Resistor", Color.yellow); }
     public void PlaceBulb() { PlaceComponent("Bulb", Color.white); }
     public void PlaceSwitch() { PlaceComponent("Switch", Color.gray); }
+    
+    void ActivateWireTool()
+    {
+        Debug.Log("🔌 Wire Tool Activated - Click on two components to connect them");
+        
+        // Find or create ConnectTool
+        ConnectTool connectTool = FindObjectOfType<ConnectTool>();
+        if (connectTool == null)
+        {
+            GameObject connectToolObj = new GameObject("ConnectTool");
+            connectTool = connectToolObj.AddComponent<ConnectTool>();
+        }
+        
+        // Activate connect mode
+        connectTool.SetConnectMode();
+    }
     
     GameObject CreateComponentObject(string componentName, Vector3 position)
     {

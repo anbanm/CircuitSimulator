@@ -1,12 +1,12 @@
 using UnityEngine;
-// using UnityEngine.UI; // DISABLED - install Legacy UI package for Unity 6
+using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class ConnectTool : MonoBehaviour
 {
-    [Header("Tool Buttons - DISABLED")]
-    // public Button selectButton;       // DISABLED - install Legacy UI package for Unity 6
-    // public Button connectButton;      // DISABLED - install Legacy UI package for Unity 6
+    [Header("Tool Buttons")]
+    public Button selectButton;
+    public Button connectButton;
     
     [Header("Wire Settings")]
     public Color wireColor = Color.blue;
@@ -24,14 +24,11 @@ public class ConnectTool : MonoBehaviour
     
     void SetupButtons()
     {
-        // DISABLED - buttons require Legacy UI package for Unity 6
-        // if (selectButton != null)
-        //     selectButton.onClick.AddListener(SetSelectMode);
-        // 
-        // if (connectButton != null)
-        //     connectButton.onClick.AddListener(SetConnectMode);
+        if (selectButton != null)
+            selectButton.onClick.AddListener(SetSelectMode);
         
-        Debug.Log("ConnectTool: Use keyboard - C for Connect Mode, V for Select Mode");
+        if (connectButton != null)
+            connectButton.onClick.AddListener(SetConnectMode);
     }
     
     public void SetSelectMode()
@@ -54,18 +51,19 @@ public class ConnectTool : MonoBehaviour
     
     void UpdateButtonColors()
     {
-        // DISABLED - buttons require Legacy UI package for Unity 6
-        // if (selectButton != null)
-        // {
-        //     Image img = selectButton.GetComponent<Image>();
-        //     img.color = _isConnectMode ? Color.white : Color.yellow;
-        // }
-        // 
-        // if (connectButton != null)
-        // {
-        //     Image img = connectButton.GetComponent<Image>();
-        //     img.color = _isConnectMode ? Color.green : Color.white;
-        // }
+        if (selectButton != null)
+        {
+            Image img = selectButton.GetComponent<Image>();
+            if (img != null)
+                img.color = _isConnectMode ? Color.white : Color.yellow;
+        }
+        
+        if (connectButton != null)
+        {
+            Image img = connectButton.GetComponent<Image>();
+            if (img != null)
+                img.color = _isConnectMode ? Color.green : Color.white;
+        }
     }
     
     public void OnComponentClicked(SelectableComponent component)
