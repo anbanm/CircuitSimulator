@@ -62,7 +62,12 @@ public class CircuitWire : MonoBehaviour
     
     void RegisterWithManager()
     {
-        Circuit3DManager manager = FindObjectOfType<Circuit3DManager>();
+        Circuit3DManager manager = Circuit3DManager.Instance;
+        if (manager == null)
+        {
+            manager = FindObjectOfType<Circuit3DManager>();
+        }
+        
         if (manager != null)
         {
             manager.RegisterWire(gameObject);
@@ -162,7 +167,11 @@ public class CircuitWire : MonoBehaviour
         if (component2 != null) component2.RemoveConnectedWire(gameObject);
         
         // Unregister from manager
-        Circuit3DManager manager = FindObjectOfType<Circuit3DManager>();
+        Circuit3DManager manager = Circuit3DManager.Instance;
+        if (manager == null)
+        {
+            manager = FindObjectOfType<Circuit3DManager>();
+        }
         if (manager != null)
         {
             manager.UnregisterWire(gameObject);
@@ -179,7 +188,18 @@ public class CircuitWire : MonoBehaviour
     
     Material CreateWireMaterial()
     {
-        Material mat = new Material(Shader.Find("Sprites/Default"));
+        // Try URP shader first, fallback to legacy
+        Shader wireShader = Shader.Find("Universal Render Pipeline/Lit");
+        if (wireShader == null)
+        {
+            wireShader = Shader.Find("Standard");
+        }
+        if (wireShader == null)
+        {
+            wireShader = Shader.Find("Sprites/Default");
+        }
+        
+        Material mat = new Material(wireShader);
         mat.color = normalColor;
         return mat;
     }

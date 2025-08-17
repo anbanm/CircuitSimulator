@@ -276,15 +276,62 @@ public class CircuitWorkspaceUI : MonoBehaviour
     {
         Debug.Log($"Selected component: {componentType}");
         
-        // Notify component palette system
-        var palette = FindObjectOfType<ComponentPalette>();
-        if (palette != null)
+        if (componentType == ComponentType.Wire)
         {
-            // palette.SelectComponentType(componentType);
+            // Activate wire connection mode
+            ActivateWireTool();
+        }
+        else
+        {
+            // Place component
+            var palette = FindObjectOfType<ComponentPalette>();
+            if (palette != null)
+            {
+                PlaceComponentType(componentType);
+            }
         }
         
         // Provide visual feedback
         ShowSelectionFeedback(componentType);
+    }
+    
+    void ActivateWireTool()
+    {
+        Debug.Log("🔌 Wire Tool Activated - Click on two components to connect them");
+        
+        // Find or create ConnectTool
+        ConnectTool connectTool = FindObjectOfType<ConnectTool>();
+        if (connectTool == null)
+        {
+            GameObject connectToolObj = new GameObject("ConnectTool");
+            connectTool = connectToolObj.AddComponent<ConnectTool>();
+        }
+        
+        // Activate connect mode
+        connectTool.SetConnectMode();
+    }
+    
+    void PlaceComponentType(ComponentType componentType)
+    {
+        var palette = FindObjectOfType<ComponentPalette>();
+        if (palette != null)
+        {
+            switch (componentType)
+            {
+                case ComponentType.Battery:
+                    palette.PlaceBattery();
+                    break;
+                case ComponentType.Resistor:
+                    palette.PlaceResistor();
+                    break;
+                case ComponentType.Bulb:
+                    palette.PlaceBulb();
+                    break;
+                case ComponentType.Switch:
+                    palette.PlaceSwitch();
+                    break;
+            }
+        }
     }
     
     void ShowSelectionFeedback(ComponentType componentType)

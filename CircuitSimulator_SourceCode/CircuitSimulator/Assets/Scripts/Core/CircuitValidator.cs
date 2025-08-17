@@ -33,15 +33,19 @@ public class CircuitValidator
         }
         
         // Check for complete paths
-        if (batteries.Count > 0 && !HasCompletePath(components, batteries[0]))
+        if (batteries.Count > 0)
         {
-            result.AddError("Circuit is not complete - components are not properly connected");
-            
-            // Provide helpful details about disconnected components
-            var disconnected = GetDisconnectedComponents(components, batteries[0]);
-            foreach (var comp in disconnected)
+            var primaryBattery = batteries[0];
+            if (!HasCompletePath(components, primaryBattery))
             {
-                result.AddError($"Component '{comp.Id}' is not connected to the main circuit");
+                result.AddError("Circuit is not complete - components are not properly connected");
+                
+                // Provide helpful details about disconnected components
+                var disconnected = GetDisconnectedComponents(components, primaryBattery);
+                foreach (var comp in disconnected)
+                {
+                    result.AddError($"Component '{comp.Id}' is not connected to the main circuit");
+                }
             }
         }
         

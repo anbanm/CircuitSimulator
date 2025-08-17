@@ -124,6 +124,19 @@ public class SelectableComponent : MonoBehaviour
         return isSelected;
     }
     
+    public void Deselect()
+    {
+        if (isSelected)
+        {
+            isSelected = false;
+            if (currentlySelected == this)
+            {
+                currentlySelected = null;
+            }
+            UpdateVisualState();
+        }
+    }
+    
     public static SelectableComponent GetCurrentlySelected()
     {
         return currentlySelected;

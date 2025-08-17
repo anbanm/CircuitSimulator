@@ -181,6 +181,7 @@ public class Circuit3DManager : MonoBehaviour
         }
     }
     
+    
     public void MarkCircuitChanged()
     {
         circuitNeedsSolving = true;
@@ -651,5 +652,146 @@ public class Circuit3DManager : MonoBehaviour
                 }
             }
         }
+    }
+    
+    // Missing methods for ComponentPalette buttons
+    public void SaveDebugReport()
+    {
+        string reportPath = Path.Combine(Application.persistentDataPath, "CircuitReport.txt");
+        try
+        {
+            using (StreamWriter writer = new StreamWriter(reportPath))
+            {
+                writer.WriteLine($"Circuit Report - {System.DateTime.Now}");
+                writer.WriteLine("=====================================");
+                writer.WriteLine($"Components: {componentCount}");
+                writer.WriteLine($"Wires: {wireCount}");
+                writer.WriteLine($"Circuit Valid: {!circuitNeedsSolving}");
+                writer.WriteLine();
+                
+                writer.WriteLine("Component Details:");
+                foreach (var comp in components3D)
+                {
+                    if (comp != null)
+                    {
+                        writer.WriteLine($"- {comp.name}: Type={comp.ComponentType}, R={comp.resistance}Ω, V={comp.voltageDrop:F2}V, I={comp.current:F3}A");
+                    }
+                }
+                
+                writer.WriteLine();
+                writer.WriteLine("Wire Details:");
+                foreach (var wireObj in wires)
+                {
+                    var wire = wireObj.GetComponent<CircuitWire>();
+                    if (wire != null)
+                    {
+                        writer.WriteLine($"- {wire.name}: R={wire.resistance}Ω, I={wire.current:F3}A");
+                    }
+                }
+            }
+            
+            Debug.Log($"Debug report saved to: {reportPath}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to save debug report: {e.Message}");
+        }
+    }
+    
+    public void DebugComponentRegistration()
+    {
+        Debug.Log("=== Component Registration Debug ===");
+        Debug.Log($"Total registered components: {componentCount}");
+        Debug.Log($"Total registered wires: {wireCount}");
+        
+        Debug.Log("3D Components:");
+        for (int i = 0; i < components3D.Count; i++)
+        {
+            var comp = components3D[i];
+            if (comp != null)
+            {
+                Debug.Log($"  [{i}] {comp.name} - Type: {comp.ComponentType}, Position: {comp.transform.position}");
+            }
+            else
+            {
+                Debug.LogWarning($"  [{i}] NULL COMPONENT FOUND!");
+            }
+        }
+        
+        Debug.Log("Logical Components:");
+        for (int i = 0; i < logicalComponents.Count; i++)
+        {
+            var comp = logicalComponents[i];
+            if (comp != null)
+            {
+                Debug.Log($"  [{i}] {comp.Id} - Type: {comp.ComponentType}, Resistance: {comp.Resistance}Ω");
+            }
+            else
+            {
+                Debug.LogWarning($"  [{i}] NULL LOGICAL COMPONENT FOUND!");
+            }
+        }
+        
+        Debug.Log("Wires:");
+        for (int i = 0; i < wires.Count; i++)
+        {
+            var wire = wires[i];
+            if (wire != null)
+            {
+                Debug.Log($"  [{i}] {wire.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"  [{i}] NULL WIRE FOUND!");
+            }
+        }
+    }
+    
+    public void ValidateAndTestCircuit()
+    {
+        Debug.Log("=== Circuit Validation and Test ===");
+        
+        // Count components by type
+        var batteryComps = components3D.FindAll(c => c != null && c.ComponentType == ComponentType.Battery);
+        var resistorComps = components3D.FindAll(c => c != null && c.ComponentType == ComponentType.Resistor);
+        var bulbComps = components3D.FindAll(c => c != null && c.ComponentType == ComponentType.Bulb);
+        var switchComps = components3D.FindAll(c => c != null && c.ComponentType == ComponentType.Switch);
+        
+        Debug.Log($"Components found: {batteryComps.Count} batteries, {resistorComps.Count} resistors, {bulbComps.Count} bulbs, {switchComps.Count} switches");
+        Debug.Log($"Wires: {wireCount}");
+        
+        // Basic validation
+        if (batteryComps.Count == 0)
+        {
+            Debug.LogError("❌ No battery found - circuit cannot function");
+            return;
+        }
+        
+        if (resistorComps.Count + bulbComps.Count == 0)
+        {
+            Debug.LogError("❌ No resistive components found - circuit would have infinite current");
+            return;
+        }
+        
+        if (wireCount == 0)
+        {
+            Debug.LogWarning("⚠️ No wires found - components may not be connected");
+        }
+        
+        // Test the current circuit
+        Debug.Log("🔧 Testing current circuit configuration...");
+        SolveCircuit();
+        
+        // Report results
+        Debug.Log("📊 Circuit Test Results:");
+        foreach (var comp in components3D)
+        {
+            if (comp != null && comp.logicalComponent != null)
+            {
+                Debug.Log($"  {comp.name}: V={comp.voltageDrop:F2}V, I={comp.current:F3}A, R={comp.resistance:F1}Ω");
+            }
+        }
+        
+        Debug.Log("✅ Circuit test completed");
     }
 }

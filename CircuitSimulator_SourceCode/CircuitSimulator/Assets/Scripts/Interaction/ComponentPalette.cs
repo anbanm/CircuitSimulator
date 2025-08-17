@@ -20,10 +20,30 @@ public class ComponentPalette : MonoBehaviour
     
     private int componentCount = 0;     // Counter for positioning
     private List<GameObject> placedComponents = new List<GameObject>();
+    private Circuit3DManager cachedManager; // Cache to avoid FindObjectOfType calls
     
     void Start()
     {
         CreatePaletteButtons();
+        CacheManagerReference();
+    }
+    
+    void CacheManagerReference()
+    {
+        cachedManager = Circuit3DManager.Instance;
+        if (cachedManager == null)
+        {
+            cachedManager = FindObjectOfType<Circuit3DManager>();
+        }
+    }
+    
+    Circuit3DManager GetManager()
+    {
+        if (cachedManager == null)
+        {
+            CacheManagerReference();
+        }
+        return cachedManager;
     }
     
     void CreatePaletteButtons()
@@ -41,7 +61,7 @@ public class ComponentPalette : MonoBehaviour
     
     void ValidateCircuit()
     {
-        Circuit3DManager manager = FindObjectOfType<Circuit3DManager>();
+        Circuit3DManager manager = GetManager();
         if (manager != null)
         {
             Debug.Log("Manual validation triggered from palette");
@@ -56,7 +76,7 @@ public class ComponentPalette : MonoBehaviour
     
     void ManualSolve()
     {
-        Circuit3DManager manager = FindObjectOfType<Circuit3DManager>();
+        Circuit3DManager manager = GetManager();
         if (manager != null)
         {
             Debug.Log("Manual solve triggered from palette");
@@ -70,13 +90,12 @@ public class ComponentPalette : MonoBehaviour
     
     void SaveReport()
     {
-        Circuit3DManager manager = Circuit3DManager.Instance;
-        if (manager == null) manager = FindObjectOfType<Circuit3DManager>();
+        Circuit3DManager manager = GetManager();
         
         if (manager != null)
         {
             Debug.Log("Save debug report triggered from palette");
-            // TODO: Add SaveDebugReport method to manager
+            manager.SaveDebugReport();
         }
         else
         {
@@ -86,13 +105,12 @@ public class ComponentPalette : MonoBehaviour
     
     void DebugRegistration()
     {
-        Circuit3DManager manager = Circuit3DManager.Instance;
-        if (manager == null) manager = FindObjectOfType<Circuit3DManager>();
+        Circuit3DManager manager = GetManager();
         
         if (manager != null)
         {
             Debug.Log("Debug registration triggered from palette");
-            // TODO: Add DebugComponentRegistration method to manager
+            manager.DebugComponentRegistration();
         }
         else
         {
@@ -102,13 +120,12 @@ public class ComponentPalette : MonoBehaviour
     
     void TestCircuit()
     {
-        Circuit3DManager manager = Circuit3DManager.Instance;
-        if (manager == null) manager = FindObjectOfType<Circuit3DManager>();
+        Circuit3DManager manager = GetManager();
         
         if (manager != null)
         {
             Debug.Log("Test circuit triggered from palette");
-            // TODO: Add TestWithoutWires method to manager
+            manager.ValidateAndTestCircuit();
         }
         else
         {
@@ -144,10 +161,10 @@ public class ComponentPalette : MonoBehaviour
         newButton.onClick.AddListener(() => onClick());
     }
     
-    void PlaceBattery() { PlaceComponent("Battery", Color.red); }
-    void PlaceResistor() { PlaceComponent("Resistor", Color.yellow); }
-    void PlaceBulb() { PlaceComponent("Bulb", Color.white); }
-    void PlaceSwitch() { PlaceComponent("Switch", Color.gray); }
+    public void PlaceBattery() { PlaceComponent("Battery", Color.red); }
+    public void PlaceResistor() { PlaceComponent("Resistor", Color.yellow); }
+    public void PlaceBulb() { PlaceComponent("Bulb", Color.white); }
+    public void PlaceSwitch() { PlaceComponent("Switch", Color.gray); }
     
     GameObject CreateComponentObject(string componentName, Vector3 position)
     {
