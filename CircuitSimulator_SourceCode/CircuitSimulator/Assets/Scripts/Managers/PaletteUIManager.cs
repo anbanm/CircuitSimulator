@@ -20,8 +20,22 @@ public class PaletteUIManager : MonoBehaviour
         factoryManager = factory;
         controlManager = control;
         
+        // Ensure ConnectTool always exists for C/V key shortcuts
+        EnsureConnectToolExists();
+        
         CreatePaletteButtons();
         Debug.Log("PaletteUIManager initialized");
+    }
+    
+    private void EnsureConnectToolExists()
+    {
+        ConnectTool connectTool = FindFirstObjectByType<ConnectTool>();
+        if (connectTool == null)
+        {
+            GameObject connectToolObj = new GameObject("ConnectTool");
+            connectTool = connectToolObj.AddComponent<ConnectTool>();
+            Debug.Log("ConnectTool created for keyboard shortcuts");
+        }
     }
     
     #region Button Creation
@@ -34,22 +48,29 @@ public class PaletteUIManager : MonoBehaviour
             return;
         }
         
-        // Component buttons
-        CreateButton("BATTERY", Color.red, () => factoryManager?.CreateBattery());
-        CreateButton("RESISTOR", Color.yellow, () => factoryManager?.CreateResistor());
-        CreateButton("BULB", Color.white, () => factoryManager?.CreateBulb());
-        CreateButton("SWITCH", Color.gray, () => factoryManager?.CreateSwitch());
-        CreateButton("WIRE TOOL", Color.blue, ActivateWireTool);
+        // Professional color scheme
+        Color modeColor = new Color(0.2f, 0.6f, 0.9f, 1f);      // Professional blue
+        Color componentColor = new Color(0.3f, 0.3f, 0.4f, 1f);  // Dark gray
+        Color actionColor = new Color(0.2f, 0.7f, 0.3f, 1f);     // Professional green
+        Color utilityColor = new Color(0.5f, 0.5f, 0.6f, 1f);    // Medium gray
         
-        // Control buttons
-        CreateButton("SOLVE!", Color.green, () => controlManager?.SolveCircuit());
-        CreateButton("VALIDATE", Color.cyan, () => controlManager?.ValidateCircuit());
-        CreateButton("TEST", Color.cyan, () => controlManager?.TestCircuit());
-        CreateButton("DEBUG", Color.magenta, () => controlManager?.DebugRegistration());
-        CreateButton("REPORT", Color.yellow, () => controlManager?.SaveReport());
+        // Mode buttons (at the top) - Simple text, no unicode
+        CreateButton("Select", modeColor, ActivateSelectMode, "Click to select and move components");
+        CreateButton("Connect", modeColor, ActivateConnectMode, "Click two components to connect with wire");
+        
+        // Component buttons with simple names
+        CreateButton("Battery", new Color(0.8f, 0.2f, 0.2f, 1f), () => factoryManager?.CreateBattery(), "Add power source (12V)");
+        CreateButton("Resistor", new Color(0.8f, 0.6f, 0.2f, 1f), () => factoryManager?.CreateResistor(), "Add resistance (10Ω)");
+        CreateButton("Bulb", new Color(0.9f, 0.9f, 0.3f, 1f), () => factoryManager?.CreateBulb(), "Add light bulb (5Ω)");
+        CreateButton("Switch", componentColor, () => factoryManager?.CreateSwitch(), "Add on/off switch");
+        
+        // Control buttons with clear names
+        CreateButton("Solve", actionColor, () => controlManager?.SolveCircuit(), "Calculate circuit");
+        CreateButton("Test", utilityColor, () => controlManager?.TestCircuit(), "Test circuit");
+        CreateButton("Reset", utilityColor, () => ResetCircuit(), "Clear all components");
     }
     
-    private void CreateButton(string label, Color color, System.Action onClick)
+    private void CreateButton(string label, Color color, System.Action onClick, string tooltip = "")
     {
         if (buttonPrefab == null || paletteContainer == null)
         {
@@ -75,15 +96,66 @@ public class PaletteUIManager : MonoBehaviour
                 tmpText.text = label;
         }
         
-        // Set button color
+        // Set button color for normal buttons
         Image buttonImage = newButton.GetComponent<Image>();
-        if (buttonImage != null)
+        if (buttonImage != null && color != Color.clear)
             buttonImage.color = color;
-            
-        // Add click listener
-        newButton.onClick.AddListener(() => onClick());
+        
+        // Add click listener if provided
+        if (onClick != null)
+        {
+            newButton.onClick.AddListener(() => onClick());
+        }
+        
+        // Add tooltip if provided (as a Unity Tooltip component)
+        if (!string.IsNullOrEmpty(tooltip))
+        {
+            // Store tooltip in the button's name for now (could add custom tooltip system later)
+            newButton.name = $"Button_{label.Replace(" ", "_")}_{tooltip}";
+        }
         
         Debug.Log($"Created palette button: {label}");
+    }
+    
+    private void ResetCircuit()
+    {
+        Debug.Log("Resetting circuit - clearing all components");
+        
+        // First, tell CircuitManager to clear its internal lists
+        CircuitManager circuitManager = CircuitManager.Instance;
+        if (circuitManager != null)
+        {
+            // Clear the manager's internal tracking before destroying objects
+            circuitManager.ClearAllComponents();
+        }
+        
+        // Reset the factory manager's component tracking
+        if (factoryManager != null)
+        {
+            factoryManager.ResetComponentTracking();
+        }
+        
+        // Now find and destroy all circuit components
+        CircuitComponent3D[] components = FindObjectsByType<CircuitComponent3D>(FindObjectsSortMode.None);
+        foreach (var comp in components)
+        {
+            if (comp != null && comp.gameObject != null)
+            {
+                Destroy(comp.gameObject);
+            }
+        }
+        
+        // Find and destroy all wires
+        CircuitWire[] wires = FindObjectsByType<CircuitWire>(FindObjectsSortMode.None);
+        foreach (var wire in wires)
+        {
+            if (wire != null && wire.gameObject != null)
+            {
+                Destroy(wire.gameObject);
+            }
+        }
+        
+        Debug.Log("Circuit reset complete");
     }
     
     #endregion
@@ -110,20 +182,42 @@ public class PaletteUIManager : MonoBehaviour
         factoryManager?.CreateSwitch();
     }
     
+    private void ActivateSelectMode()
+    {
+        Debug.Log("👆 Select Mode Activated - Click components to select them");
+        
+        // Find ConnectTool (should always exist now)
+        ConnectTool connectTool = FindFirstObjectByType<ConnectTool>();
+        if (connectTool != null)
+        {
+            connectTool.SetSelectMode();
+        }
+        else
+        {
+            Debug.LogError("ConnectTool not found! This shouldn't happen.");
+        }
+    }
+    
+    private void ActivateConnectMode()
+    {
+        Debug.Log("🔌 Connect Mode Activated - Click on two components to connect them");
+        
+        // Find ConnectTool (should always exist now)
+        ConnectTool connectTool = FindFirstObjectByType<ConnectTool>();
+        if (connectTool != null)
+        {
+            connectTool.SetConnectMode();
+        }
+        else
+        {
+            Debug.LogError("ConnectTool not found! This shouldn't happen.");
+        }
+    }
+    
+    // Deprecated - kept for compatibility
     private void ActivateWireTool()
     {
-        Debug.Log("🔌 Wire Tool Activated - Click on two components to connect them");
-        
-        // Find or create ConnectTool
-        ConnectTool connectTool = FindFirstObjectByType<ConnectTool>();
-        if (connectTool == null)
-        {
-            GameObject connectToolObj = new GameObject("ConnectTool");
-            connectTool = connectToolObj.AddComponent<ConnectTool>();
-        }
-        
-        // Activate connect mode
-        connectTool.SetConnectMode();
+        ActivateConnectMode();
     }
     
     #endregion

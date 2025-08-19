@@ -24,7 +24,20 @@ public class ComponentFactoryManager : MonoBehaviour
     {
         canvasPlane = plane;
         spacing = componentSpacing;
+        // Ensure the list is initialized
+        if (placedComponents == null)
+        {
+            placedComponents = new List<GameObject>();
+        }
         Debug.Log("ComponentFactoryManager initialized");
+    }
+    
+    public void ResetComponentTracking()
+    {
+        // Clear the placed components list and reset counter
+        placedComponents.Clear();
+        componentCount = 0;
+        Debug.Log("ComponentFactoryManager tracking reset");
     }
     
     #region Component Creation
@@ -65,8 +78,11 @@ public class ComponentFactoryManager : MonoBehaviour
         
         try
         {
-            // Calculate position
-            Vector3 position = canvasPlane.position + new Vector3(componentCount * spacing, 0.5f, 0);
+            // Use the current count of placed components for positioning
+            int currentIndex = placedComponents.Count;
+            
+            // Calculate position with proper offset
+            Vector3 position = canvasPlane.position + new Vector3(currentIndex * spacing, 0.5f, 0);
             
             // Create component object
             GameObject componentObject = CreateComponentObject(name, position);
@@ -79,7 +95,7 @@ public class ComponentFactoryManager : MonoBehaviour
             // Setup transform
             componentObject.transform.position = position;
             componentObject.transform.SetParent(canvasPlane);
-            componentObject.name = $"{name}_{componentCount}";
+            componentObject.name = $"{name}_{currentIndex}";
             
             // Setup visual appearance
             SetupComponentVisuals(componentObject, color);
@@ -92,7 +108,7 @@ public class ComponentFactoryManager : MonoBehaviour
             
             // Track component
             placedComponents.Add(componentObject);
-            componentCount++;
+            componentCount = placedComponents.Count;
             
             Debug.Log($"Successfully created {name} at position {position}. Total components: {componentCount}");
             return componentObject;
@@ -116,8 +132,48 @@ public class ComponentFactoryManager : MonoBehaviour
         else
         {
             Debug.Log($"Using default primitive for {componentName}");
-            return GameObject.CreatePrimitive(PrimitiveType.Cube);
+            return CreatePrimitiveForComponent(componentName, position);
         }
+    }
+    
+    private GameObject CreatePrimitiveForComponent(string componentName, Vector3 position)
+    {
+        GameObject componentObject;
+        
+        switch (componentName)
+        {
+            case "Battery":
+                // Battery = Cube (rectangular like real battery)
+                componentObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                componentObject.transform.localScale = new Vector3(1.5f, 0.8f, 0.6f);
+                break;
+                
+            case "Resistor":
+                // Resistor = Cylinder (cylindrical like real resistor)  
+                componentObject = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                componentObject.transform.localScale = new Vector3(0.4f, 1.2f, 0.4f);
+                componentObject.transform.Rotate(0, 0, 90); // Horizontal
+                break;
+                
+            case "Bulb":
+                // Bulb = Sphere (bulb-shaped)
+                componentObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                componentObject.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
+                break;
+                
+            case "Switch":
+                // Switch = Capsule (toggle switch shape)
+                componentObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                componentObject.transform.localScale = new Vector3(0.6f, 0.4f, 1.0f);
+                componentObject.transform.Rotate(90, 0, 0); // Flat orientation
+                break;
+                
+            default:
+                componentObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                break;
+        }
+        
+        return componentObject;
     }
     
     private GameObject GetPrefabForComponent(string componentName)

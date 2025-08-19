@@ -12,7 +12,6 @@ graph TD
     CM --> CNM[CircuitNodeManager]
     CM --> CDM[CircuitDebugManager]
     CM --> CEM[CircuitEventManager]
-    CM --> CVM[CircuitValidationManager]
     
     %% Component Registration Flow
     C3D[CircuitComponent3D] -->|RegisterComponent| CM
@@ -26,10 +25,9 @@ graph TD
     CSM -->|UpdateComponents| C3D
     CSM -->|LogResults| CDM
     
-    %% Validation Flow
-    CVM -->|ValidateCircuit| CV[CircuitValidator]
-    CVM -->|TestCircuit| CTR[CircuitTestRunner]
-    CVM -->|LogValidation| CDM
+    %% Core Validation Flow (integrated in Debug)
+    CDM -->|ValidateCircuit| CV[CircuitValidator]
+    CDM -->|TestCircuit| CTR[CircuitTestRunner]
     
     %% Workspace Management
     WM[WorkspaceManager] --> UIL[UILayoutManager]
@@ -72,7 +70,6 @@ graph LR
         CNM[CircuitNodeManager.cs]
         CDM[CircuitDebugManager.cs]
         CEM[CircuitEventManager.cs]
-        CVM[CircuitValidationManager.cs]
     end
     
     %% Component Dependencies
@@ -101,8 +98,8 @@ graph LR
     CM --> CC
     CSM --> CS
     CSM --> CC
-    CVM --> CV
-    CVM --> CTR
+    CDM --> CV
+    CDM --> CTR
     CNM --> CC
     
     C3D --> CM
@@ -137,14 +134,13 @@ graph LR
 ## 📊 **Dependency Matrix**
 
 ### **Manager Cross-Dependencies**
-| From ↓ / To → | CircuitManager | SolverManager | NodeManager | DebugManager | EventManager | ValidationManager |
-|----------------|:--------------:|:-------------:|:-----------:|:------------:|:------------:|:-----------------:|
-| CircuitManager |       -        |       ✓       |      ✓      |      ✓       |      ✓       |         ✓         |
-| SolverManager  |       ✓        |       -       |      ✓      |      ✓       |              |                   |
-| NodeManager    |                |               |      -      |      ✓       |              |                   |
-| DebugManager   |                |               |             |      -       |              |                   |
-| EventManager   |                |               |             |              |      -       |                   |
-| ValidationManager|     ✓        |               |             |      ✓       |              |         -         |
+| From ↓ / To → | CircuitManager | SolverManager | NodeManager | DebugManager | EventManager |
+|----------------|:--------------:|:-------------:|:-----------:|:------------:|:------------:|
+| CircuitManager |       -        |       ✓       |      ✓      |      ✓       |      ✓       |
+| SolverManager  |       ✓        |       -       |      ✓      |      ✓       |              |
+| NodeManager    |                |               |      -      |      ✓       |              |
+| DebugManager   |                |               |             |      -       |              |
+| EventManager   |                |               |             |              |      -       |
 
 ### **Component Dependencies**
 | Component | Depends On | Used By |
@@ -153,7 +149,7 @@ graph LR
 | CircuitWire | CircuitManager, CircuitComponent3D | ConnectTool |
 | CircuitCore | - | CircuitManager, SolverManager, NodeManager |
 | CircuitSolver | CircuitCore | CircuitSolverManager |
-| CircuitValidator | CircuitCore | CircuitValidationManager |
+| CircuitValidator | CircuitCore | CircuitDebugManager |
 
 ## 🎯 **Critical Dependency Paths**
 
@@ -232,7 +228,7 @@ CircuitSolverManager.UpdateComponentsFromSolver()
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| Max fan-out (CircuitManager) | 5 | < 7 | ✅ |
+| Max fan-out (CircuitManager) | 4 | < 7 | ✅ |
 | Max fan-in (CircuitManager) | 8 | < 10 | ✅ |
 | Cyclomatic complexity (avg) | 3.2 | < 5 | ✅ |
 | Coupling factor | 0.18 | < 0.3 | ✅ |

@@ -77,6 +77,21 @@ public class CircuitSolverManager : MonoBehaviour
         }
     }
     
+    public void StopAutoSolve()
+    {
+        // Stop any pending solves by clearing the flag
+        circuitNeedsSolving = false;
+        Debug.Log("Auto-solve stopped");
+    }
+    
+    public void ClearSolverCache()
+    {
+        // Clear any cached solver data
+        circuitNeedsSolving = false;
+        lastSolveTime = 0f;
+        Debug.Log("Solver cache cleared");
+    }
+    
     [ContextMenu("Solve Circuit Manually")]
     public void SolveCircuitManually()
     {

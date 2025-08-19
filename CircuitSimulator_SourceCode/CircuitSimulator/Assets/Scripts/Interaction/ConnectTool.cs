@@ -16,10 +16,40 @@ public class ConnectTool : MonoBehaviour
     private SelectableComponent _firstComponent = null;
     private List<GameObject> _wires = new List<GameObject>();
     
+    // Wire preview system
+    private GameObject _wirePreview = null;
+    private LineRenderer _previewLineRenderer = null;
+    private Camera _mainCamera;
+    
     void Start()
     {
+        _mainCamera = Camera.main;
         SetupButtons();
+        SetupWirePreview();
         SetSelectMode();
+    }
+    
+    void SetupWirePreview()
+    {
+        // Create wire preview object
+        _wirePreview = new GameObject("WirePreview");
+        _wirePreview.transform.SetParent(transform);
+        
+        // Add LineRenderer for preview
+        _previewLineRenderer = _wirePreview.AddComponent<LineRenderer>();
+        _previewLineRenderer.material = CreateWireMaterial();
+        _previewLineRenderer.startWidth = wireWidth;
+        _previewLineRenderer.endWidth = wireWidth;
+        _previewLineRenderer.positionCount = 2;
+        _previewLineRenderer.useWorldSpace = true;
+        
+        // Make preview wire slightly transparent and different color
+        Color previewColor = Color.cyan;
+        previewColor.a = 0.7f;
+        _previewLineRenderer.material.color = previewColor;
+        
+        // Start hidden
+        _wirePreview.SetActive(false);
     }
     
     void SetupButtons()
@@ -34,10 +64,20 @@ public class ConnectTool : MonoBehaviour
     public void SetSelectMode()
     {
         _isConnectMode = false;
-        _firstComponent = null;
+        
+        // Clear any existing selection
+        if (_firstComponent != null)
+        {
+            _firstComponent.SetHighlight(false);
+            _firstComponent = null;
+        }
+        
+        // Hide wire preview
+        HideWirePreview();
         
         UpdateButtonColors();
-        Debug.Log("Select Mode Active");
+        UpdateCursor(false);
+        Debug.Log("[SELECT MODE] Click to select and move components");
     }
     
     public void SetConnectMode()
@@ -46,7 +86,21 @@ public class ConnectTool : MonoBehaviour
         _firstComponent = null;
         
         UpdateButtonColors();
-        Debug.Log("Connect Mode Active - Click two components to connect them");
+        UpdateCursor(true);
+        Debug.Log("[CONNECT MODE] Click two components to connect them");
+    }
+    
+    void UpdateCursor(bool isConnectMode)
+    {
+        // Visual feedback for mode change
+        // In a real implementation, you could change the cursor sprite here
+        // For now, we'll just use the wire preview color to indicate mode
+        if (_previewLineRenderer != null)
+        {
+            Color previewColor = isConnectMode ? Color.cyan : Color.green;
+            previewColor.a = 0.7f;
+            _previewLineRenderer.material.color = previewColor;
+        }
     }
     
     void UpdateButtonColors()
@@ -99,6 +153,9 @@ public class ConnectTool : MonoBehaviour
             CreateCircuitWire(firstCircuitComp, circuitComp);
             _firstComponent.SetHighlight(false);
             _firstComponent = null;
+            
+            // Hide wire preview after connection is made
+            HideWirePreview();
         }
     }
     
@@ -135,12 +192,10 @@ public class ConnectTool : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.C))
         {
             SetConnectMode();
-            Debug.Log("🔌 Connect Mode activated (C key)");
         }
         if (Input.GetKeyDown(KeyCode.V))
         {
             SetSelectMode();
-            Debug.Log("👆 Select Mode activated (V key)");
         }
         
         // ESC to cancel connection mode
@@ -150,8 +205,63 @@ public class ConnectTool : MonoBehaviour
             {
                 _firstComponent.SetHighlight(false);
                 _firstComponent = null;
+                HideWirePreview();
                 Debug.Log("Cancelled connection");
             }
+        }
+        
+        // Update wire preview when in connect mode with first component selected
+        if (_isConnectMode && _firstComponent != null)
+        {
+            UpdateWirePreview();
+        }
+    }
+    
+    void UpdateWirePreview()
+    {
+        if (_previewLineRenderer == null || _mainCamera == null || _firstComponent == null)
+            return;
+        
+        // Show preview if hidden
+        if (!_wirePreview.activeInHierarchy)
+        {
+            _wirePreview.SetActive(true);
+        }
+        
+        // Start position: first component
+        Vector3 startPos = _firstComponent.transform.position + Vector3.up * 0.6f;
+        
+        // End position: mouse cursor in world space
+        Vector3 endPos = GetMouseWorldPosition();
+        
+        // Update line renderer
+        _previewLineRenderer.SetPosition(0, startPos);
+        _previewLineRenderer.SetPosition(1, endPos);
+    }
+    
+    Vector3 GetMouseWorldPosition()
+    {
+        if (_mainCamera == null) return Vector3.zero;
+        
+        // Cast ray from camera through mouse position to the workspace plane
+        Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        
+        // Create a plane at Y = 0.5 (where our components sit)
+        Plane plane = new Plane(Vector3.up, new Vector3(0, 0.5f, 0));
+        
+        if (plane.Raycast(ray, out float distance))
+        {
+            return ray.GetPoint(distance);
+        }
+        
+        return Vector3.zero;
+    }
+    
+    void HideWirePreview()
+    {
+        if (_wirePreview != null)
+        {
+            _wirePreview.SetActive(false);
         }
     }
     

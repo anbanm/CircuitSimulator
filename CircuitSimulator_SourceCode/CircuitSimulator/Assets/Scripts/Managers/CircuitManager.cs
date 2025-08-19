@@ -147,6 +147,33 @@ public class CircuitManager : MonoBehaviour
         MarkCircuitChanged();
     }
     
+    public void ClearAllComponents()
+    {
+        Debug.Log("Clearing all component and wire references");
+        
+        // Clear component list
+        components.Clear();
+        componentCount = 0;
+        
+        // Clear wire list
+        wires.Clear();
+        wireCount = 0;
+        
+        // Stop any pending solves
+        if (solverManager != null)
+        {
+            solverManager.ClearSolverCache();
+        }
+        
+        // Notify event system
+        if (eventManager != null)
+        {
+            eventManager.OnCircuitChanged();
+        }
+        
+        Debug.Log("All references cleared");
+    }
+    
     #endregion
     
     #region Circuit State Management
