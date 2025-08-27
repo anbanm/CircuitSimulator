@@ -40,44 +40,13 @@ public class MeasurementDisplayManager : MonoBehaviour
     
     private void UpdateAllMeasurements()
     {
+        // DISABLED - Dashboard blocks removed
+        // Values now show directly on components via ComponentValueDisplay
+        
         var circuitManager = CircuitManager.Instance;
         if (circuitManager == null) return;
         
-        var components = FindObjectsByType<CircuitComponent3D>(FindObjectsSortMode.None);
-        
-        // Calculate totals
-        float totalCurrent = 0f;
-        float totalVoltage = 0f;
-        float totalPower = 0f;
-        float totalResistance = 0f;
-        
-        // Find battery for total voltage
-        CircuitComponent3D battery = null;
-        foreach (var comp in components)
-        {
-            if (comp.ComponentType == ComponentType.Battery)
-            {
-                battery = comp;
-                totalVoltage = comp.voltage;
-                totalCurrent = comp.current;
-                break;
-            }
-        }
-        
-        // Calculate total power and resistance
-        if (battery != null && totalCurrent > 0.001f)
-        {
-            totalPower = totalVoltage * totalCurrent;
-            totalResistance = totalVoltage / totalCurrent;
-        }
-        
-        // Update display values
-        UpdateMeasurementDisplay("Voltage", $"{totalVoltage:F2}V");
-        UpdateMeasurementDisplay("Current", $"{totalCurrent:F3}A");
-        UpdateMeasurementDisplay("Power", $"{totalPower:F3}W");
-        UpdateMeasurementDisplay("Resistance", totalResistance > 0 ? $"{totalResistance:F2}Ω" : "∞Ω");
-        
-        // Update component count info
+        // Only update simple status (no dashboard blocks)
         int componentCount = circuitManager.ComponentCount;
         int wireCount = circuitManager.WireCount;
         UpdateStatusDisplay($"Components: {componentCount}, Wires: {wireCount}");
@@ -85,14 +54,9 @@ public class MeasurementDisplayManager : MonoBehaviour
     
     private void UpdateMeasurementDisplay(string label, string value)
     {
-        foreach (var display in measurementDisplays)
-        {
-            if (display != null && display.Label == label)
-            {
-                display.UpdateValue(value);
-                break;
-            }
-        }
+        // DISABLED - No more dashboard blocks
+        // Values shown directly on components via ComponentValueDisplay
+        return;
     }
     
     private void UpdateStatusDisplay(string status)

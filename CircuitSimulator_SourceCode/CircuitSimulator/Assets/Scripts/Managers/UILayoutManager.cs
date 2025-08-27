@@ -33,9 +33,11 @@ public class UILayoutManager : MonoBehaviour
     
     private void CreateAllPanels()
     {
-        CreateToolPanel();
-        CreateInfoPanel();
-        CreateControlPanel();
+        // DISABLED - White blocks removed, using PaletteUIManager instead
+        // CreateToolPanel();
+        // CreateInfoPanel();
+        // CreateControlPanel();
+        Debug.Log("UILayoutManager panels disabled - using PaletteUIManager for clean UI");
     }
     
     #region Tool Panel

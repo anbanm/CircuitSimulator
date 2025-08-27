@@ -50,6 +50,13 @@ public class CircuitWire : MonoBehaviour
         lineRenderer.positionCount = 2;
         lineRenderer.useWorldSpace = true;
         
+        // Add current display on wire
+        WireValueDisplay valueDisplay = GetComponent<WireValueDisplay>();
+        if (valueDisplay == null)
+        {
+            valueDisplay = gameObject.AddComponent<WireValueDisplay>();
+        }
+        
         UpdateWirePosition();
     }
     
