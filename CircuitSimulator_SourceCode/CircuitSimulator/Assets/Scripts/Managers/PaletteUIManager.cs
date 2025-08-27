@@ -63,10 +63,12 @@ public class PaletteUIManager : MonoBehaviour
         CreateButton("Resistor", new Color(0.8f, 0.6f, 0.2f, 1f), () => factoryManager?.CreateResistor(), "Add resistance (10Ω)");
         CreateButton("Bulb", new Color(0.9f, 0.9f, 0.3f, 1f), () => factoryManager?.CreateBulb(), "Add light bulb (5Ω)");
         CreateButton("Switch", componentColor, () => factoryManager?.CreateSwitch(), "Add on/off switch");
+        CreateButton("Junction", new Color(0.5f, 0.5f, 0.7f, 1f), () => factoryManager?.CreateJunction(), "Add junction for parallel circuits");
         
         // Control buttons with clear names
         CreateButton("Solve", actionColor, () => controlManager?.SolveCircuit(), "Calculate circuit");
         CreateButton("Test", utilityColor, () => controlManager?.TestCircuit(), "Test circuit");
+        CreateButton("Delete", new Color(0.8f, 0.3f, 0.3f, 1f), DeleteSelectedComponent, "Delete selected component");
         CreateButton("Reset", utilityColor, () => ResetCircuit(), "Clear all components");
     }
     
@@ -115,6 +117,62 @@ public class PaletteUIManager : MonoBehaviour
         }
         
         Debug.Log($"Created palette button: {label}");
+    }
+    
+    private void DeleteSelectedComponent()
+    {
+        // Get the currently selected component
+        SelectableComponent selected = SelectableComponent.GetCurrentlySelected();
+        
+        if (selected == null)
+        {
+            Debug.LogWarning("No component selected to delete. Select a component first.");
+            return;
+        }
+        
+        Debug.Log($"Deleting selected component: {selected.gameObject.name}");
+        
+        // Get the CircuitComponent3D to properly unregister from CircuitManager
+        CircuitComponent3D circuitComp = selected.GetComponent<CircuitComponent3D>();
+        if (circuitComp != null)
+        {
+            // Unregister from CircuitManager (will trigger proper cleanup)
+            CircuitManager circuitManager = CircuitManager.Instance;
+            if (circuitManager != null)
+            {
+                circuitManager.UnregisterComponent(circuitComp);
+            }
+        }
+        
+        // Remove from ComponentFactoryManager tracking
+        if (factoryManager != null)
+        {
+            factoryManager.RemoveComponent(selected.gameObject);
+        }
+        
+        // Find and remove any connected wires
+        CircuitWire[] allWires = FindObjectsByType<CircuitWire>(FindObjectsSortMode.None);
+        foreach (var wire in allWires)
+        {
+            if (wire.IsConnectedToComponent(selected.gameObject))
+            {
+                Debug.Log($"Removing connected wire: {wire.gameObject.name}");
+                
+                // Unregister wire from CircuitManager
+                CircuitManager circuitManager = CircuitManager.Instance;
+                if (circuitManager != null)
+                {
+                    circuitManager.UnregisterWire(wire.gameObject);
+                }
+                
+                Destroy(wire.gameObject);
+            }
+        }
+        
+        // Finally destroy the component
+        Destroy(selected.gameObject);
+        
+        Debug.Log("Selected component deleted successfully");
     }
     
     private void ResetCircuit()
@@ -251,6 +309,11 @@ public class PaletteUIManager : MonoBehaviour
             Debug.Log("Placing Switch (S key)");
             PlaceSwitch();
         }
+        if (Input.GetKeyDown(KeyCode.J))
+        {
+            Debug.Log("Placing Junction (J key)");
+            factoryManager?.CreateJunction();
+        }
         if (Input.GetKeyDown(KeyCode.Space))
         {
             Debug.Log("Solving Circuit (SPACE key)");
@@ -260,6 +323,11 @@ public class PaletteUIManager : MonoBehaviour
         {
             Debug.Log("Testing Circuit (T key)");
             controlManager?.TestCircuit();
+        }
+        if (Input.GetKeyDown(KeyCode.X))
+        {
+            Debug.Log("Deleting Selected Component (X key)");
+            DeleteSelectedComponent();
         }
     }
     

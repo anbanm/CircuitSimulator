@@ -33,6 +33,24 @@ public class SelectableComponent : MonoBehaviour
         }
     }
     
+    void OnMouseOver()
+    {
+        // Right-click to edit properties
+        if (Input.GetMouseButtonDown(1))
+        {
+            CircuitComponent3D circuitComp = GetComponent<CircuitComponent3D>();
+            if (circuitComp != null)
+            {
+                ComponentPropertyPopup popup = ComponentPropertyPopup.Instance;
+                if (popup != null)
+                {
+                    popup.ShowForComponent(circuitComp);
+                    Debug.Log($"Opening property popup for {gameObject.name}");
+                }
+            }
+        }
+    }
+    
     public void SetHighlight(bool highlighted)
     {
         if (componentRenderer != null)

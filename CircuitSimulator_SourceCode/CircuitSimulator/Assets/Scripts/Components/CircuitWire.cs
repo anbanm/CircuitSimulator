@@ -186,6 +186,14 @@ public class CircuitWire : MonoBehaviour
         Destroy(gameObject);
     }
     
+    public bool IsConnectedToComponent(GameObject component)
+    {
+        if (component == null) return false;
+        
+        return (component1 != null && component1.gameObject == component) ||
+               (component2 != null && component2.gameObject == component);
+    }
+    
     Material CreateWireMaterial()
     {
         // Try URP shader first, fallback to legacy

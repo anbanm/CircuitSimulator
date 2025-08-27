@@ -62,6 +62,49 @@ public class ComponentFactoryManager : MonoBehaviour
         return CreateComponent("Switch", ComponentType.Switch, Color.gray, 0f, 0f);
     }
     
+    public GameObject CreateJunction()
+    {
+        Debug.Log("Creating Junction for parallel circuits");
+        
+        if (canvasPlane == null)
+        {
+            Debug.LogError("canvasPlane is not assigned! Cannot place junction.");
+            return null;
+        }
+        
+        // Use the current count of placed components for positioning
+        int currentIndex = placedComponents.Count;
+        Vector3 position = canvasPlane.position + new Vector3(currentIndex * spacing, 0.5f, 0);
+        
+        // Create junction object
+        GameObject junction = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        junction.name = $"Junction_{currentIndex}";
+        junction.transform.position = position;
+        junction.transform.localScale = Vector3.one * 0.4f;
+        
+        // Set visual appearance
+        Renderer renderer = junction.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            renderer.material.color = new Color(0.5f, 0.5f, 0.7f, 1f);
+        }
+        
+        // Add junction script
+        CircuitJunction junctionScript = junction.AddComponent<CircuitJunction>();
+        
+        // Add selection capability
+        SelectableComponent selectable = junction.AddComponent<SelectableComponent>();
+        
+        // Add movement capability
+        MoveableComponent moveable = junction.AddComponent<MoveableComponent>();
+        
+        // Track junction
+        placedComponents.Add(junction);
+        
+        Debug.Log($"Junction created at {position}");
+        return junction;
+    }
+    
     #endregion
     
     #region Core Creation Logic
@@ -237,6 +280,13 @@ public class ComponentFactoryManager : MonoBehaviour
         if (moveable == null)
         {
             moveable = componentObject.AddComponent<MoveableComponent>();
+        }
+        
+        // Add value display (shows voltage/current/resistance above component)
+        ComponentValueDisplay valueDisplay = componentObject.GetComponent<ComponentValueDisplay>();
+        if (valueDisplay == null)
+        {
+            valueDisplay = componentObject.AddComponent<ComponentValueDisplay>();
         }
     }
     

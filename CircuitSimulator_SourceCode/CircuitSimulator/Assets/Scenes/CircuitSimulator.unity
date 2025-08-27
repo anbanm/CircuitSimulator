@@ -154,7 +154,7 @@ MonoBehaviour:
   arScale: 0.7
   userDistance: 2
   maxInteractionDistance: 5
-  enableLOD: 1
+  enableLOD: 0
   lodDistance: 3
   maxVisibleComponents: 15
 --- !u!114 &240776798
@@ -282,7 +282,7 @@ MonoBehaviour:
   bulbPrefab: {fileID: 0}
   switchPrefab: {fileID: 0}
   canvasPlane: {fileID: 732569699}
-  spacing: 2
+  spacing: 0.2
 --- !u!114 &268803434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -301,8 +301,8 @@ MonoBehaviour:
   resistorPrefab: {fileID: 0}
   bulbPrefab: {fileID: 0}
   switchPrefab: {fileID: 0}
-  canvasPlane: {fileID: 0}
-  spacing: 2
+  canvasPlane: {fileID: 732569699}
+  spacing: 0.2
 --- !u!4 &268803435
 Transform:
   m_ObjectHideFlags: 0

@@ -1,260 +1,281 @@
-// Component property editing popup UI
-// Future implementation for Grade 7-level circuit understanding
-
-using System;
 using UnityEngine;
-// using UnityEngine.UI; // DISABLED - install Legacy UI package for Unity 6
+using UnityEngine.UI;
 
 /// <summary>
-/// Provides a popup interface for editing circuit component properties
-/// Allows students to modify resistance values, voltage settings, etc.
-/// DISABLED: Requires Legacy UI package for Unity 6
+/// In-game property editor popup that appears in 3D space
+/// Allows editing component voltage and resistance values
 /// </summary>
-
-#if UNITY_UI_ENABLED
 public class ComponentPropertyPopup : MonoBehaviour
 {
-    [Header("UI References")]
-    public GameObject popupPanel;
-    public Text componentNameText;
-    public InputField resistanceInput;
-    public InputField voltageInput;
-    public Button saveButton;
-    public Button cancelButton;
-    public Button deleteButton;
+    [Header("Popup Settings")]
+    public float popupDistance = 2f;
+    public float popupHeight = 1.5f;
     
-    [Header("Current Component")]
+    private GameObject popupCanvas;
+    private InputField voltageInput;
+    private InputField resistanceInput;
+    private Text titleText;
+    private Button applyButton;
+    private Button cancelButton;
+    
     private CircuitComponent3D currentComponent;
-    private CircuitComponent currentCircuitComponent;
+    private static ComponentPropertyPopup instance;
     
-    void Start()
+    public static ComponentPropertyPopup Instance
     {
-        // Initialize UI event handlers
-        if (saveButton != null)
-            saveButton.onClick.AddListener(SaveProperties);
-        
-        if (cancelButton != null)
-            cancelButton.onClick.AddListener(CancelEdit);
-        
-        if (deleteButton != null)
-            deleteButton.onClick.AddListener(DeleteComponent);
-        
-        // Initially hide the popup
-        HidePopup();
-    }
-    
-    /// <summary>
-    /// Shows the property editor for a specific component
-    /// </summary>
-    public void ShowPopupForComponent(CircuitComponent3D component3D)
-    {
-        currentComponent = component3D;
-        currentCircuitComponent = component3D.GetComponent<CircuitComponent>();
-        
-        if (currentCircuitComponent == null)
+        get
         {
-            Debug.LogWarning("[ComponentPropertyPopup] No CircuitComponent found on selected object");
-            return;
-        }
-        
-        // Update UI with current component properties
-        UpdateUIWithComponentData();
-        
-        // Show the popup
-        if (popupPanel != null)
-            popupPanel.SetActive(true);
-        
-        Debug.Log($"[ComponentPropertyPopup] Showing properties for {currentCircuitComponent.Id}");
-    }
-    
-    /// <summary>
-    /// Hides the property editor popup
-    /// </summary>
-    public void HidePopup()
-    {
-        if (popupPanel != null)
-            popupPanel.SetActive(false);
-        
-        currentComponent = null;
-        currentCircuitComponent = null;
-    }
-    
-    /// <summary>
-    /// Updates the UI fields with the current component's data
-    /// </summary>
-    private void UpdateUIWithComponentData()
-    {
-        if (currentCircuitComponent == null) return;
-        
-        // Set component name
-        if (componentNameText != null)
-            componentNameText.text = currentCircuitComponent.Id;
-        
-        // Set resistance value (if applicable)
-        if (resistanceInput != null)
-        {
-            if (currentCircuitComponent is Resistor || currentCircuitComponent is Bulb)
+            if (instance == null)
             {
-                resistanceInput.text = currentCircuitComponent.Resistance.ToString("F1");
-                resistanceInput.interactable = true;
+                GameObject popupObj = new GameObject("ComponentPropertyPopup");
+                instance = popupObj.AddComponent<ComponentPropertyPopup>();
+                instance.CreatePopupUI();
             }
-            else
-            {
-                resistanceInput.text = "N/A";
-                resistanceInput.interactable = false;
-            }
-        }
-        
-        // Set voltage value (if applicable)
-        if (voltageInput != null)
-        {
-            if (currentCircuitComponent is Battery battery)
-            {
-                voltageInput.text = battery.Voltage.ToString("F1");
-                voltageInput.interactable = true;
-            }
-            else
-            {
-                voltageInput.text = "N/A";
-                voltageInput.interactable = false;
-            }
+            return instance;
         }
     }
     
-    /// <summary>
-    /// Saves the modified properties to the component
-    /// </summary>
-    private void SaveProperties()
+    void Awake()
     {
-        if (currentCircuitComponent == null) return;
-        
-        try
+        if (instance == null)
         {
-            // Save resistance value
-            if (resistanceInput != null && resistanceInput.interactable)
-            {
-                if (float.TryParse(resistanceInput.text, out float resistance))
-                {
-                    if (resistance > 0f)
-                    {
-                        // TODO: Update component resistance
-                        // This requires modifying the CircuitComponent classes to allow runtime changes
-                        Debug.Log($"[ComponentPropertyPopup] Would set resistance to {resistance}Ω");
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[ComponentPropertyPopup] Resistance must be positive");
-                        return;
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("[ComponentPropertyPopup] Invalid resistance value");
-                    return;
-                }
-            }
-            
-            // Save voltage value
-            if (voltageInput != null && voltageInput.interactable)
-            {
-                if (float.TryParse(voltageInput.text, out float voltage))
-                {
-                    if (voltage > 0f)
-                    {
-                        // TODO: Update battery voltage
-                        Debug.Log($"[ComponentPropertyPopup] Would set voltage to {voltage}V");
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[ComponentPropertyPopup] Voltage must be positive");
-                        return;
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("[ComponentPropertyPopup] Invalid voltage value");
-                    return;
-                }
-            }
-            
-            Debug.Log($"[ComponentPropertyPopup] Properties saved for {currentCircuitComponent.Id}");
-            
-            // TODO: Trigger circuit re-calculation if needed
-            // FindFirstObjectByType<Circuit3DManager>()?.RecalculateCircuit();
-            
+            instance = this;
+            CreatePopupUI();
         }
-        catch (Exception e)
+        else if (instance != this)
         {
-            Debug.LogError($"[ComponentPropertyPopup] Error saving properties: {e.Message}");
+            Destroy(gameObject);
         }
-        
-        HidePopup();
     }
     
-    /// <summary>
-    /// Cancels editing and closes the popup
-    /// </summary>
-    private void CancelEdit()
+    void CreatePopupUI()
     {
-        Debug.Log("[ComponentPropertyPopup] Edit cancelled");
-        HidePopup();
+        // Create world space canvas for popup
+        popupCanvas = new GameObject("PropertyPopupCanvas");
+        popupCanvas.transform.SetParent(transform);
+        
+        Canvas canvas = popupCanvas.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+        
+        RectTransform canvasRect = popupCanvas.GetComponent<RectTransform>();
+        canvasRect.sizeDelta = new Vector2(3, 2);
+        
+        // Add canvas scaler for world space
+        popupCanvas.AddComponent<CanvasScaler>();
+        popupCanvas.AddComponent<GraphicRaycaster>();
+        
+        // Create background panel
+        GameObject panel = new GameObject("Panel");
+        panel.transform.SetParent(popupCanvas.transform);
+        
+        RectTransform panelRect = panel.AddComponent<RectTransform>();
+        panelRect.sizeDelta = new Vector2(3, 2);
+        panelRect.localPosition = Vector3.zero;
+        panelRect.localScale = Vector3.one * 0.01f; // Scale down for world space
+        
+        Image panelImage = panel.AddComponent<Image>();
+        panelImage.color = new Color(0.2f, 0.2f, 0.2f, 0.95f);
+        
+        // Create title
+        GameObject titleObj = CreateUIText("Title", panel.transform, new Vector2(0, 60), "Edit Component");
+        titleText = titleObj.GetComponent<Text>();
+        titleText.fontSize = 24;
+        titleText.alignment = TextAnchor.MiddleCenter;
+        
+        // Create voltage input field
+        GameObject voltageLabel = CreateUIText("VoltageLabel", panel.transform, new Vector2(-70, 20), "Voltage:");
+        GameObject voltageField = CreateInputField("VoltageInput", panel.transform, new Vector2(30, 20));
+        voltageInput = voltageField.GetComponent<InputField>();
+        
+        // Create resistance input field
+        GameObject resistanceLabel = CreateUIText("ResistanceLabel", panel.transform, new Vector2(-70, -20), "Resistance:");
+        GameObject resistanceField = CreateInputField("ResistanceInput", panel.transform, new Vector2(30, -20));
+        resistanceInput = resistanceField.GetComponent<InputField>();
+        
+        // Create buttons
+        GameObject applyBtn = CreateButton("ApplyButton", panel.transform, new Vector2(-50, -60), "Apply", ApplyChanges);
+        applyButton = applyBtn.GetComponent<Button>();
+        
+        GameObject cancelBtn = CreateButton("CancelButton", panel.transform, new Vector2(50, -60), "Cancel", ClosePopup);
+        cancelButton = cancelBtn.GetComponent<Button>();
+        
+        // Hide initially
+        popupCanvas.SetActive(false);
     }
     
-    /// <summary>
-    /// Deletes the current component from the circuit
-    /// </summary>
-    private void DeleteComponent()
+    GameObject CreateUIText(string name, Transform parent, Vector2 position, string text)
+    {
+        GameObject textObj = new GameObject(name);
+        textObj.transform.SetParent(parent);
+        
+        RectTransform rect = textObj.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(100, 30);
+        rect.anchoredPosition = position;
+        
+        Text textComp = textObj.AddComponent<Text>();
+        textComp.text = text;
+        textComp.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        textComp.fontSize = 18;
+        textComp.color = Color.white;
+        
+        return textObj;
+    }
+    
+    GameObject CreateInputField(string name, Transform parent, Vector2 position)
+    {
+        GameObject inputObj = new GameObject(name);
+        inputObj.transform.SetParent(parent);
+        
+        RectTransform rect = inputObj.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(100, 30);
+        rect.anchoredPosition = position;
+        
+        Image image = inputObj.AddComponent<Image>();
+        image.color = new Color(0.3f, 0.3f, 0.3f);
+        
+        InputField input = inputObj.AddComponent<InputField>();
+        input.contentType = InputField.ContentType.DecimalNumber;
+        
+        // Create text child for input
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(inputObj.transform);
+        
+        RectTransform textRect = textObj.AddComponent<RectTransform>();
+        textRect.sizeDelta = new Vector2(90, 30);
+        textRect.anchoredPosition = Vector2.zero;
+        
+        Text inputText = textObj.AddComponent<Text>();
+        inputText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        inputText.fontSize = 16;
+        inputText.color = Color.white;
+        inputText.alignment = TextAnchor.MiddleCenter;
+        
+        input.textComponent = inputText;
+        
+        return inputObj;
+    }
+    
+    GameObject CreateButton(string name, Transform parent, Vector2 position, string text, UnityEngine.Events.UnityAction onClick)
+    {
+        GameObject buttonObj = new GameObject(name);
+        buttonObj.transform.SetParent(parent);
+        
+        RectTransform rect = buttonObj.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(80, 30);
+        rect.anchoredPosition = position;
+        
+        Image image = buttonObj.AddComponent<Image>();
+        image.color = new Color(0.4f, 0.4f, 0.4f);
+        
+        Button button = buttonObj.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.onClick.AddListener(onClick);
+        
+        // Create text child
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(buttonObj.transform);
+        
+        RectTransform textRect = textObj.AddComponent<RectTransform>();
+        textRect.sizeDelta = new Vector2(80, 30);
+        textRect.anchoredPosition = Vector2.zero;
+        
+        Text buttonText = textObj.AddComponent<Text>();
+        buttonText.text = text;
+        buttonText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        buttonText.fontSize = 16;
+        buttonText.color = Color.white;
+        buttonText.alignment = TextAnchor.MiddleCenter;
+        
+        return buttonObj;
+    }
+    
+    public void ShowForComponent(CircuitComponent3D component)
+    {
+        if (component == null || popupCanvas == null) return;
+        
+        currentComponent = component;
+        
+        // Position popup near component in world space
+        Vector3 componentPos = component.transform.position;
+        Vector3 cameraPos = Camera.main.transform.position;
+        Vector3 dirToCamera = (cameraPos - componentPos).normalized;
+        
+        popupCanvas.transform.position = componentPos + dirToCamera * popupDistance + Vector3.up * popupHeight;
+        popupCanvas.transform.LookAt(2 * popupCanvas.transform.position - cameraPos);
+        
+        // Set title
+        titleText.text = $"Edit {component.ComponentType}";
+        
+        // Show/hide fields based on component type
+        bool showVoltage = component.ComponentType == ComponentType.Battery;
+        bool showResistance = component.ComponentType == ComponentType.Resistor ||
+                             component.ComponentType == ComponentType.Bulb;
+        
+        voltageInput.transform.parent.gameObject.SetActive(showVoltage);
+        resistanceInput.transform.parent.gameObject.SetActive(showResistance);
+        
+        // Set current values
+        if (showVoltage)
+            voltageInput.text = component.voltage.ToString("F1");
+        if (showResistance)
+            resistanceInput.text = component.resistance.ToString("F1");
+        
+        // Show popup
+        popupCanvas.SetActive(true);
+        
+        Debug.Log($"Showing property popup for {component.name}");
+    }
+    
+    void ApplyChanges()
     {
         if (currentComponent == null) return;
         
-        Debug.Log($"[ComponentPropertyPopup] Deleting component {currentCircuitComponent?.Id}");
+        // Apply voltage changes
+        if (voltageInput.gameObject.activeInHierarchy && !string.IsNullOrEmpty(voltageInput.text))
+        {
+            if (float.TryParse(voltageInput.text, out float voltage))
+            {
+                currentComponent.voltage = Mathf.Clamp(voltage, 0.1f, 100f);
+                Debug.Log($"Set {currentComponent.name} voltage to {voltage}V");
+            }
+        }
         
-        // TODO: Remove component from circuit and destroy GameObject
-        // This should also remove any connected wires
+        // Apply resistance changes
+        if (resistanceInput.gameObject.activeInHierarchy && !string.IsNullOrEmpty(resistanceInput.text))
+        {
+            if (float.TryParse(resistanceInput.text, out float resistance))
+            {
+                currentComponent.resistance = Mathf.Clamp(resistance, 0.1f, 10000f);
+                Debug.Log($"Set {currentComponent.name} resistance to {resistance}Ω");
+            }
+        }
         
-        // For now, just destroy the GameObject
-        Destroy(currentComponent.gameObject);
+        // Mark circuit for re-solving
+        CircuitManager.Instance?.MarkCircuitChanged();
         
-        HidePopup();
+        ClosePopup();
     }
     
-    /// <summary>
-    /// Validates input values in real-time
-    /// </summary>
-    public void ValidateInputs()
+    void ClosePopup()
     {
-        bool isValid = true;
-        
-        // Validate resistance input
-        if (resistanceInput != null && resistanceInput.interactable)
+        if (popupCanvas != null)
+            popupCanvas.SetActive(false);
+        currentComponent = null;
+    }
+    
+    void Update()
+    {
+        // Close on ESC
+        if (popupCanvas != null && popupCanvas.activeInHierarchy && Input.GetKeyDown(KeyCode.Escape))
         {
-            if (!float.TryParse(resistanceInput.text, out float resistance) || resistance <= 0f)
-            {
-                isValid = false;
-            }
+            ClosePopup();
         }
         
-        // Validate voltage input
-        if (voltageInput != null && voltageInput.interactable)
+        // Keep popup facing camera
+        if (popupCanvas != null && popupCanvas.activeInHierarchy && Camera.main != null)
         {
-            if (!float.TryParse(voltageInput.text, out float voltage) || voltage <= 0f)
-            {
-                isValid = false;
-            }
+            Vector3 cameraPos = Camera.main.transform.position;
+            popupCanvas.transform.LookAt(2 * popupCanvas.transform.position - cameraPos);
         }
-        
-        // Enable/disable save button based on validation
-        if (saveButton != null)
-            saveButton.interactable = isValid;
     }
 }
-#else
-// Placeholder when UI is disabled
-public class ComponentPropertyPopup : MonoBehaviour
-{
-    void Start()
-    {
-        Debug.Log("ComponentPropertyPopup: Disabled. Install Legacy UI package for Unity 6 to enable property editing.");
-    }
-}
-#endif

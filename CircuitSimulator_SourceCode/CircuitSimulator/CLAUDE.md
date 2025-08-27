@@ -3,37 +3,57 @@
 ## 🚀 **Project Overview**
 Unity 3D educational circuit simulator for Grade 7-12 physics education with AR integration capabilities.
 
-## 📋 **TODO: Documentation Fixes Needed**
+## 🎯 **Current Status: v1.1 Enhanced**
 
-### **CRITICAL: Fix Documentation Errors**
-- [ ] **ARCHITECTURE.md**: Remove all references to "CircuitValidationManager" (doesn't exist)
-- [ ] **ARCHITECTURE.md**: Change "14 managers" to "13 managers" 
-- [ ] **ARCHITECTURE.md**: Fix Circuit System from "5 managers" to "5 managers" (correct count after removing validation)
-- [ ] **DEPENDENCY.md**: Remove CircuitValidationManager from all diagrams and references
-- [ ] **Assembly-CSharp.csproj**: Remove CircuitValidationManager from project file
-- [ ] **SETUP.md**: Update setup instructions with correct 13 managers
+### **Latest Features (Just Added):**
+- ✅ **Clean Value Display**: Values shown directly on components (no dashboard blocks)
+- ✅ **Property Editor**: Right-click components to edit voltage/resistance
+- ✅ **Delete Button**: UI button + X key to delete selected components
+- ✅ **Parallel Circuits**: Components share nodes when placed at same position
+- ✅ **Wire Value Display**: Current and voltage drop shown on wires
 
-### **Actual Manager Count:**
+### **System Architecture:**
 - **Circuit System**: 5 managers (CircuitManager, CircuitSolverManager, CircuitNodeManager, CircuitDebugManager, CircuitEventManager)
 - **Workspace System**: 4 managers (WorkspaceManager, UILayoutManager, MeasurementDisplayManager, ARWorkspaceAdapter)
 - **Component System**: 4 managers (ComponentPaletteCoordinator, ComponentFactoryManager, PaletteUIManager, CircuitControlManager)
-- **Total**: 13 managers (not 14)
+- **Total**: 13 specialized managers
 
-## 🏗️ **Architecture Status**
-- ✅ Refactored Circuit3DManager (843 lines) → 5 specialized managers
-- ✅ Refactored CircuitWorkspaceUI (543 lines) → 4 workspace managers
-- ✅ Refactored ComponentPalette (394 lines) → 4 component managers
-- ✅ Updated all deprecated references
-- ✅ Fixed compilation errors
-- 🔄 **IN PROGRESS**: Unity setup and testing
+## ✨ **Production Features**
+- ✅ **Modular Architecture**: 13 specialized managers (avg 165 lines each)
+- ✅ **Professional UI**: Mode switching, delete button, clean layout
+- ✅ **Component Values**: Live display of voltage/current/resistance
+- ✅ **Property Editing**: Right-click to modify component properties
+- ✅ **Parallel Circuits**: Automatic node sharing for parallel connections
+- ✅ **Validated Solver**: 100% accurate nodal analysis
+- ✅ **Visual Feedback**: Component shapes, animated wire preview, value labels
 
-## 🧪 **Current Unity Setup Progress**
-1. ✅ Created scene hierarchy (CircuitManager, WorkspaceManager, ComponentPalette, WorkspacePlane)
-2. ✅ Added CircuitCameraController to Main Camera
-3. ✅ Added all 13 manager scripts to GameObjects
-4. 🔄 **CURRENT**: Setting up Legacy uGUI Canvas + Buttons
+## 🚀 **How to Use**
 
-### **Correct Manager Scripts to Add:**
+### **Creating Circuits:**
+1. **Place Components**: Click buttons or use B/R/L/S keys
+2. **Connect Components**: Click "Connect" mode, then click two components
+3. **Edit Properties**: Right-click any component to change values
+4. **Solve Circuit**: Press Space or click "Solve" button
+5. **Delete Components**: Select and press X or click "Delete" button
+
+### **Creating Parallel Circuits:**
+- Place components at same position (they auto-share nodes)
+- Or move components close together (within 0.5 units)
+- Connect with wires as normal
+
+### **Keyboard Shortcuts:**
+- **B** - Place Battery
+- **R** - Place Resistor
+- **L** - Place Bulb  
+- **S** - Place Switch
+- **C** - Connect mode
+- **V** - Select mode
+- **X** - Delete selected
+- **Space** - Solve circuit
+- **Delete** - Delete selected
+- **Right-click** - Edit properties
+
+### **Manager Organization:**
 
 **CircuitManager GameObject:**
 - CircuitManager.cs
