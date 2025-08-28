@@ -1,6 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 
 /// <summary>
 /// Displays component values (voltage, current, resistance) directly above components
@@ -15,9 +13,9 @@ public class ComponentValueDisplay : MonoBehaviour
     public Color resistanceColor = new Color(0.7f, 0.7f, 0.3f);
     
     private CircuitComponent3D circuitComponent;
-    private TextMeshPro voltageLabel;
-    private TextMeshPro currentLabel;
-    private TextMeshPro resistanceLabel;
+    private TextMesh voltageLabel;
+    private TextMesh currentLabel;
+    private TextMesh resistanceLabel;
     
     void Start()
     {
@@ -40,37 +38,45 @@ public class ComponentValueDisplay : MonoBehaviour
     {
         Debug.Log($"Creating labels for {gameObject.name}");
         
-        // Create voltage label
-        voltageLabel = CreateLabel("Voltage", new Vector3(0, heightOffset, 0), voltageColor);
+        // Only create labels if they don't exist
+        if (voltageLabel == null)
+        {
+            voltageLabel = CreateLabel("Voltage", new Vector3(0, heightOffset, 0), voltageColor);
+        }
         
-        // Create current label  
-        currentLabel = CreateLabel("Current", new Vector3(0, heightOffset - 0.3f, 0), currentColor);
+        if (currentLabel == null)
+        {
+            currentLabel = CreateLabel("Current", new Vector3(0, heightOffset - 0.3f, 0), currentColor);
+        }
         
         // Create resistance label (only for resistors/bulbs)
-        if (circuitComponent.ComponentType == ComponentType.Resistor || 
-            circuitComponent.ComponentType == ComponentType.Bulb)
+        if (resistanceLabel == null && 
+            (circuitComponent.ComponentType == ComponentType.Resistor || 
+             circuitComponent.ComponentType == ComponentType.Bulb))
         {
             resistanceLabel = CreateLabel("Resistance", new Vector3(0, heightOffset - 0.6f, 0), resistanceColor);
         }
     }
     
-    TextMeshPro CreateLabel(string name, Vector3 localPosition, Color color)
+    TextMesh CreateLabel(string name, Vector3 localPosition, Color color)
     {
         GameObject labelObj = new GameObject($"{name}Label");
-        labelObj.transform.SetParent(transform);
+        labelObj.transform.SetParent(transform, false);
         labelObj.transform.localPosition = localPosition;
+        labelObj.transform.localScale = Vector3.one * 0.15f;
         
-        TextMeshPro tmp = labelObj.AddComponent<TextMeshPro>();
-        tmp.text = "";
-        tmp.fontSize = 3;
-        tmp.color = color;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontStyle = FontStyles.Bold;
+        TextMesh textMesh = labelObj.AddComponent<TextMesh>();
+        textMesh.text = "";
+        textMesh.fontSize = 24;
+        textMesh.color = color;
+        textMesh.anchor = TextAnchor.MiddleCenter;
+        textMesh.alignment = TextAlignment.Center;
+        textMesh.characterSize = 0.1f;
         
         // Make label always face camera
         labelObj.AddComponent<FaceCamera>();
         
-        return tmp;
+        return textMesh;
     }
     
     void Update()
@@ -83,18 +89,10 @@ public class ComponentValueDisplay : MonoBehaviour
         if (circuitComponent == null) return;
         
         // Check if labels still exist, recreate if needed
-        if (voltageLabel == null || currentLabel == null || 
-            (circuitComponent.ComponentType == ComponentType.Resistor || circuitComponent.ComponentType == ComponentType.Bulb) && resistanceLabel == null)
+        if (voltageLabel == null || currentLabel == null)
         {
-            // Clean up any orphaned labels
-            foreach (Transform child in transform)
-            {
-                if (child.name.Contains("Label"))
-                {
-                    Destroy(child.gameObject);
-                }
-            }
-            // Recreate labels
+            Debug.Log($"Labels missing on {gameObject.name}, recreating...");
+            // Recreate labels without destroying existing ones
             CreateLabels();
         }
         

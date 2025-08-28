@@ -89,7 +89,13 @@ public class ComponentFactoryManager : MonoBehaviour
             renderer.material.color = new Color(0.5f, 0.5f, 0.7f, 1f);
         }
         
-        // Add junction script
+        // Add CircuitComponent3D for wire connectivity (junctions act like 0-resistance wires)
+        CircuitComponent3D circuitComp = junction.AddComponent<CircuitComponent3D>();
+        circuitComp.ComponentType = ComponentType.Wire;
+        circuitComp.resistance = 0.001f; // Near-zero resistance
+        circuitComp.voltage = 0f;
+        
+        // Add junction script for visual behavior
         CircuitJunction junctionScript = junction.AddComponent<CircuitJunction>();
         
         // Add selection capability
@@ -97,6 +103,9 @@ public class ComponentFactoryManager : MonoBehaviour
         
         // Add movement capability
         MoveableComponent moveable = junction.AddComponent<MoveableComponent>();
+        
+        // Add value display (though junction won't show values)
+        ComponentValueDisplay valueDisplay = junction.AddComponent<ComponentValueDisplay>();
         
         // Track junction
         placedComponents.Add(junction);
