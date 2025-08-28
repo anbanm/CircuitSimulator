@@ -259,7 +259,7 @@ public class ComponentPropertyPopup : MonoBehaviour
         // Show popup
         popupCanvas.SetActive(true);
         
-        Debug.Log($"🎯 Property popup shown for {component.name} at position {popupPos}");
+        Debug.Log($"🎯 Property popup shown for {component.name}");
     }
     
     void ApplyChanges()
