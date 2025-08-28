@@ -63,15 +63,15 @@ public class ComponentValueDisplay : MonoBehaviour
         GameObject labelObj = new GameObject($"{name}Label");
         labelObj.transform.SetParent(transform, false);
         labelObj.transform.localPosition = localPosition;
-        labelObj.transform.localScale = Vector3.one * 0.15f;
+        labelObj.transform.localScale = Vector3.one * 0.5f;
         
         TextMesh textMesh = labelObj.AddComponent<TextMesh>();
         textMesh.text = "";
-        textMesh.fontSize = 24;
+        textMesh.fontSize = 36;
         textMesh.color = color;
         textMesh.anchor = TextAnchor.MiddleCenter;
         textMesh.alignment = TextAlignment.Center;
-        textMesh.characterSize = 0.1f;
+        textMesh.characterSize = 0.3f;
         
         // Make label always face camera
         labelObj.AddComponent<FaceCamera>();

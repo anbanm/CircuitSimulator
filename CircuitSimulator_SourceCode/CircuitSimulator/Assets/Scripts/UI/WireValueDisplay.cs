@@ -1,5 +1,4 @@
 using UnityEngine;
-using TMPro;
 
 /// <summary>
 /// Displays current flow on wires
@@ -12,7 +11,7 @@ public class WireValueDisplay : MonoBehaviour
     public float fontSize = 2.5f;
     
     private CircuitWire circuitWire;
-    private TextMeshPro currentLabel;
+    private TextMesh currentLabel;
     private LineRenderer lineRenderer;
     
     void Start()
@@ -29,14 +28,16 @@ public class WireValueDisplay : MonoBehaviour
     void CreateCurrentLabel()
     {
         GameObject labelObj = new GameObject("CurrentLabel");
-        labelObj.transform.SetParent(transform);
+        labelObj.transform.SetParent(transform, false);
+        labelObj.transform.localScale = Vector3.one * 0.4f;
         
-        currentLabel = labelObj.AddComponent<TextMeshPro>();
+        currentLabel = labelObj.AddComponent<TextMesh>();
         currentLabel.text = "";
-        currentLabel.fontSize = fontSize;
+        currentLabel.fontSize = 30;
         currentLabel.color = currentColor;
-        currentLabel.alignment = TextAlignmentOptions.Center;
-        currentLabel.fontStyle = FontStyles.Bold;
+        currentLabel.anchor = TextAnchor.MiddleCenter;
+        currentLabel.alignment = TextAlignment.Center;
+        currentLabel.characterSize = 0.25f;
         
         // Make label face camera
         labelObj.AddComponent<FaceCamera>();

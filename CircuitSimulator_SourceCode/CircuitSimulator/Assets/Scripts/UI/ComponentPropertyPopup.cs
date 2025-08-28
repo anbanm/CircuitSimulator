@@ -201,13 +201,13 @@ public class ComponentPropertyPopup : MonoBehaviour
         Vector3 cameraPos = Camera.main.transform.position;
         Vector3 dirToCamera = (cameraPos - componentPos).normalized;
         
-        // Position popup at a reasonable distance from component
-        Vector3 popupPos = componentPos + Vector3.up * 1.5f + dirToCamera * 3f;
+        // Position popup further away and higher for better visibility
+        Vector3 popupPos = componentPos + Vector3.up * 3f + dirToCamera * 5f;
         popupCanvas.transform.position = popupPos;
         popupCanvas.transform.LookAt(cameraPos);
         
-        // Use fixed scale for consistency
-        popupCanvas.transform.localScale = Vector3.one * 0.05f;
+        // Use larger scale for better visibility
+        popupCanvas.transform.localScale = Vector3.one * 0.15f;
         
         // Set title
         titleText.text = $"Edit {component.ComponentType}";
