@@ -201,13 +201,13 @@ public class ComponentPropertyPopup : MonoBehaviour
         Vector3 cameraPos = Camera.main.transform.position;
         Vector3 dirToCamera = (cameraPos - componentPos).normalized;
         
-        // Position popup closer and more visible
-        Vector3 popupPos = componentPos + Vector3.up * 2f + dirToCamera * 1f;
+        // Position popup at a reasonable distance from component
+        Vector3 popupPos = componentPos + Vector3.up * 1.5f + dirToCamera * 3f;
         popupCanvas.transform.position = popupPos;
         popupCanvas.transform.LookAt(cameraPos);
         
-        // Use larger scale for better visibility
-        popupCanvas.transform.localScale = Vector3.one * 0.1f;
+        // Use fixed scale for consistency
+        popupCanvas.transform.localScale = Vector3.one * 0.05f;
         
         // Set title
         titleText.text = $"Edit {component.ComponentType}";
@@ -217,8 +217,24 @@ public class ComponentPropertyPopup : MonoBehaviour
         bool showResistance = component.ComponentType == ComponentType.Resistor ||
                              component.ComponentType == ComponentType.Bulb;
         
-        voltageInput.transform.parent.gameObject.SetActive(showVoltage);
-        resistanceInput.transform.parent.gameObject.SetActive(showResistance);
+        Debug.Log($"Component type: {component.ComponentType}, ShowVoltage: {showVoltage}, ShowResistance: {showResistance}");
+        
+        // Get parent containers (the input field itself)
+        if (voltageInput != null && voltageInput.gameObject != null)
+        {
+            voltageInput.gameObject.SetActive(showVoltage);
+            // Also hide/show the label
+            GameObject voltageLabel = GameObject.Find("VoltageLabel");
+            if (voltageLabel != null) voltageLabel.SetActive(showVoltage);
+        }
+        
+        if (resistanceInput != null && resistanceInput.gameObject != null)
+        {
+            resistanceInput.gameObject.SetActive(showResistance);
+            // Also hide/show the label
+            GameObject resistanceLabel = GameObject.Find("ResistanceLabel");
+            if (resistanceLabel != null) resistanceLabel.SetActive(showResistance);
+        }
         
         // Set current values
         if (showVoltage)
