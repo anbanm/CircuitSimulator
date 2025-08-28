@@ -23,6 +23,22 @@ public class ComponentValueDisplay : MonoBehaviour
         if (circuitComponent == null) return;
         
         CreateLabels();
+        StartCoroutine(MaintainLabels());
+    }
+    
+    System.Collections.IEnumerator MaintainLabels()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(0.5f);
+            
+            // Check if labels still exist
+            if (voltageLabel == null || currentLabel == null)
+            {
+                Debug.Log($"Labels were destroyed on {gameObject.name}, recreating...");
+                CreateLabels();
+            }
+        }
     }
     
     void OnEnable()
@@ -37,6 +53,23 @@ public class ComponentValueDisplay : MonoBehaviour
     void CreateLabels()
     {
         Debug.Log($"Creating labels for {gameObject.name}");
+        
+        // Find existing labels first
+        foreach (Transform child in transform)
+        {
+            if (child.name == "VoltageLabel" && voltageLabel == null)
+            {
+                voltageLabel = child.GetComponent<TextMesh>();
+            }
+            else if (child.name == "CurrentLabel" && currentLabel == null)
+            {
+                currentLabel = child.GetComponent<TextMesh>();
+            }
+            else if (child.name == "ResistanceLabel" && resistanceLabel == null)
+            {
+                resistanceLabel = child.GetComponent<TextMesh>();
+            }
+        }
         
         // Only create labels if they don't exist
         if (voltageLabel == null)

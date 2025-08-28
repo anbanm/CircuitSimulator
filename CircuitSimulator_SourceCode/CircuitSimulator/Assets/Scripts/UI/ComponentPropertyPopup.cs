@@ -196,18 +196,32 @@ public class ComponentPropertyPopup : MonoBehaviour
         
         currentComponent = component;
         
-        // Position popup near component in world space
+        // Position popup relative to camera view
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null) return;
+        
         Vector3 componentPos = component.transform.position;
-        Vector3 cameraPos = Camera.main.transform.position;
-        Vector3 dirToCamera = (cameraPos - componentPos).normalized;
+        Vector3 cameraPos = mainCamera.transform.position;
         
-        // Position popup further away and higher for better visibility
-        Vector3 popupPos = componentPos + Vector3.up * 3f + dirToCamera * 5f;
-        popupCanvas.transform.position = popupPos;
-        popupCanvas.transform.LookAt(cameraPos);
+        // Calculate screen position of component
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(componentPos);
         
-        // Use larger scale for better visibility
-        popupCanvas.transform.localScale = Vector3.one * 0.15f;
+        // Position popup to the side of the component in screen space
+        float offsetX = 200f; // Pixels to the right
+        float offsetY = 100f; // Pixels up
+        Vector3 popupScreenPos = new Vector3(screenPos.x + offsetX, screenPos.y + offsetY, screenPos.z);
+        
+        // Convert back to world position
+        Vector3 popupWorldPos = mainCamera.ScreenToWorldPoint(popupScreenPos);
+        popupCanvas.transform.position = popupWorldPos;
+        
+        // Make popup face camera
+        popupCanvas.transform.rotation = Quaternion.LookRotation(popupCanvas.transform.position - cameraPos);
+        
+        // Scale based on distance for consistent size
+        float distance = Vector3.Distance(cameraPos, popupWorldPos);
+        float scale = distance * 0.01f; // Adjust multiplier as needed
+        popupCanvas.transform.localScale = Vector3.one * Mathf.Clamp(scale, 0.05f, 0.3f);
         
         // Set title
         titleText.text = $"Edit {component.ComponentType}";
@@ -293,11 +307,32 @@ public class ComponentPropertyPopup : MonoBehaviour
             ClosePopup();
         }
         
-        // Keep popup facing camera
-        if (popupCanvas != null && popupCanvas.activeInHierarchy && Camera.main != null)
+        // Keep popup facing camera and positioned correctly
+        if (popupCanvas != null && popupCanvas.activeInHierarchy && currentComponent != null && Camera.main != null)
         {
-            Vector3 cameraPos = Camera.main.transform.position;
-            popupCanvas.transform.LookAt(2 * popupCanvas.transform.position - cameraPos);
+            Camera mainCamera = Camera.main;
+            Vector3 componentPos = currentComponent.transform.position;
+            Vector3 cameraPos = mainCamera.transform.position;
+            
+            // Recalculate screen position for smooth following
+            Vector3 screenPos = mainCamera.WorldToScreenPoint(componentPos);
+            
+            // Only update if component is in front of camera
+            if (screenPos.z > 0)
+            {
+                float offsetX = 200f;
+                float offsetY = 100f;
+                Vector3 popupScreenPos = new Vector3(screenPos.x + offsetX, screenPos.y + offsetY, screenPos.z);
+                Vector3 popupWorldPos = mainCamera.ScreenToWorldPoint(popupScreenPos);
+                
+                popupCanvas.transform.position = popupWorldPos;
+                popupCanvas.transform.rotation = Quaternion.LookRotation(popupCanvas.transform.position - cameraPos);
+                
+                // Update scale based on distance
+                float distance = Vector3.Distance(cameraPos, popupWorldPos);
+                float scale = distance * 0.01f;
+                popupCanvas.transform.localScale = Vector3.one * Mathf.Clamp(scale, 0.05f, 0.3f);
+            }
         }
     }
 }
