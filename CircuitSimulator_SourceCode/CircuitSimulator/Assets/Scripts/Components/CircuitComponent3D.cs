@@ -42,6 +42,9 @@ public class CircuitComponent3D : MonoBehaviour
         {
             Debug.LogWarning($"CircuitManager not found! {name} will not be included in circuit solving.");
         }
+        
+        // Register with label manager for persistent labels
+        LabelManager.Instance.RegisterComponent(this);
     }
     
     void OnDestroy()
@@ -50,6 +53,12 @@ public class CircuitComponent3D : MonoBehaviour
         if (CircuitManager.Instance != null)
         {
             CircuitManager.Instance.UnregisterComponent(this);
+        }
+        
+        // Unregister from label manager
+        if (LabelManager.Instance != null)
+        {
+            LabelManager.Instance.UnregisterComponent(this);
         }
     }
     
