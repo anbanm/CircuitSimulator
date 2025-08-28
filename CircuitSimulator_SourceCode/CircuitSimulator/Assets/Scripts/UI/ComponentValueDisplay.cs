@@ -26,18 +26,74 @@ public class ComponentValueDisplay : MonoBehaviour
         StartCoroutine(MaintainLabels());
     }
     
+    void OnDestroy()
+    {
+        // Don't destroy labels on component destruction
+        StopAllCoroutines();
+    }
+    
     System.Collections.IEnumerator MaintainLabels()
     {
         while (true)
         {
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.1f); // Check more frequently
             
-            // Check if labels still exist
-            if (voltageLabel == null || currentLabel == null)
+            CheckAndRecreateLabels();
+        }
+    }
+    
+    void CheckAndRecreateLabels()
+    {
+        // Check each label individually and recreate only what's missing
+        bool needsRecreation = false;
+        
+        // Check voltage label
+        if (voltageLabel == null)
+        {
+            Transform existingVoltage = transform.Find("VoltageLabel");
+            if (existingVoltage != null)
             {
-                Debug.Log($"Labels were destroyed on {gameObject.name}, recreating...");
-                CreateLabels();
+                voltageLabel = existingVoltage.GetComponent<TextMesh>();
             }
+            else
+            {
+                needsRecreation = true;
+            }
+        }
+        
+        // Check current label
+        if (currentLabel == null)
+        {
+            Transform existingCurrent = transform.Find("CurrentLabel");
+            if (existingCurrent != null)
+            {
+                currentLabel = existingCurrent.GetComponent<TextMesh>();
+            }
+            else
+            {
+                needsRecreation = true;
+            }
+        }
+        
+        // Check resistance label for appropriate components
+        if ((circuitComponent.ComponentType == ComponentType.Resistor || 
+             circuitComponent.ComponentType == ComponentType.Bulb) && resistanceLabel == null)
+        {
+            Transform existingResistance = transform.Find("ResistanceLabel");
+            if (existingResistance != null)
+            {
+                resistanceLabel = existingResistance.GetComponent<TextMesh>();
+            }
+            else
+            {
+                needsRecreation = true;
+            }
+        }
+        
+        if (needsRecreation)
+        {
+            Debug.Log($"Recreating missing labels on {gameObject.name}");
+            CreateLabels();
         }
     }
     
@@ -52,34 +108,31 @@ public class ComponentValueDisplay : MonoBehaviour
     
     void CreateLabels()
     {
-        Debug.Log($"Creating labels for {gameObject.name}");
-        
-        // Find existing labels first
-        foreach (Transform child in transform)
-        {
-            if (child.name == "VoltageLabel" && voltageLabel == null)
-            {
-                voltageLabel = child.GetComponent<TextMesh>();
-            }
-            else if (child.name == "CurrentLabel" && currentLabel == null)
-            {
-                currentLabel = child.GetComponent<TextMesh>();
-            }
-            else if (child.name == "ResistanceLabel" && resistanceLabel == null)
-            {
-                resistanceLabel = child.GetComponent<TextMesh>();
-            }
-        }
-        
-        // Only create labels if they don't exist
+        // Only create labels if they don't exist as children
         if (voltageLabel == null)
         {
-            voltageLabel = CreateLabel("Voltage", new Vector3(0, heightOffset, 0), voltageColor);
+            Transform existing = transform.Find("VoltageLabel");
+            if (existing != null)
+            {
+                voltageLabel = existing.GetComponent<TextMesh>();
+            }
+            else
+            {
+                voltageLabel = CreateLabel("Voltage", new Vector3(0, heightOffset, 0), voltageColor);
+            }
         }
         
         if (currentLabel == null)
         {
-            currentLabel = CreateLabel("Current", new Vector3(0, heightOffset - 0.3f, 0), currentColor);
+            Transform existing = transform.Find("CurrentLabel");
+            if (existing != null)
+            {
+                currentLabel = existing.GetComponent<TextMesh>();
+            }
+            else
+            {
+                currentLabel = CreateLabel("Current", new Vector3(0, heightOffset - 0.3f, 0), currentColor);
+            }
         }
         
         // Create resistance label (only for resistors/bulbs)
@@ -87,7 +140,15 @@ public class ComponentValueDisplay : MonoBehaviour
             (circuitComponent.ComponentType == ComponentType.Resistor || 
              circuitComponent.ComponentType == ComponentType.Bulb))
         {
-            resistanceLabel = CreateLabel("Resistance", new Vector3(0, heightOffset - 0.6f, 0), resistanceColor);
+            Transform existing = transform.Find("ResistanceLabel");
+            if (existing != null)
+            {
+                resistanceLabel = existing.GetComponent<TextMesh>();
+            }
+            else
+            {
+                resistanceLabel = CreateLabel("Resistance", new Vector3(0, heightOffset - 0.6f, 0), resistanceColor);
+            }
         }
     }
     
@@ -121,13 +182,8 @@ public class ComponentValueDisplay : MonoBehaviour
     {
         if (circuitComponent == null) return;
         
-        // Check if labels still exist, recreate if needed
-        if (voltageLabel == null || currentLabel == null)
-        {
-            Debug.Log($"Labels missing on {gameObject.name}, recreating...");
-            // Recreate labels without destroying existing ones
-            CreateLabels();
-        }
+        // Always check and recreate labels if missing
+        CheckAndRecreateLabels();
         
         // Update voltage
         if (voltageLabel != null)
