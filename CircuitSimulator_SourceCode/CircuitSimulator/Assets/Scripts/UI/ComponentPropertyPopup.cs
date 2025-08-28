@@ -202,26 +202,28 @@ public class ComponentPropertyPopup : MonoBehaviour
         
         Vector3 componentPos = component.transform.position;
         Vector3 cameraPos = mainCamera.transform.position;
+        Vector3 cameraForward = mainCamera.transform.forward;
+        Vector3 cameraRight = mainCamera.transform.right;
+        Vector3 cameraUp = mainCamera.transform.up;
         
-        // Calculate screen position of component
-        Vector3 screenPos = mainCamera.WorldToScreenPoint(componentPos);
+        // Calculate distance from camera to component
+        float distanceToComponent = Vector3.Distance(cameraPos, componentPos);
         
-        // Position popup to the side of the component in screen space
-        float offsetX = 200f; // Pixels to the right
-        float offsetY = 100f; // Pixels up
-        Vector3 popupScreenPos = new Vector3(screenPos.x + offsetX, screenPos.y + offsetY, screenPos.z);
+        // Position popup offset from component in camera space
+        Vector3 popupOffset = cameraRight * 2f + cameraUp * 1f; // Right and up from camera view
+        Vector3 popupPos = componentPos + popupOffset;
         
-        // Convert back to world position
-        Vector3 popupWorldPos = mainCamera.ScreenToWorldPoint(popupScreenPos);
-        popupCanvas.transform.position = popupWorldPos;
+        // Move popup slightly toward camera so it's not obscured
+        popupPos += -cameraForward * 0.5f;
         
-        // Make popup face camera
-        popupCanvas.transform.rotation = Quaternion.LookRotation(popupCanvas.transform.position - cameraPos);
+        popupCanvas.transform.position = popupPos;
         
-        // Scale based on distance for consistent size
-        float distance = Vector3.Distance(cameraPos, popupWorldPos);
-        float scale = distance * 0.01f; // Adjust multiplier as needed
-        popupCanvas.transform.localScale = Vector3.one * Mathf.Clamp(scale, 0.05f, 0.3f);
+        // Make popup face camera directly
+        popupCanvas.transform.LookAt(popupCanvas.transform.position + cameraForward, cameraUp);
+        
+        // Scale based on distance for consistent apparent size
+        float scale = distanceToComponent * 0.003f; // Much smaller multiplier
+        popupCanvas.transform.localScale = Vector3.one * Mathf.Clamp(scale, 0.01f, 0.05f);
         
         // Set title
         titleText.text = $"Edit {component.ComponentType}";
@@ -313,26 +315,28 @@ public class ComponentPropertyPopup : MonoBehaviour
             Camera mainCamera = Camera.main;
             Vector3 componentPos = currentComponent.transform.position;
             Vector3 cameraPos = mainCamera.transform.position;
+            Vector3 cameraForward = mainCamera.transform.forward;
+            Vector3 cameraRight = mainCamera.transform.right;
+            Vector3 cameraUp = mainCamera.transform.up;
             
-            // Recalculate screen position for smooth following
-            Vector3 screenPos = mainCamera.WorldToScreenPoint(componentPos);
+            // Calculate distance from camera to component
+            float distanceToComponent = Vector3.Distance(cameraPos, componentPos);
             
-            // Only update if component is in front of camera
-            if (screenPos.z > 0)
-            {
-                float offsetX = 200f;
-                float offsetY = 100f;
-                Vector3 popupScreenPos = new Vector3(screenPos.x + offsetX, screenPos.y + offsetY, screenPos.z);
-                Vector3 popupWorldPos = mainCamera.ScreenToWorldPoint(popupScreenPos);
-                
-                popupCanvas.transform.position = popupWorldPos;
-                popupCanvas.transform.rotation = Quaternion.LookRotation(popupCanvas.transform.position - cameraPos);
-                
-                // Update scale based on distance
-                float distance = Vector3.Distance(cameraPos, popupWorldPos);
-                float scale = distance * 0.01f;
-                popupCanvas.transform.localScale = Vector3.one * Mathf.Clamp(scale, 0.05f, 0.3f);
-            }
+            // Position popup offset from component in camera space
+            Vector3 popupOffset = cameraRight * 2f + cameraUp * 1f;
+            Vector3 popupPos = componentPos + popupOffset;
+            
+            // Move popup slightly toward camera
+            popupPos += -cameraForward * 0.5f;
+            
+            popupCanvas.transform.position = popupPos;
+            
+            // Make popup face camera directly
+            popupCanvas.transform.LookAt(popupCanvas.transform.position + cameraForward, cameraUp);
+            
+            // Consistent scale based on distance
+            float scale = distanceToComponent * 0.003f;
+            popupCanvas.transform.localScale = Vector3.one * Mathf.Clamp(scale, 0.01f, 0.05f);
         }
     }
 }
