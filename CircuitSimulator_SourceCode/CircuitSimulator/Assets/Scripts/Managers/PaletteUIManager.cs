@@ -84,18 +84,30 @@ public class PaletteUIManager : MonoBehaviour
         Button newButton = Instantiate(buttonPrefab, paletteContainer);
         newButton.name = $"Button_{label}";
         
+        // Set smaller button size (half the original)
+        RectTransform buttonRect = newButton.GetComponent<RectTransform>();
+        if (buttonRect != null)
+        {
+            Vector2 currentSize = buttonRect.sizeDelta;
+            buttonRect.sizeDelta = new Vector2(currentSize.x * 0.5f, currentSize.y * 0.5f);
+        }
+        
         // Set button text (handle both Text and TextMeshPro)
         Text buttonText = newButton.GetComponentInChildren<Text>();
         if (buttonText != null)
         {
             buttonText.text = label;
+            buttonText.fontSize = Mathf.Max(8, buttonText.fontSize / 2); // Half font size, minimum 8
         }
         else
         {
             // Try TextMeshPro if regular Text not found
             var tmpText = newButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
             if (tmpText != null)
+            {
                 tmpText.text = label;
+                tmpText.fontSize = Mathf.Max(8, tmpText.fontSize / 2); // Half font size, minimum 8
+            }
         }
         
         // Set button color for normal buttons
