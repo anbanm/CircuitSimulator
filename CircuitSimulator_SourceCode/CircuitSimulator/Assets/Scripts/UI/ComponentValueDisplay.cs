@@ -27,8 +27,19 @@ public class ComponentValueDisplay : MonoBehaviour
         CreateLabels();
     }
     
+    void OnEnable()
+    {
+        // Ensure labels exist when component is re-enabled
+        if (circuitComponent != null && voltageLabel == null)
+        {
+            CreateLabels();
+        }
+    }
+    
     void CreateLabels()
     {
+        Debug.Log($"Creating labels for {gameObject.name}");
+        
         // Create voltage label
         voltageLabel = CreateLabel("Voltage", new Vector3(0, heightOffset, 0), voltageColor);
         
@@ -70,6 +81,22 @@ public class ComponentValueDisplay : MonoBehaviour
     void UpdateLabels()
     {
         if (circuitComponent == null) return;
+        
+        // Check if labels still exist, recreate if needed
+        if (voltageLabel == null || currentLabel == null || 
+            (circuitComponent.ComponentType == ComponentType.Resistor || circuitComponent.ComponentType == ComponentType.Bulb) && resistanceLabel == null)
+        {
+            // Clean up any orphaned labels
+            foreach (Transform child in transform)
+            {
+                if (child.name.Contains("Label"))
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+            // Recreate labels
+            CreateLabels();
+        }
         
         // Update voltage
         if (voltageLabel != null)
