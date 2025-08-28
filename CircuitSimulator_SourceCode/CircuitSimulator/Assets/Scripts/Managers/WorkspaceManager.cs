@@ -106,8 +106,8 @@ public class WorkspaceManager : MonoBehaviour
         // AR-specific workspace configuration
         if (workspacePlane != null)
         {
-            // Adjust scale for AR viewing
-            workspacePlane.localScale *= arUIScale;
+            // Set scale for AR viewing (not multiplicative to avoid compounding)
+            workspacePlane.localScale = Vector3.one * arUIScale;
             
             // Position appropriately for AR
             workspacePlane.position = new Vector3(0, 0, 2f); // 2 units in front of user

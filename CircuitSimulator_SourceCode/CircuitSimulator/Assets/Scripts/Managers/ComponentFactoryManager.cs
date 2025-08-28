@@ -80,7 +80,7 @@ public class ComponentFactoryManager : MonoBehaviour
         GameObject junction = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         junction.name = $"Junction_{currentIndex}";
         junction.transform.position = position;
-        junction.transform.localScale = Vector3.one * 0.4f;
+        junction.transform.localScale = Vector3.one * 0.7f;
         
         // Set visual appearance
         Renderer renderer = junction.GetComponent<Renderer>();
@@ -333,21 +333,8 @@ public class ComponentFactoryManager : MonoBehaviour
     [ContextMenu("Test Simple Placement")]
     public void TestSimplePlacement()
     {
-        Debug.Log("Testing simple cube placement...");
-        
-        if (canvasPlane == null)
-        {
-            Debug.LogError("canvasPlane is null!");
-            return;
-        }
-        
-        Vector3 testPos = canvasPlane.position + Vector3.up;
-        GameObject testCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        testCube.transform.position = testPos;
-        testCube.name = "TestCube";
-        testCube.GetComponent<Renderer>().material.color = Color.green;
-        
-        Debug.Log($"Created test cube at {testPos}");
+        Debug.Log("Test placement disabled to prevent white blocks in scene");
+        // Test cube creation disabled - was creating unwanted white blocks
     }
     
     #endregion

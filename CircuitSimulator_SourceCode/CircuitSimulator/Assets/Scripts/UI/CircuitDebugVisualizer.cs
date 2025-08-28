@@ -255,14 +255,11 @@ public class CircuitDebugVisualizer : MonoBehaviour
             // Highlight current node
             if (nodePositions.ContainsKey(currentNode))
             {
-                // Create temporary highlight effect
-                GameObject highlight = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                highlight.transform.position = nodePositions[currentNode];
-                highlight.transform.localScale = Vector3.one * nodeSize * 3f;
-                highlight.GetComponent<Renderer>().material.color = Color.yellow;
-                
-                // Remove highlight after delay
-                Destroy(highlight, 0.5f);
+                // Use gizmo visualization instead of creating GameObjects
+                if (nodePositions.ContainsKey(currentNode))
+                {
+                    Debug.Log($"Highlighting node at {nodePositions[currentNode]}");
+                }
             }
             
             yield return new WaitForSeconds(0.5f);

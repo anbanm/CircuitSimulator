@@ -41,6 +41,7 @@ public class ComponentPropertyPopup : MonoBehaviour
         {
             instance = this;
             CreatePopupUI();
+            Debug.Log("✅ ComponentPropertyPopup initialized successfully");
         }
         else if (instance != this)
         {
@@ -58,7 +59,7 @@ public class ComponentPropertyPopup : MonoBehaviour
         canvas.renderMode = RenderMode.WorldSpace;
         
         RectTransform canvasRect = popupCanvas.GetComponent<RectTransform>();
-        canvasRect.sizeDelta = new Vector2(3, 2);
+        canvasRect.sizeDelta = new Vector2(400, 250); // Larger canvas size
         
         // Add canvas scaler for world space
         popupCanvas.AddComponent<CanvasScaler>();
@@ -69,9 +70,9 @@ public class ComponentPropertyPopup : MonoBehaviour
         panel.transform.SetParent(popupCanvas.transform);
         
         RectTransform panelRect = panel.AddComponent<RectTransform>();
-        panelRect.sizeDelta = new Vector2(3, 2);
+        panelRect.sizeDelta = new Vector2(300, 200); // Reasonable size
         panelRect.localPosition = Vector3.zero;
-        panelRect.localScale = Vector3.one * 0.01f; // Scale down for world space
+        panelRect.localScale = Vector3.one; // Full scale for visibility
         
         Image panelImage = panel.AddComponent<Image>();
         panelImage.color = new Color(0.2f, 0.2f, 0.2f, 0.95f);
@@ -200,8 +201,13 @@ public class ComponentPropertyPopup : MonoBehaviour
         Vector3 cameraPos = Camera.main.transform.position;
         Vector3 dirToCamera = (cameraPos - componentPos).normalized;
         
-        popupCanvas.transform.position = componentPos + dirToCamera * popupDistance + Vector3.up * popupHeight;
-        popupCanvas.transform.LookAt(2 * popupCanvas.transform.position - cameraPos);
+        // Position popup closer and more visible
+        Vector3 popupPos = componentPos + Vector3.up * 2f + dirToCamera * 1f;
+        popupCanvas.transform.position = popupPos;
+        popupCanvas.transform.LookAt(cameraPos);
+        
+        // Use larger scale for better visibility
+        popupCanvas.transform.localScale = Vector3.one * 0.1f;
         
         // Set title
         titleText.text = $"Edit {component.ComponentType}";
@@ -223,7 +229,7 @@ public class ComponentPropertyPopup : MonoBehaviour
         // Show popup
         popupCanvas.SetActive(true);
         
-        Debug.Log($"Showing property popup for {component.name}");
+        Debug.Log($"🎯 Property popup shown for {component.name} at position {popupPos}");
     }
     
     void ApplyChanges()

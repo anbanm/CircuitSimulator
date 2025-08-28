@@ -6,7 +6,7 @@ public class ComponentLabel : MonoBehaviour
 {
     [Header("Label Settings")]
     public Vector3 labelOffset = new Vector3(0, 0.7f, 0);
-    public float labelScale = 0.0005f; // MUCH smaller scale
+    public float labelScale = 0.02f; // Reasonable scale for visibility
     
     [Header("Label Colors")]
     public Color voltageColor = Color.red;
