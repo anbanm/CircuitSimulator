@@ -104,8 +104,8 @@ public class ComponentFactoryManager : MonoBehaviour
         // Add movement capability
         MoveableComponent moveable = junction.AddComponent<MoveableComponent>();
         
-        // Add value display (though junction won't show values)
-        ComponentValueDisplay valueDisplay = junction.AddComponent<ComponentValueDisplay>();
+        // DISABLED - Using PersistentLabel system instead
+        // ComponentValueDisplay valueDisplay = junction.AddComponent<ComponentValueDisplay>();
         
         // Track junction
         placedComponents.Add(junction);
@@ -291,12 +291,12 @@ public class ComponentFactoryManager : MonoBehaviour
             moveable = componentObject.AddComponent<MoveableComponent>();
         }
         
-        // Add value display (shows voltage/current/resistance above component)
-        ComponentValueDisplay valueDisplay = componentObject.GetComponent<ComponentValueDisplay>();
-        if (valueDisplay == null)
-        {
-            valueDisplay = componentObject.AddComponent<ComponentValueDisplay>();
-        }
+        // DISABLED - Using PersistentLabel system instead
+        // ComponentValueDisplay valueDisplay = componentObject.GetComponent<ComponentValueDisplay>();
+        // if (valueDisplay == null)
+        // {
+        //     valueDisplay = componentObject.AddComponent<ComponentValueDisplay>();
+        // }
     }
     
     #endregion
