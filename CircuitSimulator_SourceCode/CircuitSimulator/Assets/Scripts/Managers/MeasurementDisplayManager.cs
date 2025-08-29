@@ -41,7 +41,7 @@ public class MeasurementDisplayManager : MonoBehaviour
     private void UpdateAllMeasurements()
     {
         // DISABLED - Dashboard blocks removed
-        // Values now show directly on components via ComponentValueDisplay
+        // Values now show directly on components via PersistentLabel system
         
         var circuitManager = CircuitManager.Instance;
         if (circuitManager == null) return;
@@ -55,7 +55,7 @@ public class MeasurementDisplayManager : MonoBehaviour
     private void UpdateMeasurementDisplay(string label, string value)
     {
         // DISABLED - No more dashboard blocks
-        // Values shown directly on components via ComponentValueDisplay
+        // Values shown directly on components via PersistentLabel system
         return;
     }
     

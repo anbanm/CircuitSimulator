@@ -22,7 +22,7 @@ public class SelectableComponent : MonoBehaviour
     void OnMouseDown()
     {
         // Check if connect tool is active
-        ConnectTool connectTool = FindFirstObjectByType<ConnectTool>();
+        ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
         if (connectTool != null && connectTool.IsConnectMode())
         {
             connectTool.OnComponentClicked(this);
@@ -138,7 +138,7 @@ public class SelectableComponent : MonoBehaviour
         }
         
         // Remove from ComponentFactoryManager list if needed
-        ComponentFactoryManager factoryManager = FindFirstObjectByType<ComponentFactoryManager>();
+        ComponentFactoryManager factoryManager = ComponentRegistry.Instance.GetManager<ComponentFactoryManager>();
         if (factoryManager != null)
         {
             factoryManager.RemoveComponent(gameObject);

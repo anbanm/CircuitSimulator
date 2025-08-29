@@ -42,6 +42,9 @@ public class CircuitManager : MonoBehaviour
         if (instance == null)
         {
             instance = this;
+            
+            // Register with ComponentRegistry for O(1) lookups
+            ComponentRegistry.Instance.RegisterManager<CircuitManager>(this);
         }
         else if (instance != this)
         {

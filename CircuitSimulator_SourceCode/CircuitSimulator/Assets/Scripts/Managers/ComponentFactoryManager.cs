@@ -7,6 +7,11 @@ using System.Collections.Generic;
 /// </summary>
 public class ComponentFactoryManager : MonoBehaviour
 {
+    void Awake()
+    {
+        // Register with ComponentRegistry for performance
+        ComponentRegistry.Instance.RegisterManager<ComponentFactoryManager>(this);
+    }
     [Header("Component Prefabs")]
     public GameObject batteryPrefab;
     public GameObject resistorPrefab;

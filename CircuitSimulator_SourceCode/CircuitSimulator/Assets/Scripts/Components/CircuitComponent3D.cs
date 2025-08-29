@@ -60,6 +60,11 @@ public class CircuitComponent3D : MonoBehaviour
         {
             LabelManager.Instance.UnregisterComponent(this);
         }
+        
+        // Clear references to prevent memory leaks
+        logicalComponent = null;
+        connectedWires?.Clear();
+        connectedWires = null;
     }
     
     // Wire connection methods (used by CircuitWire system)
@@ -91,7 +96,7 @@ public class CircuitComponent3D : MonoBehaviour
         return connectedWires.Count;
     }
     
-    // Visual feedback methods (to be implemented in UI)
+    // Visual feedback methods - now triggers label updates
     public void UpdateVisualFeedback()
     {
         // Update 3D visual representation based on current/voltage
@@ -99,7 +104,9 @@ public class CircuitComponent3D : MonoBehaviour
         // - Bulb brightness based on current
         // - Wire glow based on current
         // - Battery charge indicators
-        // - Voltage/current displays
+        
+        // Trigger event-driven label updates (Performance: no more polling)
+        LabelManager.Instance?.UpdateLabelsForComponent(this);
         
         // For AR future: could control holographic effects, particle systems, etc.
     }

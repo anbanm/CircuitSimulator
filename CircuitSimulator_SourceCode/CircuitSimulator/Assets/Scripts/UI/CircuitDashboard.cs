@@ -57,7 +57,7 @@ public class CircuitDashboard : MonoBehaviour
     public void UpdateAllReadings()
     {
         // Get current circuit from the scene
-        var circuitManager = FindFirstObjectByType<CircuitManager>();
+        var circuitManager = ComponentRegistry.Instance.GetManager<CircuitManager>();
         if (circuitManager != null)
         {
             // TODO: Get circuit components from the manager

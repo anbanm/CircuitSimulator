@@ -72,7 +72,7 @@ public class CircuitWire : MonoBehaviour
         CircuitManager manager = CircuitManager.Instance;
         if (manager == null)
         {
-            manager = FindFirstObjectByType<CircuitManager>();
+            manager = ComponentRegistry.Instance.GetManager<CircuitManager>();
         }
         
         if (manager != null)
@@ -177,7 +177,7 @@ public class CircuitWire : MonoBehaviour
         CircuitManager manager = CircuitManager.Instance;
         if (manager == null)
         {
-            manager = FindFirstObjectByType<CircuitManager>();
+            manager = ComponentRegistry.Instance.GetManager<CircuitManager>();
         }
         if (manager != null)
         {

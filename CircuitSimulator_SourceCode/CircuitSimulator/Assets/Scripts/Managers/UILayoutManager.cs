@@ -222,7 +222,7 @@ public class UILayoutManager : MonoBehaviour
         }
         else
         {
-            var factoryManager = FindFirstObjectByType<ComponentFactoryManager>();
+            var factoryManager = ComponentRegistry.Instance.GetManager<ComponentFactoryManager>();
             if (factoryManager != null)
             {
                 PlaceComponentType(componentType, factoryManager);
@@ -234,7 +234,7 @@ public class UILayoutManager : MonoBehaviour
     {
         Debug.Log("🔌 Wire Tool Activated");
         
-        var connectTool = FindFirstObjectByType<ConnectTool>();
+        var connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
         if (connectTool == null)
         {
             GameObject connectToolObj = new GameObject("ConnectTool");

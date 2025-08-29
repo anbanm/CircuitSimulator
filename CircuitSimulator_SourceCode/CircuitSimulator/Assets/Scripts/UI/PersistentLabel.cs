@@ -46,14 +46,42 @@ public class PersistentLabel : MonoBehaviour
         // If target component is destroyed, destroy this label
         if (targetComponent == null)
         {
-            Destroy(gameObject);
+            CleanupAndDestroy();
             return;
         }
         
-        // Follow the component
+        // Follow the component (only position, text updates are event-driven)
         transform.position = targetComponent.transform.position + offset;
+    }
+    
+    void OnDestroy()
+    {
+        // Ensure proper cleanup when label is destroyed
+        CleanupReferences();
+    }
+    
+    private void CleanupAndDestroy()
+    {
+        CleanupReferences();
+        Destroy(gameObject);
+    }
+    
+    private void CleanupReferences()
+    {
+        // Clear references to prevent memory leaks
+        targetComponent = null;
+        textMesh = null;
         
-        // Update text based on type
+        // Notify LabelManager if it exists
+        if (LabelManager.Instance != null)
+        {
+            // The LabelManager will handle removing this from its dictionary
+        }
+    }
+    
+    // Event-driven text update instead of every frame
+    public void UpdateTextValues()
+    {
         UpdateText();
     }
     

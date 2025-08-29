@@ -14,7 +14,7 @@ public class CircuitControlManager : MonoBehaviour
         circuitManager = CircuitManager.Instance;
         if (circuitManager == null)
         {
-            circuitManager = FindFirstObjectByType<CircuitManager>();
+            circuitManager = ComponentRegistry.Instance.GetManager<CircuitManager>();
         }
         
         Debug.Log("CircuitControlManager initialized");
@@ -108,7 +108,7 @@ public class CircuitControlManager : MonoBehaviour
         circuitManager = CircuitManager.Instance;
         if (circuitManager == null)
         {
-            circuitManager = FindFirstObjectByType<CircuitManager>();
+            circuitManager = ComponentRegistry.Instance.GetManager<CircuitManager>();
         }
     }
     

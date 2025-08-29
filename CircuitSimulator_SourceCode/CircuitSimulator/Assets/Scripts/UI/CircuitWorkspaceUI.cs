@@ -44,7 +44,7 @@ public class CircuitWorkspaceUI : MonoBehaviour
         Debug.LogWarning("CircuitWorkspaceUI is deprecated. Auto-migrating to WorkspaceManager architecture...");
         
         // Create or find WorkspaceManager
-        WorkspaceManager workspaceManager = FindFirstObjectByType<WorkspaceManager>();
+        WorkspaceManager workspaceManager = ComponentRegistry.Instance.GetManager<WorkspaceManager>();
         if (workspaceManager == null)
         {
             GameObject managerObj = new GameObject("WorkspaceManager");

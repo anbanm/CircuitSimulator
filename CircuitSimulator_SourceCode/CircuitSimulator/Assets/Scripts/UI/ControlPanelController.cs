@@ -40,7 +40,7 @@ public class ControlPanelController : MonoBehaviour
             
         // Find connect tool if not assigned
         if (connectTool == null)
-            connectTool = FindFirstObjectByType<ConnectTool>();
+            connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
         
         SetupButtons();
     }

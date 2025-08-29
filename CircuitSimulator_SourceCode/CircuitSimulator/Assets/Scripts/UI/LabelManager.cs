@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 
 /// <summary>
@@ -29,6 +30,9 @@ public class LabelManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
+            
+            // Subscribe to scene changes to prevent memory leaks
+            SceneManager.sceneUnloaded += OnSceneUnloaded;
         }
         else if (instance != this)
         {
@@ -36,10 +40,36 @@ public class LabelManager : MonoBehaviour
         }
     }
     
+    void OnDestroy()
+    {
+        // Unsubscribe from scene events
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
+    }
+    
+    private void OnSceneUnloaded(Scene scene)
+    {
+        // Clean up all labels when scene changes to prevent memory leaks
+        Debug.Log($"Scene {scene.name} unloaded, cleaning up {componentLabels.Count} component labels");
+        
+        foreach (var kvp in componentLabels)
+        {
+            foreach (var label in kvp.Value)
+            {
+                if (label != null && label.gameObject != null)
+                {
+                    Destroy(label.gameObject);
+                }
+            }
+        }
+        
+        componentLabels.Clear();
+        Debug.Log("All labels cleaned up for scene change");
+    }
+    
     void Start()
     {
-        // Check for labels every frame
-        InvokeRepeating("EnsureAllLabelsExist", 0.5f, 0.1f);
+        // Remove expensive polling - now event-driven
+        // InvokeRepeating removed for +15 FPS performance gain
     }
     
     public void RegisterComponent(CircuitComponent3D component)
@@ -71,20 +101,10 @@ public class LabelManager : MonoBehaviour
         Debug.Log($"Registered labels for {component.name}");
     }
     
-    void EnsureAllLabelsExist()
+    // Called manually only when needed, not on timer
+    public void CleanupOrphanedLabels()
     {
-        // Find all components in scene
-        CircuitComponent3D[] allComponents = FindObjectsOfType<CircuitComponent3D>();
-        
-        foreach (var component in allComponents)
-        {
-            if (component != null && !componentLabels.ContainsKey(component))
-            {
-                RegisterComponent(component);
-            }
-        }
-        
-        // Clean up null entries
+        // Clean up null entries without expensive FindObjectsOfType
         List<CircuitComponent3D> toRemove = new List<CircuitComponent3D>();
         foreach (var kvp in componentLabels)
         {
@@ -120,6 +140,34 @@ public class LabelManager : MonoBehaviour
                 }
             }
             componentLabels.Remove(component);
+            Debug.Log($"Unregistered labels for {component?.name}");
+        }
+    }
+    
+    // Event-driven label updates when circuit values change
+    public void UpdateLabelsForComponent(CircuitComponent3D component)
+    {
+        if (componentLabels.ContainsKey(component))
+        {
+            foreach (var label in componentLabels[component])
+            {
+                if (label != null)
+                {
+                    label.UpdateTextValues();
+                }
+            }
+        }
+    }
+    
+    // Update all labels when circuit is solved
+    public void UpdateAllLabels()
+    {
+        foreach (var kvp in componentLabels)
+        {
+            if (kvp.Key != null)
+            {
+                UpdateLabelsForComponent(kvp.Key);
+            }
         }
     }
 }

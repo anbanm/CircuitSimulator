@@ -29,7 +29,7 @@ public class PaletteUIManager : MonoBehaviour
     
     private void EnsureConnectToolExists()
     {
-        ConnectTool connectTool = FindFirstObjectByType<ConnectTool>();
+        ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
         if (connectTool == null)
         {
             GameObject connectToolObj = new GameObject("ConnectTool");
@@ -257,7 +257,7 @@ public class PaletteUIManager : MonoBehaviour
         Debug.Log("👆 Select Mode Activated - Click components to select them");
         
         // Find ConnectTool (should always exist now)
-        ConnectTool connectTool = FindFirstObjectByType<ConnectTool>();
+        ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
         if (connectTool != null)
         {
             connectTool.SetSelectMode();
@@ -273,7 +273,7 @@ public class PaletteUIManager : MonoBehaviour
         Debug.Log("🔌 Connect Mode Activated - Click on two components to connect them");
         
         // Find ConnectTool (should always exist now)
-        ConnectTool connectTool = FindFirstObjectByType<ConnectTool>();
+        ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
         if (connectTool != null)
         {
             connectTool.SetConnectMode();

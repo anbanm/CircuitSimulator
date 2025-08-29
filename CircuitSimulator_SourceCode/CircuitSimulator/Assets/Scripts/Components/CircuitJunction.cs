@@ -114,7 +114,7 @@ public class CircuitJunction : MonoBehaviour
     void OnMouseDown()
     {
         // Check if connect tool is active
-        ConnectTool connectTool = FindFirstObjectByType<ConnectTool>();
+        ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
         if (connectTool != null && connectTool.IsConnectMode())
         {
             // Treat junction like a component for connections
