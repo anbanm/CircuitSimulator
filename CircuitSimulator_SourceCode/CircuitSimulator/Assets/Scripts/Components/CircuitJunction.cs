@@ -2,8 +2,9 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Junction/Node component that allows branching for parallel circuits
-/// Makes it easy to create connection points where multiple wires meet
+/// Visual junction component for parallel circuit branching
+/// Provides clear connection points - NOT an electrical component
+/// The spatial node system automatically handles electrical connectivity
 /// </summary>
 public class CircuitJunction : MonoBehaviour
 {
@@ -65,8 +66,10 @@ public class CircuitJunction : MonoBehaviour
     
     void RegisterWithManager()
     {
-        // Junctions don't need to register as components
-        // They just facilitate connections
+        // Junctions are visual-only aids - they don't register as electrical components
+        // They help the spatial node system by providing clear connection points
+        // The CircuitNodeManager will automatically create shared nodes for components near this junction
+        Debug.Log($"Junction {name} created as visual connection aid at {transform.position}");
     }
     
     public void AddConnectedWire(GameObject wire)
@@ -113,17 +116,17 @@ public class CircuitJunction : MonoBehaviour
     
     void OnMouseDown()
     {
-        // Check if connect tool is active
-        ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
-        if (connectTool != null && connectTool.IsConnectMode())
+        // FIXED: Use existing SelectableComponent (should already exist from factory)
+        SelectableComponent selectable = GetComponent<SelectableComponent>();
+        if (selectable != null)
         {
-            // Treat junction like a component for connections
-            SelectableComponent selectable = GetComponent<SelectableComponent>();
-            if (selectable == null)
-            {
-                selectable = gameObject.AddComponent<SelectableComponent>();
-            }
-            connectTool.OnComponentClicked(selectable);
+            // Let SelectableComponent handle the connection logic
+            // This will properly handle both connect mode and select mode
+            selectable.SendMessage("OnMouseDown", SendMessageOptions.DontRequireReceiver);
+        }
+        else
+        {
+            Debug.LogError($"Junction {name} missing SelectableComponent - cannot be connected!");
         }
     }
     
@@ -150,9 +153,33 @@ public class CircuitJunction : MonoBehaviour
     
     /// <summary>
     /// Get the effective position for wire connections
+    /// This is where the spatial node system will create shared electrical nodes
     /// </summary>
     public Vector3 GetConnectionPoint()
     {
         return transform.position;
+    }
+    
+    /// <summary>
+    /// Check if a component is close enough to share this junction's electrical node
+    /// Uses the same tolerance as the spatial node system (0.5f units)
+    /// </summary>
+    public bool IsComponentNearJunction(Vector3 componentPosition)
+    {
+        float nodeShareTolerance = 0.5f; // Same as CircuitNodeManager
+        return Vector3.Distance(transform.position, componentPosition) <= nodeShareTolerance;
+    }
+    
+    /// <summary>
+    /// Visual feedback when components connect through this junction
+    /// </summary>
+    public void ShowConnectionFeedback(bool connected)
+    {
+        if (junctionRenderer != null)
+        {
+            Color feedbackColor = connected ? Color.green : junctionColor;
+            junctionRenderer.material.color = feedbackColor;
+            junctionRenderer.material.SetColor("_EmissionColor", feedbackColor * 0.5f);
+        }
     }
 }

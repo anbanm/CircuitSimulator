@@ -94,20 +94,17 @@ public class ComponentFactoryManager : MonoBehaviour
             renderer.material.color = new Color(0.5f, 0.5f, 0.7f, 1f);
         }
         
-        // Add CircuitComponent3D for wire connectivity (junctions act like 0-resistance wires)
-        CircuitComponent3D circuitComp = junction.AddComponent<CircuitComponent3D>();
-        circuitComp.ComponentType = ComponentType.Wire;
-        circuitComp.resistance = 0.001f; // Near-zero resistance
-        circuitComp.voltage = 0f;
+        // FIXED: Junctions are VISUAL-ONLY connection aids, not electrical components
+        // They help the spatial node system by providing clear connection points
         
-        // Add junction script for visual behavior
-        CircuitJunction junctionScript = junction.AddComponent<CircuitJunction>();
-        
-        // Add selection capability
+        // Add selection capability for wire connections
         SelectableComponent selectable = junction.AddComponent<SelectableComponent>();
         
         // Add movement capability
         MoveableComponent moveable = junction.AddComponent<MoveableComponent>();
+        
+        // Add junction script for visual behavior and connection logic
+        CircuitJunction junctionScript = junction.AddComponent<CircuitJunction>();
         
         // DISABLED - Using PersistentLabel system instead
         // ComponentValueDisplay valueDisplay = junction.AddComponent<ComponentValueDisplay>();
