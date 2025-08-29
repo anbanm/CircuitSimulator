@@ -70,6 +70,9 @@ public class PaletteUIManager : MonoBehaviour
         CreateButton("Test", utilityColor, () => controlManager?.TestCircuit(), "Test circuit");
         CreateButton("Delete", new Color(0.8f, 0.3f, 0.3f, 1f), DeleteSelectedComponent, "Delete selected component");
         CreateButton("Reset", utilityColor, () => ResetCircuit(), "Clear all components");
+        
+        // Educational assistance toggle
+        CreateButton("Help", new Color(0.3f, 0.7f, 0.3f, 1f), () => MisconceptionAlert.Instance.ToggleMisconceptionDetection(), "Toggle learning assistance (M key)");
     }
     
     private void CreateButton(string label, Color color, System.Action onClick, string tooltip = "")
@@ -340,6 +343,13 @@ public class PaletteUIManager : MonoBehaviour
         {
             Debug.Log("Deleting Selected Component (X key)");
             DeleteSelectedComponent();
+        }
+        
+        // M key - Toggle Misconception Detection (educational assistance)
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            Debug.Log("Toggle Misconception Detection (M key)");
+            MisconceptionAlert.Instance.ToggleMisconceptionDetection();
         }
     }
     
