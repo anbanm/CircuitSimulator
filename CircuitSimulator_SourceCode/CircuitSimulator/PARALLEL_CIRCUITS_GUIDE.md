@@ -1,7 +1,7 @@
-# 🔀 How to Create Parallel Circuits - SIMPLE!
+# 🔀 How to Create Parallel Circuits - SIMPLE! (v1.2)
 
-## ✨ **NEW: Junction Component**
-Junctions are **connection points** where wires can split or merge. Think of them as electrical "intersections".
+## ✨ **NEW: Visual Junction Component**
+Junctions are **visual connection aids** where wires can split or merge. They provide clear connection points but don't affect electrical calculations - the spatial node system handles actual connectivity automatically!
 
 ## 📋 **Step-by-Step Parallel Circuit**
 
@@ -42,17 +42,20 @@ Junctions are **connection points** where wires can split or merge. Think of the
      [🔋 Battery]
 ```
 
-## 💡 **Why Junctions?**
-- **Clear visual**: You can SEE where circuits branch
-- **Easy to understand**: Like a road intersection for electricity
-- **Multiple connections**: Can connect 3, 4, or more wires to one junction
+## 💡 **Why Junctions? (v1.2 Architecture)**
+- **Visual clarity**: You can SEE where circuits branch
+- **Educational tool**: Like a road intersection for electricity
+- **Spatial connectivity**: Components within 0.5 units automatically share electrical nodes
+- **Non-electrical**: Junctions don't participate in circuit solving - purely visual aids
 - **Move freely**: Junctions can be repositioned like any component
 
-## ⚡ **Quick Tips:**
-- **Junction = Split/Merge point**
+## ⚡ **Quick Tips (v1.2):**
+- **Junction = Visual connection point** (not electrical component)
 - **Blue spheres** are junctions
 - **J key** creates a junction
-- Connect multiple wires to same junction for branching
+- **0.5 unit rule**: Components within 0.5 units of junction share electrical nodes
+- **Spatial system**: CircuitNodeManager automatically handles electrical connectivity
+- Connect components near junctions for parallel branching
 
 ## 🎮 **Keyboard Shortcuts:**
 - **B** - Battery

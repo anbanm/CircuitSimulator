@@ -1,4 +1,4 @@
-# Dependency Maps
+# Dependency Maps (v1.2 - Phase 1 Optimized)
 
 ## 🔗 **Function Call Dependency Map**
 
@@ -7,17 +7,26 @@ graph TD
     %% User Entry Points
     UI[UI Layer] --> CM[CircuitManager]
     
-    %% CircuitManager as Central Hub
+    %% CircuitManager as Central Hub (v1.2: ComponentRegistry integration)
+    CR[ComponentRegistry] -->|O(1) lookups| CM
     CM --> CSM[CircuitSolverManager]
-    CM --> CNM[CircuitNodeManager]
+    CM --> CNM[CircuitNodeManager] 
     CM --> CDM[CircuitDebugManager]
     CM --> CEM[CircuitEventManager]
     
-    %% Component Registration Flow
+    %% ComponentRegistry replaces FindObjectsOfType calls
+    CR -->|GetManager| CSM
+    CR -->|GetManager| CNM
+    CR -->|GetManager| CFM
+    
+    %% Component Registration Flow (v1.2: Event-driven label updates)
     C3D[CircuitComponent3D] -->|RegisterComponent| CM
+    C3D -->|RegisterComponent| LM[LabelManager]
     CW[CircuitWire] -->|RegisterWire| CM
     CM -->|NotifyRegistration| CEM
     CM -->|MarkCircuitChanged| CSM
+    CSM -->|UpdateVisualFeedback| C3D
+    C3D -->|UpdateLabels| LM
     
     %% Solving Flow
     CSM -->|BuildLogicalCircuit| CNM
@@ -131,25 +140,30 @@ graph LR
     style CPC fill:#fbf,stroke:#333,stroke-width:2px
 ```
 
-## 📊 **Dependency Matrix**
+## 📊 **Dependency Matrix (v1.2)**
 
 ### **Manager Cross-Dependencies**
-| From ↓ / To → | CircuitManager | SolverManager | NodeManager | DebugManager | EventManager |
-|----------------|:--------------:|:-------------:|:-----------:|:------------:|:------------:|
-| CircuitManager |       -        |       ✓       |      ✓      |      ✓       |      ✓       |
-| SolverManager  |       ✓        |       -       |      ✓      |      ✓       |              |
-| NodeManager    |                |               |      -      |      ✓       |              |
-| DebugManager   |                |               |             |      -       |              |
-| EventManager   |                |               |             |              |      -       |
+| From ↓ / To → | CircuitManager | SolverManager | NodeManager | DebugManager | EventManager | ComponentRegistry |
+|----------------|:--------------:|:-------------:|:-----------:|:------------:|:------------:|:-----------------:|
+| CircuitManager |       -        |       ✓       |      ✓      |      ✓       |      ✓       |        ✓         |
+| SolverManager  |       ✓        |       -       |      ✓      |      ✓       |              |        ✓         |
+| NodeManager    |                |               |      -      |      ✓       |              |        ✓         |
+| DebugManager   |                |               |             |      -       |              |                  |
+| EventManager   |                |               |             |              |      -       |                  |
+| ComponentRegistry |             |               |             |              |              |        -         |
 
-### **Component Dependencies**
+### **Component Dependencies (v1.2)**
 | Component | Depends On | Used By |
 |-----------|------------|---------|
-| CircuitComponent3D | CircuitManager | ComponentFactoryManager, MeasurementDisplayManager |
+| CircuitComponent3D | CircuitManager, LabelManager | ComponentFactoryManager, MeasurementDisplayManager |
 | CircuitWire | CircuitManager, CircuitComponent3D | ConnectTool |
+| CircuitJunction | SelectableComponent, MoveableComponent | ComponentFactoryManager |
 | CircuitCore | - | CircuitManager, SolverManager, NodeManager |
 | CircuitSolver | CircuitCore | CircuitSolverManager |
 | CircuitValidator | CircuitCore | CircuitDebugManager |
+| ComponentRegistry | - | All managers (replaces FindObjectsOfType) |
+| PersistentLabel | CircuitComponent3D, LabelManager | Event-driven updates |
+| LabelManager | PersistentLabel | CircuitComponent3D |
 
 ## 🎯 **Critical Dependency Paths**
 
@@ -234,10 +248,17 @@ CircuitSolverManager.UpdateComponentsFromSolver()
 | Coupling factor | 0.18 | < 0.3 | ✅ |
 | Instability (avg) | 0.4 | 0.3-0.7 | ✅ |
 
-## 🚀 **Dependency Optimization Opportunities**
+## 🚀 **Dependency Optimization (v1.2)**
 
-1. **Event Bus Enhancement**: Replace direct manager references with event-driven communication
-2. **Interface Extraction**: Define ICircuitManager, ISolverManager interfaces
-3. **Dependency Injection Container**: Centralize manager creation and wiring
-4. **Lazy Loading**: Defer manager initialization until needed
-5. **Module Bundling**: Group related managers into assemblies
+### **✅ Completed (Phase 1)**
+1. **ComponentRegistry**: Eliminated expensive FindObjectsOfType calls with O(1) lookups
+2. **Event-Driven Labels**: Replaced polling with event-based updates
+3. **Memory Leak Prevention**: Proper cleanup on scene changes and component destruction
+4. **Junction Architecture**: Visual-only junctions, spatial node system handles connectivity
+
+### **🔄 Next Phase Opportunities**
+1. **Interface Extraction**: Define ICircuitManager, ISolverManager interfaces
+2. **Dependency Injection Container**: Centralize manager creation and wiring
+3. **Lazy Loading**: Defer manager initialization until needed
+4. **Module Bundling**: Group related managers into assemblies
+5. **Standardized Singleton Pattern**: Consistent singleton implementation across all managers

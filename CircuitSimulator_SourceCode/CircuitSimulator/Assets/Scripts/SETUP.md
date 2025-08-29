@@ -1,4 +1,4 @@
-# Unity Circuit Simulator - Setup Guide
+# Unity Circuit Simulator - Setup Guide (v1.2)
 
 ## 📋 **Prerequisites**
 
@@ -40,13 +40,15 @@ Edit → Project Settings → Player → Configuration
 2. Save as: Assets/Scenes/CircuitSimulator.unity
 ```
 
-### **Step 2: Setup Core Managers**
+### **Step 2: Setup Core Managers (v1.2 Architecture)**
 Create these GameObjects in hierarchy:
 
 ```
 CircuitSimulator (Scene Root)
 ├── Managers
 │   ├── CircuitManager (Add all 5 Circuit System managers)
+│   │   ├── ComponentRegistry (NEW v1.2 - O(1) manager lookups)
+│   │   ├── LabelManager (NEW v1.2 - Event-driven label system)
 │   ├── WorkspaceManager (Add all 4 Workspace System managers)
 │   └── ComponentPalette (Add all 4 Component System managers)
 ├── Workspace

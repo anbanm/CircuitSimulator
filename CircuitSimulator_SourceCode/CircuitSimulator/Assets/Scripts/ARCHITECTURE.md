@@ -11,16 +11,16 @@ Assets/Scripts/
 └── AR/            # AR-specific adaptations
 ```
 
-## 🏗️ **Manager Architecture**
+## 🏗️ **Manager Architecture (v1.2)**
 
 ### **Circuit System (5 managers)**
 | Manager | Lines | Responsibility |
 |---------|-------|----------------|
-| CircuitManager | 240 | Central hub, component/wire registration |
+| CircuitManager | 240 | Central hub, component/wire registration, ComponentRegistry integration |
 | CircuitSolverManager | 259 | Solving logic, timing, solver integration |
-| CircuitNodeManager | 165 | Spatial nodes, connectivity graph |
+| CircuitNodeManager | 165 | Spatial nodes (0.5f tolerance), junction connectivity |
 | CircuitDebugManager | 273 | Logging, reports, debugging |
-| CircuitEventManager | 122 | State change notifications |
+| CircuitEventManager | 122 | Event-driven notifications, label updates |
 
 ### **Workspace System (4 managers)**
 | Manager | Lines | Responsibility |
@@ -52,34 +52,41 @@ See [DEPENDENCY.md](./DEPENDENCY.md) for detailed dependency maps and analysis.
 **Component Creation:**
 `UI Click → PaletteUIManager → ComponentFactory.Create() → CircuitComponent3D → CircuitManager.Register()`
 
-## 📊 **Architectural Patterns**
+## 📊 **Architectural Patterns (v1.2)**
 
 1. **Singleton**: CircuitManager.Instance (central coordinator)
-2. **Manager**: Specialized managers with single responsibilities
-3. **Observer**: CircuitEventManager for state notifications
-4. **Factory**: ComponentFactoryManager for creation
-5. **Adapter**: ARWorkspaceAdapter for AR features
+2. **Manager**: Specialized managers with single responsibilities  
+3. **Registry**: ComponentRegistry for O(1) manager lookups
+4. **Observer**: CircuitEventManager for state notifications
+5. **Factory**: ComponentFactoryManager for creation
+6. **Adapter**: ARWorkspaceAdapter for AR features
+7. **Event-Driven**: Label updates only on circuit changes
 
-## ⚡ **Performance**
+## ⚡ **Performance (v1.2 Optimized)**
 
 | Hotspot | Solution |
 |---------|----------|
+| ~~FindObjectsOfType calls~~ | ✅ ComponentRegistry O(1) lookups |
+| ~~Label polling every 0.1s~~ | ✅ Event-driven label updates |
+| ~~Memory leaks~~ | ✅ Proper cleanup on scene changes |
 | SolverManager.Update() | Throttled with solveDelay |
 | NodeManager.BuildNodes() | Spatial indexing for O(n²) → O(n log n) |
-| MeasurementDisplay.Update() | Update interval limiting |
+| Junction connectivity | ✅ Visual-only, spatial node system handles connectivity |
 
-## 🧪 **Testing Example**
+## 🧪 **Testing Example (v1.2)**
 ```csharp
-// Integration test
+// Integration test - using optimized ComponentRegistry
 var manager = CircuitManager.Instance;
-var factory = FindFirstObjectByType<ComponentFactoryManager>();
+var factory = ComponentRegistry.Instance.GetManager<ComponentFactoryManager>();
 
 var battery = factory.CreateBattery();
 var resistor = factory.CreateResistor();
+var junction = factory.CreateJunction(); // Visual connection aid
 var wire = ConnectTool.CreateWire(battery, resistor);
 
 manager.SolveCircuit();
 Assert.IsTrue(battery.current > 0);
+// Junction provides visual feedback but doesn't affect electrical calculations
 ```
 
 ## 📈 **Results**
@@ -94,7 +101,7 @@ Assert.IsTrue(battery.current > 0);
 - ✅ Scalable (easy to add features)
 - ✅ AR-Ready (dedicated AR components)
 
-## 🚀 **Usage**
+## 🚀 **Usage (v1.2)**
 
 ```csharp
 // Old (deprecated)
@@ -103,12 +110,15 @@ Circuit3DManager.Instance.RegisterComponent(comp);
 // New (modular)
 CircuitManager.Instance.RegisterComponent(comp);
 
-// Direct manager access
-var solver = FindFirstObjectByType<CircuitSolverManager>();
+// v1.2 Optimized - ComponentRegistry for O(1) lookups
+var solver = ComponentRegistry.Instance.GetManager<CircuitSolverManager>();
 solver.EnableDebugMode(true);
+
+// Event-driven label updates
+LabelManager.Instance.UpdateLabelsForComponent(comp);
 ```
 
-## 🎯 **Current Status: v1.0 Production Ready**
+## 🎯 **Current Status: v1.2 Phase 1 Performance Optimized**
 
 ### **Migration Complete**
 - Circuit3DManager → 5 specialized managers ✅
