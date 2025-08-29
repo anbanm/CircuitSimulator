@@ -20,9 +20,16 @@ public class CircuitWire : MonoBehaviour
     private bool isSelected = false;
     private static CircuitWire currentlySelectedWire = null;
     
+    // Educational: Current flow visualization for Grade 7 students
+    private CurrentFlowVisualizer currentFlowVisualizer;
+    
     public CircuitComponent3D Component1 => component1;
     public CircuitComponent3D Component2 => component2;
     public bool IsSelected => isSelected;
+    
+    // For CurrentFlowVisualizer access
+    public CircuitComponent3D startComponent => component1;
+    public CircuitComponent3D endComponent => component2;
     
     public void Initialize(CircuitComponent3D comp1, CircuitComponent3D comp2)
     {
@@ -30,6 +37,7 @@ public class CircuitWire : MonoBehaviour
         component2 = comp2;
         
         SetupVisual();
+        SetupCurrentFlowVisualization();
         RegisterWithComponents();
         RegisterWithManager();
         
@@ -60,6 +68,18 @@ public class CircuitWire : MonoBehaviour
         UpdateWirePosition();
     }
     
+    void SetupCurrentFlowVisualization()
+    {
+        // Add current flow visualization for educational purposes
+        // This helps Grade 7 students SEE electricity flowing
+        currentFlowVisualizer = GetComponent<CurrentFlowVisualizer>();
+        if (currentFlowVisualizer == null)
+        {
+            currentFlowVisualizer = gameObject.AddComponent<CurrentFlowVisualizer>();
+            Debug.Log($"Added current flow visualization to wire: {name}");
+        }
+    }
+    
     void RegisterWithComponents()
     {
         // Tell components about this wire connection
@@ -84,8 +104,32 @@ public class CircuitWire : MonoBehaviour
     void Update()
     {
         UpdateWirePosition();
+        UpdateCurrentFromComponents();
         UpdateVisualFromCircuitData();
         HandleInput();
+    }
+    
+    void UpdateCurrentFromComponents()
+    {
+        // Get current from connected components for educational visualization
+        // This ensures the current flow dots show the correct speed
+        if (component1 != null && component2 != null)
+        {
+            // Use the current from the first component (should be same in series)
+            float componentCurrent = component1.current;
+            
+            // Only update if there's a significant change
+            if (Mathf.Abs(componentCurrent - current) > 0.001f)
+            {
+                current = componentCurrent;
+                
+                // Debug info for educational purposes
+                if (Mathf.Abs(current) > 0.01f)
+                {
+                    Debug.Log($"Wire {name}: Current updated to {current:F3}A");
+                }
+            }
+        }
     }
     
     void UpdateWirePosition()
