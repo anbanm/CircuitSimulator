@@ -19,6 +19,7 @@ public class CircuitSolverManager : MonoBehaviour
     private CircuitManager circuitManager;
     private CircuitNodeManager nodeManager;
     private CircuitDebugManager debugManager;
+    private ComponentTerminalManager terminalManager;
     
     public void Initialize()
     {
@@ -26,6 +27,7 @@ public class CircuitSolverManager : MonoBehaviour
         circuitManager = CircuitManager.Instance;
         nodeManager = GetComponent<CircuitNodeManager>();
         debugManager = GetComponent<CircuitDebugManager>();
+        terminalManager = GetComponent<ComponentTerminalManager>();
         
         // Initialize solver
         circuitSolver = new CircuitSolver();
@@ -160,36 +162,33 @@ public class CircuitSolverManager : MonoBehaviour
             debugManager?.LogToFile($"Components: {circuitManager.Components.Count}, Wires: {circuitManager.Wires.Count}");
         }
         
-        // Use node manager to create spatial node system
-        var spatialNodes = nodeManager?.CreateSpatialNodeSystem();
-        if (spatialNodes == null)
-        {
-            Debug.LogError("Failed to create spatial node system");
-            return logicalComponents;
-        }
+        // Use terminal manager to update logical connections
+        terminalManager?.UpdateLogicalConnections();
         
-        // Create logical components using spatial nodes
+        // Create logical components using terminal-based nodes
         foreach (var comp3D in circuitManager.Components)
         {
             if (comp3D == null) continue;
             
-            // Get component terminal positions
-            Vector3 componentPos = comp3D.transform.position;
-            Vector3 inputPos = componentPos + Vector3.left * 0.3f;
-            Vector3 outputPos = componentPos + Vector3.right * 0.3f;
-            
-            // Find the spatial nodes for these positions
-            var nodeA = nodeManager?.GetSpatialNode(spatialNodes, inputPos, 0.5f);
-            var nodeB = nodeManager?.GetSpatialNode(spatialNodes, outputPos, 0.5f);
-            
-            if (nodeA == null || nodeB == null)
+            // Get component terminals
+            var terminals = terminalManager?.GetComponentTerminals(comp3D);
+            if (terminals == null || terminals.Count < 2)
             {
-                Debug.LogError($"Could not find spatial nodes for component {comp3D.name}");
+                Debug.LogWarning($"Component {comp3D.name} does not have proper terminals");
+                continue;
+            }
+            
+            var inputTerminal = terminals.Find(t => t.isInput);
+            var outputTerminal = terminals.Find(t => !t.isInput);
+            
+            if (inputTerminal?.electricalNode == null || outputTerminal?.electricalNode == null)
+            {
+                Debug.LogWarning($"Component {comp3D.name} terminals do not have electrical nodes");
                 continue;
             }
             
             // Create appropriate logical component
-            CircuitComponent logicalComp = CreateLogicalComponent(comp3D, nodeA, nodeB);
+            CircuitComponent logicalComp = CreateLogicalComponent(comp3D, inputTerminal.electricalNode, outputTerminal.electricalNode);
             if (logicalComp != null)
             {
                 logicalComponents.Add(logicalComp);
@@ -197,7 +196,7 @@ public class CircuitSolverManager : MonoBehaviour
                 
                 if (debugSolver)
                 {
-                    debugManager?.LogToFile($"Created {logicalComp.GetType().Name}: {logicalComp.Id}");
+                    debugManager?.LogToFile($"Created {logicalComp.GetType().Name}: {logicalComp.Id} with terminals");
                 }
             }
         }
@@ -205,12 +204,7 @@ public class CircuitSolverManager : MonoBehaviour
         if (debugSolver)
         {
             debugManager?.LogToFile($"Final circuit: {logicalComponents.Count} components");
-            var uniqueNodes = spatialNodes.Values.Distinct().ToList();
-            debugManager?.LogToFile($"Unique nodes: {uniqueNodes.Count()}");
-            foreach (var node in uniqueNodes)
-            {
-                debugManager?.LogToFile($"  Node {node.Id}: {node.ConnectedComponents.Count} components");
-            }
+            debugManager?.LogToFile("Terminal-based electrical connections established");
         }
         
         return logicalComponents;

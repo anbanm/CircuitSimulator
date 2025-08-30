@@ -20,6 +20,10 @@ public class CircuitWire : MonoBehaviour
     private bool isSelected = false;
     private static CircuitWire currentlySelectedWire = null;
     
+    // Terminal-based connections (new architecture)
+    public ComponentTerminal startTerminal;
+    public ComponentTerminal endTerminal;
+    
     // Educational: Current flow visualization for Grade 7 students
     private CurrentFlowVisualizer currentFlowVisualizer;
     
@@ -43,6 +47,22 @@ public class CircuitWire : MonoBehaviour
         
         name = $"Wire_{comp1.name}_to_{comp2.name}";
         Debug.Log($"Created circuit wire: {name}");
+    }
+    
+    public void InitializeWithTerminals(ComponentTerminal terminal1, ComponentTerminal terminal2)
+    {
+        startTerminal = terminal1;
+        endTerminal = terminal2;
+        component1 = terminal1.ParentComponent;
+        component2 = terminal2.ParentComponent;
+        
+        SetupVisual();
+        SetupCurrentFlowVisualization();
+        RegisterWithComponents();
+        RegisterWithManager();
+        
+        name = $"Wire_{terminal1.name}_to_{terminal2.name}";
+        Debug.Log($"Created terminal-based circuit wire: {name}");
     }
     
     void SetupVisual()
@@ -134,14 +154,29 @@ public class CircuitWire : MonoBehaviour
     
     void UpdateWirePosition()
     {
-        if (component1 != null && component2 != null && lineRenderer != null)
+        if (lineRenderer == null) return;
+        
+        Vector3 pos1, pos2;
+        
+        // Use terminal positions if available (new architecture)
+        if (startTerminal != null && endTerminal != null)
         {
-            Vector3 pos1 = component1.transform.position + Vector3.up * 0.6f;
-            Vector3 pos2 = component2.transform.position + Vector3.up * 0.6f;
-            
-            lineRenderer.SetPosition(0, pos1);
-            lineRenderer.SetPosition(1, pos2);
+            pos1 = startTerminal.GetConnectionPoint();
+            pos2 = endTerminal.GetConnectionPoint();
         }
+        // Fallback to component positions (legacy)
+        else if (component1 != null && component2 != null)
+        {
+            pos1 = component1.transform.position + Vector3.up * 0.6f;
+            pos2 = component2.transform.position + Vector3.up * 0.6f;
+        }
+        else
+        {
+            return; // Can't position wire without valid endpoints
+        }
+        
+        lineRenderer.SetPosition(0, pos1);
+        lineRenderer.SetPosition(1, pos2);
     }
     
     void UpdateVisualFromCircuitData()

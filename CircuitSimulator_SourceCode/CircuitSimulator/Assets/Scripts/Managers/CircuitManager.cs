@@ -29,6 +29,7 @@ public class CircuitManager : MonoBehaviour
     private CircuitNodeManager nodeManager;
     private CircuitDebugManager debugManager;
     private CircuitEventManager eventManager;
+    private ComponentTerminalManager terminalManager;
     
     // Public properties
     public List<CircuitComponent3D> Components => components;
@@ -62,6 +63,7 @@ public class CircuitManager : MonoBehaviour
         // Initialize solver and register existing components
         solverManager?.Initialize();
         debugManager?.Initialize();
+        terminalManager?.Initialize();
         RegisterExistingComponents();
     }
     
@@ -90,6 +92,10 @@ public class CircuitManager : MonoBehaviour
         eventManager = GetComponent<CircuitEventManager>();
         if (eventManager == null)
             eventManager = gameObject.AddComponent<CircuitEventManager>();
+            
+        terminalManager = GetComponent<ComponentTerminalManager>();
+        if (terminalManager == null)
+            terminalManager = gameObject.AddComponent<ComponentTerminalManager>();
     }
     
     #region Component Management
@@ -102,6 +108,9 @@ public class CircuitManager : MonoBehaviour
         componentCount = components.Count;
         
         Debug.Log($"Registered component: {component.name} (Total: {componentCount})");
+        
+        // Setup terminals for the component
+        terminalManager?.OnComponentRegistered(component);
         
         // Notify managers
         eventManager?.OnComponentRegistered(component);
@@ -116,6 +125,9 @@ public class CircuitManager : MonoBehaviour
         componentCount = components.Count;
         
         Debug.Log($"Unregistered component: {component.name} (Total: {componentCount})");
+        
+        // Remove terminals for the component
+        terminalManager?.OnComponentUnregistered(component);
         
         // Notify managers
         eventManager?.OnComponentUnregistered(component);
