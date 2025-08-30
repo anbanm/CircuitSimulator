@@ -36,6 +36,13 @@ public class CircuitSolverManager : MonoBehaviour
     
     public void Update()
     {
+        // DEBUGGING: Force solve if we have components but haven't solved yet
+        if (circuitManager.ComponentCount > 0 && !circuitNeedsSolving && lastSolveTime == 0f)
+        {
+            Debug.Log("🔧 FORCED SOLVE: Circuit has components but circuitNeedsSolving=false, forcing solve...");
+            circuitNeedsSolving = true;
+        }
+        
         // Handle automatic solving
         if (circuitManager.autoSolve && !manualSolveMode && circuitNeedsSolving)
         {

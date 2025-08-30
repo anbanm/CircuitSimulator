@@ -35,8 +35,8 @@ public class PersistentLabel : MonoBehaviour
         label.textMesh.alignment = TextAlignment.Center;
         label.textMesh.characterSize = 0.3f;
         
-        // Add face camera behavior
-        labelObj.AddComponent<FaceCamera>();
+        // Face camera behavior (manual rotation in Update)
+        // labelObj.AddComponent<FaceCamera>(); // Removed - missing component
         
         return label;
     }

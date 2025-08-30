@@ -39,8 +39,8 @@ public class WireValueDisplay : MonoBehaviour
         currentLabel.alignment = TextAlignment.Center;
         currentLabel.characterSize = 0.25f;
         
-        // Make label face camera
-        labelObj.AddComponent<FaceCamera>();
+        // Make label face camera (manual rotation in Update)
+        // labelObj.AddComponent<FaceCamera>(); // Removed - missing component
     }
     
     void Update()

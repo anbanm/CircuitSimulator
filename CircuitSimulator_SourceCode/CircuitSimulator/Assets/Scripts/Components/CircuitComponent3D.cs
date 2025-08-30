@@ -33,6 +33,9 @@ public class CircuitComponent3D : MonoBehaviour
     
     void Start()
     {
+        // Set up visual connection terminals for educational clarity
+        SetupConnectionTerminals();
+        
         // Register with CircuitManager when component starts
         if (CircuitManager.Instance != null)
         {
@@ -45,6 +48,22 @@ public class CircuitComponent3D : MonoBehaviour
         
         // Register with label manager for persistent labels
         LabelManager.Instance.RegisterComponent(this);
+    }
+    
+    void SetupConnectionTerminals()
+    {
+        // DISABLED temporarily to avoid compilation errors
+        // Will re-enable once core solver is working
+        /*
+        // Add terminal manager if it doesn't exist
+        ComponentTerminalManager terminalManager = GetComponent<ComponentTerminalManager>();
+        if (terminalManager == null)
+        {
+            terminalManager = gameObject.AddComponent<ComponentTerminalManager>();
+            terminalManager.SetupTerminals();
+            Debug.Log($"✅ Added connection terminals to {name} ({ComponentType})");
+        }
+        */
     }
     
     void OnDestroy()
