@@ -7,18 +7,23 @@ using UnityEngine;
 public class CircuitControlManager : MonoBehaviour
 {
     private CircuitManager circuitManager;
-    
+
+    void Start()
+    {
+        Initialize();
+    }
+
     public void Initialize()
     {
         // Get the main circuit manager
         circuitManager = CircuitManager.Instance;
-        if (circuitManager == null)
+        if (circuitManager == null && ComponentRegistry.Instance != null)
         {
             circuitManager = ComponentRegistry.Instance.GetManager<CircuitManager>();
         }
-        
+
         Debug.Log("CircuitControlManager initialized");
-        
+
         // TEST: Check if circuitManager was found
         if (circuitManager != null)
         {
@@ -39,17 +44,19 @@ public class CircuitControlManager : MonoBehaviour
             SolveCircuit();
         }
         
-        // TEST: Basic update test - should show once per second
-        if (Time.frameCount % 60 == 0) // Every 60 frames (roughly 1 second)
-        {
-            Debug.Log("⏰ CircuitControlManager Update() running - Frame: " + Time.frameCount);
-        }
+        // Removed excessive per-frame debug logging that was causing crashes
     }
     
     #region Circuit Operations
     
     public void SolveCircuit()
     {
+        // Refresh reference if null (defensive programming)
+        if (circuitManager == null)
+        {
+            RefreshManagerReference();
+        }
+
         if (circuitManager != null)
         {
             Debug.Log("Manual solve triggered from control manager");

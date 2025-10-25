@@ -1,26 +1,84 @@
 using UnityEngine;
 using System.Collections.Generic;
+using CircuitSimulator.Services;
+using CircuitSimulator;
+using CircuitSimulator.Components;
+using ComponentDefinitionLegacy = CircuitSimulator.ComponentDefinition;
 
 /// <summary>
 /// Handles component creation and placement logic
-/// Manages component prefabs and instantiation
+/// Implements IComponentFactory interface and integrates with ServiceLocator
 /// </summary>
-public class ComponentFactoryManager : MonoBehaviour
+public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
 {
-    void Awake()
-    {
-        // Register with ComponentRegistry for performance
-        ComponentRegistry.Instance.RegisterManager<ComponentFactoryManager>(this);
-    }
     [Header("Component Prefabs")]
     public GameObject batteryPrefab;
     public GameObject resistorPrefab;
     public GameObject bulbPrefab;
     public GameObject switchPrefab;
-    
+
+    [Header("Component Definitions (ScriptableObjects)")]
+    [Tooltip("Optional ThemedComponentDefinition assets for themed components")]
+    public CircuitSimulator.Components.ThemedComponentDefinition[] componentDefinitions;
+
     [Header("Placement Settings")]
     public Transform canvasPlane;
     public float spacing = 2f;
+
+    // IComponentFactory Events
+    public System.Action<CircuitComponent3D> OnComponentCreated { get; set; }
+    public System.Action<CircuitWire> OnWireCreated { get; set; }
+
+    // IComponentFactory Properties
+    public bool UseRandomizedPositioning { get; set; } = false;
+    public float ComponentSpacing { get; set; } = 2f;
+    public Transform ComponentParent { get; set; }
+
+    void Awake()
+    {
+        // Register with ServiceLocator
+        ServiceLocator.Instance.Register<IComponentFactory>(this);
+
+        // Auto-find Components GameObject if canvasPlane not set or incorrectly assigned
+        if (canvasPlane == null || canvasPlane.name == "Main Canvas")
+        {
+            GameObject componentsObj = GameObject.Find("Components");
+            if (componentsObj != null)
+            {
+                canvasPlane = componentsObj.transform;
+                Debug.Log("[ComponentFactoryManager] Auto-assigned Components GameObject as canvasPlane");
+            }
+            else
+            {
+                // Create it if it doesn't exist
+                componentsObj = new GameObject("Components");
+                canvasPlane = componentsObj.transform;
+                Debug.Log("[ComponentFactoryManager] Created and assigned Components GameObject");
+            }
+        }
+
+        // Initialize properties
+        ComponentSpacing = spacing;
+        ComponentParent = canvasPlane;
+
+        Debug.Log("[ComponentFactoryManager] Registered with ServiceLocator");
+    }
+
+    void Start()
+    {
+        // CRITICAL FIX: Disable AR LOD system that's hiding components
+        // This must run in Start() AFTER ARWorkspaceAdapter is initialized
+        var arAdapter = FindFirstObjectByType<ARWorkspaceAdapter>();
+        if (arAdapter != null)
+        {
+            arAdapter.DisableARMode();
+            Debug.Log("[ComponentFactoryManager] Disabled AR Mode to prevent LOD from hiding components");
+        }
+        else
+        {
+            Debug.LogWarning("[ComponentFactoryManager] ARWorkspaceAdapter not found");
+        }
+    }
     
     private int componentCount = 0;
     private List<GameObject> placedComponents = new List<GameObject>();
@@ -51,7 +109,7 @@ public class ComponentFactoryManager : MonoBehaviour
     {
         return CreateComponent("Battery", ComponentType.Battery, Color.red, 6f, 0f);
     }
-    
+
     public GameObject CreateResistor()
     {
         return CreateComponent("Resistor", ComponentType.Resistor, Color.yellow, 0f, 100f);
@@ -159,11 +217,21 @@ public class ComponentFactoryManager : MonoBehaviour
             
             // Add interaction capabilities
             SetupComponentInteraction(componentObject);
-            
+
+            // Setup connection terminals (CRITICAL for terminal-to-terminal wiring)
+            SetupComponentTerminals(componentObject);
+
             // Track component
             placedComponents.Add(componentObject);
             componentCount = placedComponents.Count;
-            
+
+            // Fire interface event
+            var circuitComponent = componentObject.GetComponent<CircuitComponent3D>();
+            if (circuitComponent != null)
+            {
+                OnComponentCreated?.Invoke(circuitComponent);
+            }
+
             Debug.Log($"Successfully created {name} at position {position}. Total components: {componentCount}");
             return componentObject;
         }
@@ -245,13 +313,41 @@ public class ComponentFactoryManager : MonoBehaviour
     private void SetupComponentVisuals(GameObject componentObject, Color color)
     {
         var renderer = componentObject.GetComponent<Renderer>();
-        if (renderer != null && renderer.material != null)
+        if (renderer == null)
+        {
+            Debug.LogError($"MeshRenderer is missing on {componentObject.name}! Component will be invisible.");
+            return;
+        }
+
+        // CRITICAL FIX: Ensure MeshRenderer is enabled
+        renderer.enabled = true;
+
+        // Ensure material exists - create default if missing
+        if (renderer.sharedMaterial == null)
+        {
+            Debug.LogWarning($"Material missing on {componentObject.name}, creating default material");
+            // Use Unity's built-in Standard shader as fallback
+            Shader standardShader = Shader.Find("Standard");
+            if (standardShader != null)
+            {
+                renderer.material = new Material(standardShader);
+            }
+            else
+            {
+                // Absolute fallback - use the default diffuse material
+                renderer.material = new Material(Shader.Find("Diffuse"));
+            }
+        }
+
+        // Set color on material instance
+        if (renderer.material != null)
         {
             renderer.material.color = color;
+            Debug.Log($"✅ Set material color for {componentObject.name} to {color} (Renderer enabled: {renderer.enabled})");
         }
         else
         {
-            Debug.LogWarning("Failed to set material color");
+            Debug.LogError($"Failed to create material for {componentObject.name}");
         }
     }
     
@@ -285,14 +381,25 @@ public class ComponentFactoryManager : MonoBehaviour
         {
             selectable = componentObject.AddComponent<SelectableComponent>();
         }
-        
+
         // Add movement capability
         MoveableComponent moveable = componentObject.GetComponent<MoveableComponent>();
         if (moveable == null)
         {
             moveable = componentObject.AddComponent<MoveableComponent>();
         }
-        
+
+        // CRITICAL FIX: Add InteractionComponent for terminal-based wire connections
+        CircuitSimulator.Components.InteractionComponent interactionComp = componentObject.GetComponent<CircuitSimulator.Components.InteractionComponent>();
+        if (interactionComp == null)
+        {
+            interactionComp = componentObject.AddComponent<CircuitSimulator.Components.InteractionComponent>();
+            Debug.Log($"Added InteractionComponent to {componentObject.name} for terminal-based connections");
+        }
+
+        // Add connection terminals for electrical connections
+        SetupConnectionTerminals(componentObject);
+
         // DISABLED - Using PersistentLabel system instead
         // ComponentValueDisplay valueDisplay = componentObject.GetComponent<ComponentValueDisplay>();
         // if (valueDisplay == null)
@@ -300,9 +407,207 @@ public class ComponentFactoryManager : MonoBehaviour
         //     valueDisplay = componentObject.AddComponent<ComponentValueDisplay>();
         // }
     }
-    
+
+    private void SetupConnectionTerminals(GameObject componentObject)
+    {
+        CircuitComponent3D circuitComp = componentObject.GetComponent<CircuitComponent3D>();
+        if (circuitComp == null) return;
+
+        // NEW: Check if component has gizmo-based connection points
+        ComponentConnectionPoints connectionPoints = componentObject.GetComponent<ComponentConnectionPoints>();
+        if (connectionPoints != null)
+        {
+            Debug.Log($"Using gizmo-based connection points for {componentObject.name}");
+            connectionPoints.CreateRuntimeTerminals();
+            return;
+        }
+
+        // Check if component has a ThemedComponentDefinition with custom connection points
+        CircuitSimulator.Components.ThemedComponentDefinitionApplier definitionApplier = componentObject.GetComponent<CircuitSimulator.Components.ThemedComponentDefinitionApplier>();
+        if (definitionApplier != null && definitionApplier.definition != null)
+        {
+            // Custom connection points will be handled by the ThemedComponentDefinitionApplier
+            Debug.Log($"Using ComponentDefinition connection points for {componentObject.name}");
+            return;
+        }
+
+        // NO FALLBACK - Components MUST have gizmo-based connection points or ThemedComponentDefinition
+        Debug.LogWarning($"Component {componentObject.name} has no connection points defined! Add ComponentConnectionPoints or use a ThemedComponentDefinition.");
+    }
+
+    private void SetupComponentTerminals(GameObject componentObject)
+    {
+        // Get the ComponentTerminalManager from CircuitManager
+        CircuitComponent3D circuitComp = componentObject.GetComponent<CircuitComponent3D>();
+        if (circuitComp == null)
+        {
+            Debug.LogWarning($"Cannot setup terminals: {componentObject.name} has no CircuitComponent3D");
+            return;
+        }
+
+        // Find ComponentTerminalManager
+        ComponentTerminalManager terminalManager = FindFirstObjectByType<ComponentTerminalManager>();
+        if (terminalManager == null)
+        {
+            Debug.LogWarning("ComponentTerminalManager not found! Terminals will not be created.");
+            return;
+        }
+
+        // Create terminals for this component
+        terminalManager.SetupComponentTerminals(circuitComp);
+        Debug.Log($"✅ Created terminals for {componentObject.name}");
+    }
+
     #endregion
-    
+
+    #region ComponentDefinition Support
+
+    /// <summary>
+    /// Create a component from a ThemedComponentDefinition ScriptableObject
+    /// </summary>
+    public GameObject CreateComponentFromDefinition(ThemedComponentDefinition definition, Vector3? position = null)
+    {
+        if (definition == null)
+        {
+            Debug.LogError("ComponentDefinition is null");
+            return null;
+        }
+
+        Vector3 createPosition = position ?? GetNextPlacementPosition();
+
+        Debug.Log($"Creating component from definition: {definition.displayName}");
+
+        GameObject componentObject;
+
+        // Use custom prefab if available, otherwise create primitive
+        if (definition.visualProperties.customPrefab != null)
+        {
+            componentObject = Instantiate(definition.visualProperties.customPrefab, createPosition, Quaternion.identity);
+            componentObject.name = definition.displayName;
+
+            // Ensure it has a ThemedComponentDefinitionApplier
+            // TEMPORARY COMMENT: CircuitSimulator.Components.ThemedComponentDefinitionApplier applier = componentObject.GetComponent<CircuitSimulator.Components.ThemedComponentDefinitionApplier>();
+            // if (applier == null)
+            // {
+            //     applier = componentObject.AddComponent<CircuitSimulator.Components.ThemedComponentDefinitionApplier>();
+            // }
+            // applier.definition = definition;
+        }
+        else
+        {
+            // Create primitive and set up as defined component
+            componentObject = CreatePrimitiveComponent(definition, createPosition);
+        }
+
+        // Setup transform
+        componentObject.transform.position = createPosition;
+        componentObject.transform.SetParent(canvasPlane);
+
+        // Setup circuit functionality
+        SetupDefinitionBasedComponent(componentObject, definition);
+
+        // Setup interaction capabilities
+        SetupComponentInteraction(componentObject);
+
+        // Track component
+        placedComponents.Add(componentObject);
+        componentCount = placedComponents.Count;
+
+        Debug.Log($"Successfully created {definition.displayName} at position {createPosition}");
+        return componentObject;
+    }
+
+    private GameObject CreatePrimitiveComponent(ThemedComponentDefinition definition, Vector3 position)
+    {
+        // Create the primitive GameObject
+        GameObject componentObject = GameObject.CreatePrimitive(definition.visualProperties.primitiveType);
+        componentObject.name = definition.displayName;
+
+        // Apply visual properties
+        componentObject.transform.localScale = definition.visualProperties.scale;
+
+        // Set material and color
+        Renderer renderer = componentObject.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            if (definition.visualProperties.defaultMaterial != null)
+            {
+                renderer.material = definition.visualProperties.defaultMaterial;
+            }
+            else
+            {
+                renderer.material.color = definition.visualProperties.defaultColor;
+            }
+        }
+
+        // Add ThemedComponentDefinitionApplier for runtime management
+        // TEMPORARY COMMENT: CircuitSimulator.Components.ThemedComponentDefinitionApplier applier = componentObject.AddComponent<CircuitSimulator.Components.ThemedComponentDefinitionApplier>();
+        // applier.definition = definition;
+
+        return componentObject;
+    }
+
+    private void SetupDefinitionBasedComponent(GameObject componentObject, ThemedComponentDefinition definition)
+    {
+        // Add CircuitComponent3D
+        CircuitComponent3D circuitComp = componentObject.GetComponent<CircuitComponent3D>();
+        if (circuitComp == null)
+        {
+            circuitComp = componentObject.AddComponent<CircuitComponent3D>();
+        }
+
+        // Convert ThemedBaseComponentType to ComponentType
+        ComponentType componentType = ConvertThemedBaseType(definition.baseType);
+
+        // Set component properties from definition
+        circuitComp.ComponentType = componentType;
+        circuitComp.voltage = definition.electricalProperties.defaultVoltage;
+        circuitComp.resistance = definition.electricalProperties.defaultResistance;
+        circuitComp.current = definition.electricalProperties.defaultCurrent;
+
+        Debug.Log($"Set component as {componentType}: {circuitComp.voltage}V, {circuitComp.resistance}Ω");
+    }
+
+    /// <summary>
+    /// Get ComponentDefinition by name or base type
+    /// </summary>
+    public CircuitSimulator.Components.ThemedComponentDefinition GetComponentDefinition(string definitionName)
+    {
+        if (componentDefinitions == null) return null;
+
+        foreach (var definition in componentDefinitions)
+        {
+            if (definition != null && definition.displayName == definitionName)
+            {
+                return definition;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Get all ComponentDefinitions of a specific base type
+    /// </summary>
+    public CircuitSimulator.Components.ThemedComponentDefinition[] GetComponentDefinitionsByType(CircuitSimulator.Components.ThemedBaseComponentType baseType)
+    {
+        if (componentDefinitions == null) return new CircuitSimulator.Components.ThemedComponentDefinition[0];
+
+        List<CircuitSimulator.Components.ThemedComponentDefinition> matchingDefinitions = new List<CircuitSimulator.Components.ThemedComponentDefinition>();
+
+        foreach (var definition in componentDefinitions)
+        {
+            if (definition != null && definition.baseType == baseType)
+            {
+                matchingDefinitions.Add(definition);
+            }
+        }
+
+        return matchingDefinitions.ToArray();
+    }
+
+    #endregion
+
     #region Component Management
     
     public void RemoveComponent(GameObject component)
@@ -320,7 +625,10 @@ public class ComponentFactoryManager : MonoBehaviour
         {
             if (component != null)
             {
-                DestroyImmediate(component);
+                if (Application.isPlaying)
+                    Destroy(component);
+                else
+                    DestroyImmediate(component);
             }
         }
         placedComponents.Clear();
@@ -338,15 +646,229 @@ public class ComponentFactoryManager : MonoBehaviour
     public int ComponentCount => placedComponents.Count;
     
     #endregion
-    
+
+    #region IComponentFactory Implementation
+
+    // Component Creation with Vector3 position
+    public CircuitComponent3D CreateComponent(ComponentType type, Vector3 position)
+    {
+        GameObject componentGO = null;
+        Vector3 oldPosition = canvasPlane != null ? canvasPlane.position : Vector3.zero;
+
+        // Temporarily set canvas position to match desired position
+        if (canvasPlane != null)
+            canvasPlane.position = position;
+
+        try
+        {
+            switch (type)
+            {
+                case ComponentType.Battery:
+                    componentGO = CreateBattery();
+                    break;
+                case ComponentType.Resistor:
+                    componentGO = CreateResistor();
+                    break;
+                case ComponentType.Bulb:
+                    componentGO = CreateBulb();
+                    break;
+                case ComponentType.Switch:
+                    componentGO = CreateSwitch();
+                    break;
+                case ComponentType.Junction:
+                    componentGO = CreateJunction();
+                    break;
+                default:
+                    Debug.LogError($"Unsupported component type: {type}");
+                    return null;
+            }
+        }
+        finally
+        {
+            // Restore canvas position
+            if (canvasPlane != null)
+                canvasPlane.position = oldPosition;
+        }
+
+        if (componentGO != null)
+        {
+            // Set exact position
+            componentGO.transform.position = position;
+            return componentGO.GetComponent<CircuitComponent3D>();
+        }
+
+        return null;
+    }
+
+    // Component Creation with ComponentDefinition (Legacy)
+    public CircuitComponent3D CreateComponent(ComponentDefinitionLegacy definition, Vector3 position)
+    {
+        if (definition == null)
+        {
+            Debug.LogError("ComponentDefinition is null");
+            return null;
+        }
+
+        // Create base component based on definition type
+        var component = CreateComponent(ConvertBaseType(definition.baseType), position);
+        if (component == null) return null;
+
+        // Apply definition properties
+        ApplyComponentDefinition(component, definition);
+
+        return component;
+    }
+
+    // Specific Component Factories with default positions
+    public CircuitComponent3D CreateBattery(Vector3 position = default)
+    {
+        if (position == default) position = GetNextPlacementPosition();
+        return CreateComponent(ComponentType.Battery, position);
+    }
+
+    public CircuitComponent3D CreateResistor(Vector3 position = default)
+    {
+        if (position == default) position = GetNextPlacementPosition();
+        return CreateComponent(ComponentType.Resistor, position);
+    }
+
+    public CircuitComponent3D CreateBulb(Vector3 position = default)
+    {
+        if (position == default) position = GetNextPlacementPosition();
+        return CreateComponent(ComponentType.Bulb, position);
+    }
+
+    public CircuitComponent3D CreateSwitch(Vector3 position = default)
+    {
+        if (position == default) position = GetNextPlacementPosition();
+        return CreateComponent(ComponentType.Switch, position);
+    }
+
+    public CircuitComponent3D CreateJunction(Vector3 position = default)
+    {
+        if (position == default) position = GetNextPlacementPosition();
+        return CreateComponent(ComponentType.Junction, position);
+    }
+
+    // Custom Components
+    public CircuitComponent3D CreateCustomComponent(ComponentDefinitionLegacy definition, Vector3 position)
+    {
+        return CreateComponent(definition, position);
+    }
+
+    // Wire Creation
+    public CircuitWire CreateWire(CircuitComponent3D startComponent, CircuitComponent3D endComponent)
+    {
+        if (startComponent == null || endComponent == null)
+        {
+            Debug.LogError("Cannot create wire: start or end component is null");
+            return null;
+        }
+
+        // Create wire GameObject
+        var wireGO = new GameObject($"Wire_{startComponent.name}_to_{endComponent.name}");
+        var wire = wireGO.AddComponent<CircuitWire>();
+
+        // Initialize wire
+        wire.Initialize(startComponent, endComponent);
+
+        // Fire interface event
+        OnWireCreated?.Invoke(wire);
+
+        return wire;
+    }
+
+    // Helper Methods
+    private Vector3 GetNextPlacementPosition()
+    {
+        if (UseRandomizedPositioning)
+        {
+            return new Vector3(
+                UnityEngine.Random.Range(-5f, 5f),
+                0.5f,
+                UnityEngine.Random.Range(-5f, 5f)
+            );
+        }
+
+        var basePosition = ComponentParent != null ? ComponentParent.position : Vector3.zero;
+        return basePosition + new Vector3(placedComponents.Count * ComponentSpacing, 0.5f, 0);
+    }
+
+    private ComponentType ConvertBaseType(CircuitSimulator.BaseComponentType baseType)
+    {
+        switch (baseType)
+        {
+            case CircuitSimulator.BaseComponentType.Battery: return ComponentType.Battery;
+            case CircuitSimulator.BaseComponentType.Resistor: return ComponentType.Resistor;
+            case CircuitSimulator.BaseComponentType.Bulb: return ComponentType.Bulb;
+            case CircuitSimulator.BaseComponentType.Switch: return ComponentType.Switch;
+            case CircuitSimulator.BaseComponentType.Junction: return ComponentType.Junction;
+            default: return ComponentType.Resistor; // Default fallback
+        }
+    }
+
+    private ComponentType ConvertThemedBaseType(ThemedBaseComponentType baseType)
+    {
+        switch (baseType)
+        {
+            case ThemedBaseComponentType.Battery: return ComponentType.Battery;
+            case ThemedBaseComponentType.Resistor: return ComponentType.Resistor;
+            case ThemedBaseComponentType.Bulb: return ComponentType.Bulb;
+            case ThemedBaseComponentType.Switch: return ComponentType.Switch;
+            case ThemedBaseComponentType.Junction: return ComponentType.Junction;
+            default: return ComponentType.Resistor; // Default fallback
+        }
+    }
+
+    private void ApplyComponentDefinition(CircuitComponent3D component, ComponentDefinitionLegacy definition)
+    {
+        if (component == null || definition == null) return;
+
+        // Apply electrical properties
+        var electrical = definition.electricalProperties;
+        component.voltage = electrical.defaultVoltage;
+        component.resistance = electrical.defaultResistance;
+        component.current = electrical.defaultCurrent;
+
+        // Apply visual properties
+        var visual = definition.visualProperties;
+        if (visual.customPrefab == null)
+        {
+            // Apply scale
+            component.transform.localScale = visual.scale;
+
+            // Apply material/color
+            var renderer = component.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                if (visual.defaultMaterial != null)
+                {
+                    renderer.material = visual.defaultMaterial;
+                }
+                else
+                {
+                    renderer.material.color = visual.defaultColor;
+                }
+            }
+        }
+
+        // Update display name
+        component.name = definition.displayName;
+        component.gameObject.name = definition.displayName;
+
+        Debug.Log($"Applied ComponentDefinition '{definition.displayName}' to component");
+    }
+
+    #endregion
+
     #region Testing
-    
+
     [ContextMenu("Test Simple Placement")]
     public void TestSimplePlacement()
     {
         Debug.Log("Test placement disabled to prevent white blocks in scene");
         // Test cube creation disabled - was creating unwanted white blocks
     }
-    
+
     #endregion
 }

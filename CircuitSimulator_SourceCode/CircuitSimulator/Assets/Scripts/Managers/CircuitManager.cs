@@ -1,11 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using CircuitSimulator.Services;
 
 /// <summary>
 /// Core circuit manager - handles component and wire registration
-/// Singleton pattern for global access
+/// Implements ICircuitManager interface and integrates with ServiceLocator
 /// </summary>
-public class CircuitManager : MonoBehaviour
+public class CircuitManager : MonoBehaviour, ICircuitManager
 {
     [Header("Circuit Settings")]
     public bool autoSolve = true;
@@ -37,15 +38,28 @@ public class CircuitManager : MonoBehaviour
     public int ComponentCount => componentCount;
     public int WireCount => wireCount;
     
+    // ICircuitManager Events
+    public System.Action<CircuitComponent3D> OnComponentRegistered { get; set; }
+    public System.Action<CircuitComponent3D> OnComponentUnregistered { get; set; }
+    public System.Action<CircuitWire> OnWireRegistered { get; set; }
+    public System.Action<CircuitWire> OnWireUnregistered { get; set; }
+    public System.Action OnCircuitChanged { get; set; }
+
     void Awake()
     {
         // Singleton setup
         if (instance == null)
         {
             instance = this;
-            
-            // Register with ComponentRegistry for O(1) lookups
-            ComponentRegistry.Instance.RegisterManager<CircuitManager>(this);
+
+            // Register with ServiceLocator
+            ServiceLocator.Instance.Register<ICircuitManager>(this);
+
+            // Legacy ComponentRegistry support
+            if (ComponentRegistry.Instance != null)
+            {
+                ComponentRegistry.Instance.RegisterManager<CircuitManager>(this);
+            }
         }
         else if (instance != this)
         {
@@ -53,7 +67,7 @@ public class CircuitManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        
+
         // Initialize managers
         InitializeManagers();
     }
@@ -103,46 +117,69 @@ public class CircuitManager : MonoBehaviour
     public void RegisterComponent(CircuitComponent3D component)
     {
         if (component == null || components.Contains(component)) return;
-        
+
         components.Add(component);
         componentCount = components.Count;
-        
+
         Debug.Log($"Registered component: {component.name} (Total: {componentCount})");
-        
+
         // Setup terminals for the component
         terminalManager?.OnComponentRegistered(component);
-        
+
         // Notify managers
         eventManager?.OnComponentRegistered(component);
+
+        // Fire interface event
+        OnComponentRegistered?.Invoke(component);
+
         MarkCircuitChanged();
     }
     
     public void UnregisterComponent(CircuitComponent3D component)
     {
         if (component == null || !components.Contains(component)) return;
-        
+
         components.Remove(component);
         componentCount = components.Count;
-        
+
         Debug.Log($"Unregistered component: {component.name} (Total: {componentCount})");
-        
+
         // Remove terminals for the component
         terminalManager?.OnComponentUnregistered(component);
-        
+
         // Notify managers
         eventManager?.OnComponentUnregistered(component);
+
+        // Fire interface event
+        OnComponentUnregistered?.Invoke(component);
+
         MarkCircuitChanged();
     }
     
+    /// <summary>
+    /// Check if a wire is already registered with the CircuitManager
+    /// </summary>
+    public bool IsWireRegistered(GameObject wire)
+    {
+        return wire != null && wires.Contains(wire);
+    }
+
     public void RegisterWire(GameObject wire)
     {
-        if (wire == null || wires.Contains(wire)) return;
-        
+        if (wire == null || wires.Contains(wire))
+        {
+            if (wire != null && wires.Contains(wire))
+            {
+                Debug.LogWarning($"⚠️ Wire {wire.name} is ALREADY registered in CircuitManager! Skipping duplicate registration.");
+            }
+            return;
+        }
+
         wires.Add(wire);
         wireCount = wires.Count;
-        
+
         Debug.Log($"Registered wire: {wire.name} (Total: {wireCount})");
-        
+
         // Notify managers
         eventManager?.OnWireRegistered(wire);
         MarkCircuitChanged();
@@ -161,7 +198,56 @@ public class CircuitManager : MonoBehaviour
         eventManager?.OnWireUnregistered(wire);
         MarkCircuitChanged();
     }
-    
+
+    // Interface implementations
+    public IReadOnlyList<CircuitComponent3D> GetAllComponents()
+    {
+        return components.AsReadOnly();
+    }
+
+    public IReadOnlyList<CircuitWire> GetAllWires()
+    {
+        var circuitWires = new List<CircuitWire>();
+        foreach (var wire in wires)
+        {
+            var circuitWire = wire?.GetComponent<CircuitWire>();
+            if (circuitWire != null)
+            {
+                circuitWires.Add(circuitWire);
+            }
+        }
+        return circuitWires.AsReadOnly();
+    }
+
+    public void RegisterWire(CircuitWire wire)
+    {
+        if (wire?.gameObject != null)
+        {
+            RegisterWire(wire.gameObject);
+            OnWireRegistered?.Invoke(wire);
+        }
+    }
+
+    public void UnregisterWire(CircuitWire wire)
+    {
+        if (wire?.gameObject != null)
+        {
+            UnregisterWire(wire.gameObject);
+            OnWireUnregistered?.Invoke(wire);
+        }
+    }
+
+    public CircuitComponent3D GetComponentById(int id)
+    {
+        return components.Find(c => c.GetInstanceID() == id);
+    }
+
+    public void ResetCircuit()
+    {
+        ClearAllComponents();
+        MarkCircuitChanged();
+    }
+
     public void ClearAllComponents()
     {
         Debug.Log("Clearing all component and wire references");
@@ -199,6 +285,9 @@ public class CircuitManager : MonoBehaviour
         solverManager?.MarkForSolving();
         eventManager?.OnCircuitChanged();
         debugManager?.LogCircuitChange();
+
+        // Fire interface event
+        OnCircuitChanged?.Invoke();
     }
     
     public void SolveCircuit()
@@ -219,12 +308,21 @@ public class CircuitManager : MonoBehaviour
     {
         // Find and register any existing components in the scene
         CircuitComponent3D[] existingComponents = FindObjectsByType<CircuitComponent3D>(FindObjectsSortMode.None);
-        foreach (var comp in existingComponents)
+        if (existingComponents != null && existingComponents.Length > 0)
         {
-            RegisterComponent(comp);
+            foreach (var comp in existingComponents)
+            {
+                if (comp != null) // Check each component is not null
+                {
+                    RegisterComponent(comp);
+                }
+            }
+            Debug.Log($"Found and registered {existingComponents.Length} existing components");
         }
-        
-        Debug.Log($"Found and registered {existingComponents.Length} existing components");
+        else
+        {
+            Debug.Log("No existing components found in scene");
+        }
     }
     
     #endregion
@@ -250,6 +348,21 @@ public class CircuitManager : MonoBehaviour
     {
         debugManager?.TestCircuitComponents();
     }
-    
+
+    #endregion
+
+    #region ICircuitManager Implementation
+
+    // Missing interface methods
+    public bool IsCircuitValid()
+    {
+        return components.Count > 0 && wires.Count > 0;
+    }
+
+    public bool HasComponents() => components.Count > 0;
+    public bool HasWires() => wires.Count > 0;
+    public int GetComponentCount() => componentCount;
+    public int GetWireCount() => wireCount;
+
     #endregion
 }

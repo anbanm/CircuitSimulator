@@ -1,17 +1,32 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using CircuitSimulator.Services;
 
 /// <summary>
 /// Handles all circuit solving logic and solver integration
-/// Manages when and how circuits are solved
+/// Implements ICircuitSolver interface and integrates with ServiceLocator
 /// </summary>
-public class CircuitSolverManager : MonoBehaviour
+public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
 {
     [Header("Solver Settings")]
     public bool manualSolveMode = false;
     public bool debugSolver = true;
-    
+    public float solveDelay = 0.5f;
+
+    // ICircuitSolver Events
+    public System.Action OnCircuitSolved { get; set; }
+    public System.Action<string> OnSolveError { get; set; }
+    public System.Action OnSolveStarted { get; set; }
+
+    // ICircuitSolver Properties
+    public bool IsAutoSolveEnabled => !manualSolveMode;
+    public float SolveInterval => solveDelay;
+    public bool IsDebugEnabled { get; set; }
+    public bool IsCircuitSolved { get; private set; }
+    public float LastSolveTime => lastSolveTime;
+    public string LastSolveResult { get; private set; } = "";
+
     private CircuitSolver circuitSolver;
     private float lastSolveTime = 0f;
     private bool circuitNeedsSolving = false;
@@ -23,11 +38,38 @@ public class CircuitSolverManager : MonoBehaviour
     
     public void Initialize()
     {
-        // Get manager references
+        // Register with ServiceLocator
+        ServiceLocator.Instance.Register<ICircuitSolver>(this);
+
+        // Initialize interface properties
+        IsDebugEnabled = debugSolver;
+
+        // Get manager references with null checks
         circuitManager = CircuitManager.Instance;
+        if (circuitManager == null)
+        {
+            Debug.LogError("CircuitManager.Instance is null in CircuitSolverManager.Initialize()");
+            enabled = false;
+            return;
+        }
+        
         nodeManager = GetComponent<CircuitNodeManager>();
+        if (nodeManager == null)
+        {
+            Debug.LogWarning("CircuitNodeManager not found on same GameObject");
+        }
+        
         debugManager = GetComponent<CircuitDebugManager>();
+        if (debugManager == null)
+        {
+            Debug.LogWarning("CircuitDebugManager not found on same GameObject");
+        }
+        
         terminalManager = GetComponent<ComponentTerminalManager>();
+        if (terminalManager == null)
+        {
+            Debug.LogWarning("ComponentTerminalManager not found on same GameObject");
+        }
         
         // Initialize solver
         circuitSolver = new CircuitSolver();
@@ -38,6 +80,9 @@ public class CircuitSolverManager : MonoBehaviour
     
     public void Update()
     {
+        // Safety check for null circuit manager
+        if (circuitManager == null) return;
+        
         // DEBUGGING: Force solve if we have components but haven't solved yet
         if (circuitManager.ComponentCount > 0 && !circuitNeedsSolving && lastSolveTime == 0f)
         {
@@ -111,16 +156,19 @@ public class CircuitSolverManager : MonoBehaviour
         SolveCircuit();
     }
     
-    public void SolveCircuit()
+    public bool SolveCircuit()
     {
         if (circuitManager == null || circuitManager.Components.Count == 0)
         {
             Debug.LogWarning("No components to solve");
-            return;
+            LastSolveResult = "No components to solve";
+            OnSolveError?.Invoke(LastSolveResult);
+            return false;
         }
-        
+
+        OnSolveStarted?.Invoke();
         debugManager?.LogToFile($"=== SOLVING CIRCUIT (Components: {circuitManager.ComponentCount}, Wires: {circuitManager.WireCount}) ===");
-        
+
         try
         {
             // Build logical circuit from 3D components
@@ -129,39 +177,55 @@ public class CircuitSolverManager : MonoBehaviour
             if (logicalComponents.Count == 0)
             {
                 Debug.LogWarning("No valid circuit components found");
-                return;
+                LastSolveResult = "No valid circuit components found";
+                OnSolveError?.Invoke(LastSolveResult);
+                return false;
             }
-            
+
             // Solve the circuit components directly
-            circuitSolver.Solve(logicalComponents);
-            
+            circuitSolver.Solve(logicalComponents.ToList());
+
             // Update 3D components with solved values
-            UpdateComponentsFromSolver(logicalComponents);
-            
+            UpdateComponentsFromSolver(logicalComponents.ToList());
+
             // Mark as solved
             circuitNeedsSolving = false;
             lastSolveTime = Time.time;
-            
-            debugManager?.LogToFile($"Circuit solved successfully: {logicalComponents.Count} components");
+            IsCircuitSolved = true;
+
+            LastSolveResult = $"Circuit solved successfully: {logicalComponents.Count} components";
+            debugManager?.LogToFile(LastSolveResult);
             Debug.Log($"✅ Circuit solved: {logicalComponents.Count} components");
+
+            // Fire success event
+            OnCircuitSolved?.Invoke();
+            return true;
         }
         catch (System.Exception ex)
         {
             Debug.LogError($"Circuit solving failed: {ex.Message}");
+            LastSolveResult = $"Circuit solving failed: {ex.Message}";
             debugManager?.LogToFile($"ERROR: {ex.Message}");
+            OnSolveError?.Invoke(LastSolveResult);
+            IsCircuitSolved = false;
+            return false;
         }
     }
     
-    private List<CircuitComponent> BuildLogicalCircuit()
+    public IReadOnlyList<CircuitComponent> BuildLogicalCircuit()
     {
         var logicalComponents = new List<CircuitComponent>();
-        
+
         if (debugSolver)
         {
             debugManager?.LogToFile("=== BUILDING LOGICAL CIRCUIT ===");
             debugManager?.LogToFile($"Components: {circuitManager.Components.Count}, Wires: {circuitManager.Wires.Count}");
         }
-        
+
+        // CRITICAL FIX: Clear all CircuitNode.ConnectedComponents lists before rebuilding
+        // This prevents duplicate component references when logical components are recreated
+        ClearAllNodeComponentLists();
+
         // Use terminal manager to update logical connections
         terminalManager?.UpdateLogicalConnections();
         
@@ -207,9 +271,44 @@ public class CircuitSolverManager : MonoBehaviour
             debugManager?.LogToFile("Terminal-based electrical connections established");
         }
         
-        return logicalComponents;
+        return logicalComponents.AsReadOnly();
     }
-    
+
+    /// <summary>
+    /// Clear all CircuitNode.ConnectedComponents lists before rebuilding the logical circuit.
+    /// This prevents duplicate component references when logical components are recreated.
+    /// </summary>
+    private void ClearAllNodeComponentLists()
+    {
+        // Iterate through all components and clear their terminal nodes
+        foreach (var comp3D in circuitManager.Components)
+        {
+            if (comp3D == null) continue;
+
+            var terminals = terminalManager?.GetComponentTerminals(comp3D);
+            if (terminals == null) continue;
+
+            foreach (var terminal in terminals)
+            {
+                if (terminal?.electricalNode != null)
+                {
+                    int oldCount = terminal.electricalNode.ConnectedComponents.Count;
+                    terminal.electricalNode.ConnectedComponents.Clear();
+
+                    if (debugSolver && oldCount > 0)
+                    {
+                        debugManager?.LogToFile($"Cleared {oldCount} components from node {terminal.electricalNode.Id}");
+                    }
+                }
+            }
+        }
+
+        if (debugSolver)
+        {
+            debugManager?.LogToFile("All CircuitNode.ConnectedComponents lists cleared");
+        }
+    }
+
     private CircuitComponent CreateLogicalComponent(CircuitComponent3D comp3D, CircuitNode nodeA, CircuitNode nodeB)
     {
         string componentId = $"{comp3D.ComponentType}_{comp3D.GetInstanceID()}";
@@ -235,7 +334,7 @@ public class CircuitSolverManager : MonoBehaviour
         }
     }
     
-    private void UpdateComponentsFromSolver(List<CircuitComponent> solvedComponents)
+    public void UpdateComponentsFromSolver(List<CircuitComponent> solvedComponents)
     {
         foreach (var logicalComp in solvedComponents)
         {
@@ -257,4 +356,37 @@ public class CircuitSolverManager : MonoBehaviour
             }
         }
     }
+
+    #region ICircuitSolver Implementation
+
+    // Configuration Methods
+    public void EnableAutoSolve(bool enabled)
+    {
+        manualSolveMode = !enabled;
+        Debug.Log($"Auto-solve {(enabled ? "enabled" : "disabled")}");
+    }
+
+    public void SetSolveInterval(float interval)
+    {
+        solveDelay = Mathf.Max(0.1f, interval); // Minimum 0.1 seconds
+        Debug.Log($"Solve interval set to {solveDelay:F1} seconds");
+    }
+
+    // Direct Interface Methods (delegating to existing methods)
+    public void MarkCircuitChanged()
+    {
+        MarkForSolving();
+    }
+
+    // Interface method implementation - parameterless version
+    public void UpdateComponentsFromSolver()
+    {
+        // Build the logical circuit first to get current component state
+        var logicalComponents = BuildLogicalCircuit();
+
+        // Call the existing implementation with the logical components
+        UpdateComponentsFromSolver(logicalComponents.ToList());
+    }
+
+    #endregion
 }
