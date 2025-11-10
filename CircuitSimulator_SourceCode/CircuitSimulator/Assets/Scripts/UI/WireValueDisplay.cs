@@ -43,20 +43,36 @@ public class WireValueDisplay : MonoBehaviour
         // labelObj.AddComponent<FaceCamera>(); // Removed - missing component
     }
     
+    // Performance optimization: throttle display updates
+    private float updateInterval = 0.1f; // 10 FPS update rate
+    private float nextUpdateTime = 0f;
+    private float lastDisplayedCurrent = float.MinValue;
+    
     void Update()
     {
-        UpdateCurrentDisplay();
-        PositionLabel();
+        // Early exit if components are missing
+        if (currentLabel == null || circuitWire == null) return;
+        
+        // Only update if enough time has passed or current has changed significantly
+        if (Time.time >= nextUpdateTime || Mathf.Abs(circuitWire.current - lastDisplayedCurrent) > 0.001f)
+        {
+            UpdateCurrentDisplay();
+            PositionLabel();
+            lastDisplayedCurrent = circuitWire.current;
+            nextUpdateTime = Time.time + updateInterval;
+        }
     }
     
     void UpdateCurrentDisplay()
     {
         if (currentLabel == null || circuitWire == null) return;
-        
+
         // Show current if significant
         if (Mathf.Abs(circuitWire.current) > 0.01f)
         {
-            currentLabel.text = $"{circuitWire.current:F2}A";
+            // EDUCATIONAL FIX: Display absolute value (magnitude only) to avoid confusing students
+            // The sign is used internally for animation direction but shouldn't be shown in UI
+            currentLabel.text = $"{Mathf.Abs(circuitWire.current):F2}A";
         }
         else
         {

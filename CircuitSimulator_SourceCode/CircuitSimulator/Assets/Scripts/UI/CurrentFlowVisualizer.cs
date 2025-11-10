@@ -29,50 +29,76 @@ public class CurrentFlowVisualizer : MonoBehaviour
     private List<CurrentDot> activeDots = new List<CurrentDot>();
     private float currentMagnitude = 0f;
     private bool isFlowActive = false;
-    
+    private CircuitSolverManager solverManager;
+
     // Dot spawning
     private float dotSpawnInterval = 0.5f; // Time between dot spawns
     private float timeSinceLastDot = 0f;
-    
+
     void Start()
     {
         // Get required components
         circuitWire = GetComponent<CircuitWire>();
         wireRenderer = GetComponent<LineRenderer>();
-        
+
         if (circuitWire == null || wireRenderer == null)
         {
             Debug.LogError($"CurrentFlowVisualizer on {name} requires CircuitWire and LineRenderer components!");
             enabled = false;
             return;
         }
-        
-        // Start checking for current flow
-        InvokeRepeating("UpdateCurrentFlow", 0.1f, 0.1f);
-        
+
+        // EVENT-DRIVEN: Subscribe to circuit solved event for immediate updates
+        solverManager = FindFirstObjectByType<CircuitSolverManager>();
+        if (solverManager != null)
+        {
+            solverManager.OnCircuitSolved += OnCircuitSolved;
+            if (showDebugInfo)
+                Debug.Log($"✅ CurrentFlowVisualizer subscribed to OnCircuitSolved event");
+        }
+        else
+        {
+            Debug.LogWarning("CurrentFlowVisualizer: Could not find CircuitSolverManager for event subscription");
+        }
+
+        // Initial update
+        UpdateCurrentFlow();
+
         if (showDebugInfo)
             Debug.Log($"CurrentFlowVisualizer initialized on wire: {name}");
+    }
+
+    /// <summary>
+    /// EVENT HANDLER: Called immediately when circuit is solved
+    /// Replaces the old polling system (InvokeRepeating) with instant updates
+    /// </summary>
+    void OnCircuitSolved()
+    {
+        UpdateCurrentFlow();
+
+        if (showDebugInfo)
+            Debug.Log($"⚡ CurrentFlowVisualizer received OnCircuitSolved event - updating immediately!");
     }
     
     void Update()
     {
         if (!isFlowActive) return;
-        
-        // Spawn new dots if current is flowing
-        if (currentMagnitude > minCurrentToShow)
+
+        // Spawn new dots if current is flowing (check absolute value)
+        if (Mathf.Abs(currentMagnitude) > minCurrentToShow)
         {
             timeSinceLastDot += Time.deltaTime;
-            
+
             if (timeSinceLastDot >= dotSpawnInterval && activeDots.Count < maxDotsPerWire)
             {
                 SpawnCurrentDot();
                 timeSinceLastDot = 0f;
             }
         }
-        
+
         // Update existing dots
         UpdateCurrentDots();
-        
+
         // Clean up completed dots
         CleanupCompletedDots();
     }
@@ -80,44 +106,55 @@ public class CurrentFlowVisualizer : MonoBehaviour
     void UpdateCurrentFlow()
     {
         if (circuitWire == null) return;
-        
-        // Get current from the wire's connected components
+
+        // Get current WITH DIRECTION from the wire's connected components
         float newCurrent = GetWireCurrentMagnitude();
-        
+
         if (Mathf.Abs(newCurrent - currentMagnitude) > 0.001f)
         {
             currentMagnitude = newCurrent;
-            isFlowActive = currentMagnitude > minCurrentToShow;
-            
-            // Adjust spawn rate based on current magnitude
-            if (currentMagnitude > 0f)
+            isFlowActive = Mathf.Abs(currentMagnitude) > minCurrentToShow; // Use absolute value for activation check
+
+            // Adjust spawn rate based on current magnitude (absolute value)
+            float absCurrent = Mathf.Abs(currentMagnitude);
+            if (absCurrent > 0f)
             {
                 // Higher current = more frequent dots
-                dotSpawnInterval = Mathf.Lerp(0.8f, 0.2f, currentMagnitude / 3f);
+                dotSpawnInterval = Mathf.Lerp(0.8f, 0.2f, absCurrent / 3f);
             }
-            
+
             if (showDebugInfo)
-                Debug.Log($"Wire {name}: Current = {currentMagnitude:F3}A, Flow active = {isFlowActive}");
+                Debug.Log($"Wire {name}: Current = {currentMagnitude:F3}A, Flow active = {isFlowActive}, Direction = {(currentMagnitude >= 0 ? "forward" : "reverse")}");
         }
     }
     
     void SpawnCurrentDot()
     {
         if (wireRenderer.positionCount < 2) return;
-        
-        // Create dot at start of wire
-        Vector3 startPos = wireRenderer.GetPosition(0);
-        
+
+        // Create dot at the correct starting position based on current direction
+        // Positive current: start at beginning (position 0)
+        // Negative current: start at end (last position)
+        Vector3 startPos;
+        if (currentMagnitude >= 0)
+        {
+            startPos = wireRenderer.GetPosition(0); // Start at beginning
+        }
+        else
+        {
+            startPos = wireRenderer.GetPosition(wireRenderer.positionCount - 1); // Start at end
+        }
+
         GameObject dotObj = CreateDotGameObject(startPos);
         CurrentDot dot = dotObj.AddComponent<CurrentDot>();
-        
-        // Initialize dot
+
+        // Initialize dot with direction information
         dot.Initialize(wireRenderer, currentMagnitude, maxSpeed, currentColor, dotSize);
-        
+
         activeDots.Add(dot);
-        
+
         if (showDebugInfo)
-            Debug.Log($"Spawned current dot on {name}, active dots: {activeDots.Count}");
+            Debug.Log($"Spawned current dot on {name}, direction={(currentMagnitude >= 0 ? "forward" : "reverse")}, active dots: {activeDots.Count}");
     }
     
     GameObject CreateDotGameObject(Vector3 position)
@@ -142,7 +179,10 @@ public class CurrentFlowVisualizer : MonoBehaviour
         Collider dotCollider = dotObj.GetComponent<Collider>();
         if (dotCollider != null)
         {
-            DestroyImmediate(dotCollider);
+            if (Application.isPlaying)
+                Destroy(dotCollider);
+            else
+                DestroyImmediate(dotCollider);
         }
         
         return dotObj;
@@ -176,21 +216,36 @@ public class CurrentFlowVisualizer : MonoBehaviour
     
     float GetWireCurrentMagnitude()
     {
-        // Get current from connected components
+        // Get current WITH DIRECTION from the wire's solved current value
+        // Positive = flows from start to end, Negative = flows from end to start
+        // CircuitWire.UpdateCurrentFromComponents() gets the accurate solved current from the circuit solver
+        if (circuitWire != null)
+        {
+            return circuitWire.current; // Keep sign for direction!
+        }
+
+        // Fallback: Try to get from connected components
         if (circuitWire.startComponent != null)
         {
-            CircuitComponent3D startComp = circuitWire.startComponent.GetComponent<CircuitComponent3D>();
-            if (startComp != null)
-            {
-                return Mathf.Abs(startComp.current);
-            }
+            return circuitWire.startComponent.current; // Keep sign for direction!
         }
-        
+
+        if (circuitWire.endComponent != null)
+        {
+            return circuitWire.endComponent.current; // Keep sign for direction!
+        }
+
         return 0f;
     }
     
     void OnDestroy()
     {
+        // Unsubscribe from events to prevent memory leaks
+        if (solverManager != null)
+        {
+            solverManager.OnCircuitSolved -= OnCircuitSolved;
+        }
+
         // Clean up all dots
         foreach (var dot in activeDots)
         {
@@ -200,9 +255,6 @@ public class CurrentFlowVisualizer : MonoBehaviour
             }
         }
         activeDots.Clear();
-        
-        // Stop repeating invoke
-        CancelInvoke();
     }
     
     // Educational debug information
@@ -255,33 +307,44 @@ public class CurrentDot : MonoBehaviour
         this.wireRenderer = wire;
         this.currentMagnitude = current;
         this.maxSpeed = maxSpeed;
-        
+
         // Set visual properties
         transform.localScale = Vector3.one * size;
-        
-        // Position at start of wire
-        currentPosition = 0f;
+
+        // Position at correct end based on current direction
+        // Positive current: start at 0, move to 1
+        // Negative current: start at 1, move to 0
+        currentPosition = (current >= 0) ? 0f : 1f;
         UpdatePosition();
     }
     
     public void UpdateMovement()
     {
         if (isCompleted || wireRenderer == null) return;
-        
-        // Calculate movement speed based on current magnitude
+
+        // Calculate movement speed based on current magnitude (use absolute value)
         // Higher current = faster dots (educational: more current = more electron flow)
-        float speed = Mathf.Lerp(0.1f, maxSpeed, currentMagnitude / 3f);
-        
-        // Move along wire
-        currentPosition += speed * Time.deltaTime;
-        
-        // Check if completed
-        if (currentPosition >= 1f)
+        float absCurrent = Mathf.Abs(currentMagnitude);
+        float speed = Mathf.Lerp(0.1f, maxSpeed, absCurrent / 3f);
+
+        // Determine direction: positive current = forward (0→1), negative current = reverse (1→0)
+        float direction = currentMagnitude >= 0 ? 1f : -1f;
+
+        // Move along wire in the correct direction
+        currentPosition += direction * speed * Time.deltaTime;
+
+        // Check if completed (reached either end depending on direction)
+        if (currentMagnitude >= 0 && currentPosition >= 1f) // Forward direction
         {
             isCompleted = true;
             return;
         }
-        
+        else if (currentMagnitude < 0 && currentPosition <= 0f) // Reverse direction
+        {
+            isCompleted = true;
+            return;
+        }
+
         UpdatePosition();
     }
     

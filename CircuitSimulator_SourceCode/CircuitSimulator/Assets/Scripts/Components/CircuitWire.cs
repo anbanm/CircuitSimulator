@@ -20,6 +20,12 @@ public class CircuitWire : MonoBehaviour
     private bool isSelected = false;
     private static CircuitWire currentlySelectedWire = null;
 
+    // Public accessor for other systems to check currently selected wire
+    public static CircuitWire GetCurrentlySelectedWire()
+    {
+        return currentlySelectedWire;
+    }
+
     // Wire dragging state
     private bool isDraggingWire = false;
     private Vector3 dragOffset;
@@ -145,14 +151,25 @@ public class CircuitWire : MonoBehaviour
         {
             startTerminal = startEndpoint.ConnectedTerminal;
             component1 = startTerminal.ParentComponent;
-            Debug.Log($"  → Start endpoint connected to {component1.name}, Wire count on component: {component1.connectedWires.Count}");
+            Debug.Log($"  → Start endpoint connected to {component1.name}, Terminal: {startTerminal.name} (IsInput: {startTerminal.isInput})");
         }
 
         if (endEndpoint != null && endEndpoint.IsConnected)
         {
             endTerminal = endEndpoint.ConnectedTerminal;
             component2 = endTerminal.ParentComponent;
-            Debug.Log($"  → End endpoint connected to {component2.name}, Wire count on component: {component2.connectedWires.Count}");
+            Debug.Log($"  → End endpoint connected to {component2.name}, Terminal: {endTerminal.name} (IsInput: {endTerminal.isInput})");
+        }
+
+        // Log animation direction update
+        if (startTerminal != null && endTerminal != null)
+        {
+            bool startIsOutput = !startTerminal.isInput;
+            bool endIsInput = endTerminal.isInput;
+            string direction = (startIsOutput && endIsInput) ? "OUTPUT→INPUT (forward)" :
+                             (!startIsOutput && !endIsInput) ? "INPUT→OUTPUT (reversed)" :
+                             "MIXED (unusual)";
+            Debug.Log($"  🎬 Animation direction updated: {direction}");
         }
 
         // If both endpoints connected, register with circuit system
@@ -464,11 +481,72 @@ public class CircuitWire : MonoBehaviour
                 // Wire current flows between the two connected components
                 if (component1 != null && component2 != null)
                 {
-                    // In a series circuit, wire current = component current
-                    // Use average if components have different currents (parallel branches)
-                    float current1 = Mathf.Abs(component1.current);
-                    float current2 = Mathf.Abs(component2.current);
-                    float wireCurrent = (current1 + current2) / 2f;
+                    // EDUCATIONAL PHYSICS: Kirchhoff's Current Law (KCL)
+                    // Current through a wire MUST equal current through connected components
+                    // Any difference indicates a solver error that we should detect
+
+                    // CRITICAL FIX: Keep sign for direction! Don't use Mathf.Abs()
+                    // The solver calculates current direction based on node ordering (NodeA to NodeB)
+                    // We need to determine if the wire orientation matches the current direction
+                    float current1 = component1.current; // Keep sign for direction!
+                    float current2 = component2.current; // Keep sign for direction!
+
+                    // Use the component's current WITH DIRECTION
+                    // Determine direction based on TERMINAL POLARITY (input vs output)
+                    // Current flows: OUTPUT terminal → INPUT terminal
+                    float wireCurrent = Mathf.Abs(current1); // Start with magnitude
+
+                    // TERMINAL-BASED DIRECTION (respects wire drawing order + terminal type)
+                    if (startTerminal != null && endTerminal != null)
+                    {
+                        // DEBUG: Log terminal types and direction decision
+                        Debug.Log($"🔌 Wire {name}: Start={startTerminal.name} (IsInput:{startTerminal.isInput}), " +
+                                 $"End={endTerminal.name} (IsInput:{endTerminal.isInput}), Magnitude={wireCurrent:F3}A");
+
+                        // Current flows from OUTPUT to INPUT
+                        // If wire is drawn OUTPUT→INPUT: direction is correct (positive)
+                        // If wire is drawn INPUT→OUTPUT: direction is reversed (negative)
+
+                        bool startIsOutput = !startTerminal.isInput;
+                        bool endIsInput = endTerminal.isInput;
+
+                        if (startIsOutput && endIsInput)
+                        {
+                            // Perfect: wire drawn in correct direction (output → input)
+                            Debug.Log($"   ➡️ Direction: FORWARD (output→input), Final={wireCurrent:F3}A");
+                        }
+                        else if (!startIsOutput && !endIsInput)
+                        {
+                            // Wire drawn backwards: input → output
+                            wireCurrent = -wireCurrent; // Reverse direction
+                            Debug.Log($"   ⬅️ Direction: REVERSED (input→output becomes output→input), Final={wireCurrent:F3}A");
+                        }
+                        else
+                        {
+                            // Mixed: output→output or input→input (should not happen in valid circuits)
+                            Debug.LogWarning($"   ⚠️ Unusual connection: {(startIsOutput ? "output" : "input")}→{(endIsInput ? "input" : "output")}");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"⚠️ Wire {name}: Missing terminals! " +
+                                       $"Start={startTerminal?.name}, End={endTerminal?.name}");
+                    }
+
+                    // EDUCATIONAL CHECK: Verify Kirchhoff's Current Law
+                    // In a properly solved circuit, current magnitudes should be equal
+                    float currentDifference = Mathf.Abs(Mathf.Abs(current1) - Mathf.Abs(current2));
+                    if (currentDifference > 0.01f) // Tolerance for numerical precision
+                    {
+                        Debug.LogWarning($"⚠️ KCL Violation in {name}! Component currents differ: " +
+                                       $"{component1.name}={current1:F3}A, {component2.name}={current2:F3}A. " +
+                                       $"This indicates a solver error or circuit topology issue.");
+
+                        // For educational purposes, use the average magnitude
+                        // Direction is already determined by terminal voltages above
+                        float avgMagnitude = (Mathf.Abs(current1) + Mathf.Abs(current2)) / 2f;
+                        wireCurrent = (wireCurrent >= 0) ? avgMagnitude : -avgMagnitude;
+                    }
 
                     // Only update if there's a significant change
                     if (Mathf.Abs(wireCurrent - current) > 0.001f)
@@ -726,17 +804,20 @@ public class CircuitWire : MonoBehaviour
         {
             currentlySelectedWire.DeselectWire();
         }
-        
-        // Deselect any selected components
+
+        // Deselect any selected components (OLD SYSTEM - v1.0)
         SelectableComponent selectedComp = SelectableComponent.GetCurrentlySelected();
         if (selectedComp != null)
         {
             selectedComp.Deselect();
         }
-        
+
+        // CRITICAL FIX: Deselect ALL InteractionComponents (NEW SYSTEM - v2.0)
+        CircuitSimulator.Components.InteractionComponent.DeselectAll();
+
         isSelected = true;
         currentlySelectedWire = this;
-        
+
         Debug.Log($"Selected wire: {name} (R={resistance}Ω, I={current:F2}A)");
     }
     

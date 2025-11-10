@@ -15,12 +15,13 @@ public class ConnectTool : MonoBehaviour
     public enum Mode { Select, Connect }
     private Mode _currentMode = Mode.Select;
     
-    private SelectableComponent _firstComponent = null;
+    // Terminal-to-terminal connection system (ONLY system used)
     private ComponentTerminal _firstTerminal = null;
     private List<GameObject> _wires = new List<GameObject>();
     
     public static ConnectTool Instance { get; private set; }
     public Mode CurrentMode => _currentMode;
+    public bool IsInConnectMode => _currentMode == Mode.Connect;
     
     // Wire preview system
     private GameObject _wirePreview = null;
@@ -29,8 +30,28 @@ public class ConnectTool : MonoBehaviour
     
     void Start()
     {
+        // Singleton pattern with safety check
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("Multiple ConnectTool instances found! Destroying duplicate.");
+            Destroy(gameObject);
+            return;
+        }
         Instance = this;
+        
         _mainCamera = Camera.main;
+        if (_mainCamera == null)
+        {
+            Debug.LogError("No MainCamera found for ConnectTool!");
+            _mainCamera = FindFirstObjectByType<Camera>();
+            if (_mainCamera == null)
+            {
+                Debug.LogError("No camera found in scene! ConnectTool requires a camera.");
+                enabled = false;
+                return;
+            }
+        }
+        
         SetupButtons();
         SetupWirePreview();
         SetSelectMode();
@@ -71,20 +92,14 @@ public class ConnectTool : MonoBehaviour
     public void SetSelectMode()
     {
         _currentMode = Mode.Select;
-        
-        // Clear any existing selection
-        if (_firstComponent != null)
-        {
-            _firstComponent.SetHighlight(false);
-            _firstComponent = null;
-        }
-        
+
+        // Clear any existing terminal selection
         if (_firstTerminal != null)
         {
             _firstTerminal.SetHighlight(false);
             _firstTerminal = null;
         }
-        
+
         // Hide wire preview
         HideWirePreview();
         
@@ -96,9 +111,8 @@ public class ConnectTool : MonoBehaviour
     public void SetConnectMode()
     {
         _currentMode = Mode.Connect;
-        _firstComponent = null;
         _firstTerminal = null;
-        
+
         UpdateButtonColors();
         UpdateCursor(true);
         Debug.Log("[CONNECT MODE] Click terminals to connect components");
@@ -137,52 +151,61 @@ public class ConnectTool : MonoBehaviour
     public void OnComponentClicked(SelectableComponent component)
     {
         if (_currentMode != Mode.Connect) return;
-        
-        // Get the CircuitComponent3D from the SelectableComponent
-        CircuitComponent3D circuitComp = component.GetComponent<CircuitComponent3D>();
-        if (circuitComp == null)
+
+        // Find the nearest terminal to the mouse click position
+        ComponentTerminal nearestTerminal = FindNearestTerminal(component.gameObject);
+
+        if (nearestTerminal == null)
         {
-            Debug.LogWarning("Component doesn't have CircuitComponent3D!");
+            Debug.LogWarning($"Component {component.name} has no terminals! Ensure ComponentTerminalManager creates terminals.");
             return;
         }
-        
-        if (_firstComponent == null)
-        {
-            // First component selected
-            _firstComponent = component;
-            component.SetHighlight(true);
-            Debug.Log($"First component selected: {component.name}");
-        }
-        else if (_firstComponent == component)
-        {
-            // Clicked same component - deselect
-            _firstComponent.SetHighlight(false);
-            _firstComponent = null;
-            Debug.Log("Deselected component");
-        }
-        else
-        {
-            // Second component selected - create wire
-            CircuitComponent3D firstCircuitComp = _firstComponent.GetComponent<CircuitComponent3D>();
-            CreateCircuitWire(firstCircuitComp, circuitComp);
-            _firstComponent.SetHighlight(false);
-            _firstComponent = null;
-            
-            // Hide wire preview after connection is made
-            HideWirePreview();
-        }
+
+        // Route to terminal-based connection
+        HandleTerminalClick(nearestTerminal);
     }
+
+    private ComponentTerminal FindNearestTerminal(GameObject componentObject)
+    {
+        // Get all terminals that are children of this component
+        ComponentTerminal[] terminals = componentObject.GetComponentsInChildren<ComponentTerminal>();
+
+        if (terminals.Length == 0)
+            return null;
+
+        // Find nearest terminal to mouse position
+        Vector3 mouseWorldPos = GetMouseWorldPosition();
+        ComponentTerminal nearest = terminals[0];
+        float minDistance = Vector3.Distance(mouseWorldPos, nearest.transform.position);
+
+        foreach (var terminal in terminals)
+        {
+            float distance = Vector3.Distance(mouseWorldPos, terminal.transform.position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearest = terminal;
+            }
+        }
+
+        return nearest;
+    }
+
     
     public void HandleTerminalClick(ComponentTerminal terminal)
     {
         if (_currentMode != Mode.Connect) return;
-        
+
         if (_firstTerminal == null)
         {
             // First terminal selected
             _firstTerminal = terminal;
             terminal.SetHighlight(true);
-            Debug.Log($"First terminal selected: {terminal.name}");
+
+            // Show wire preview from this terminal
+            ShowWirePreview(terminal.GetConnectionPoint());
+
+            Debug.Log($"First terminal selected: {terminal.name} on {terminal.ParentComponent.name}");
         }
         else if (_firstTerminal == terminal)
         {
@@ -195,7 +218,7 @@ public class ConnectTool : MonoBehaviour
         else
         {
             // Check if terminals can be connected
-            var terminalManager = FindObjectOfType<ComponentTerminalManager>();
+            var terminalManager = FindFirstObjectByType<ComponentTerminalManager>();
             if (terminalManager != null && terminalManager.CanConnectTerminals(_firstTerminal, terminal))
             {
                 // Create terminal-to-terminal wire
@@ -203,55 +226,45 @@ public class ConnectTool : MonoBehaviour
                 _firstTerminal.SetHighlight(false);
                 _firstTerminal = null;
                 HideWirePreview();
-                Debug.Log($"Connected {_firstTerminal?.name} to {terminal.name}");
+                Debug.Log($"Connected {_firstTerminal.name} to {terminal.name}");
             }
             else
             {
-                Debug.LogWarning("Cannot connect these terminals (same component or wrong type)");
+                Debug.LogWarning("Cannot connect these terminals (same component or invalid connection)");
+                // Still allow deselection
+                _firstTerminal.SetHighlight(false);
+                _firstTerminal = null;
+                HideWirePreview();
             }
         }
     }
     
-    void CreateCircuitWire(CircuitComponent3D comp1, CircuitComponent3D comp2)
-    {
-        // Create wire GameObject
-        GameObject wireObj = new GameObject($"Wire_{comp1.name}_to_{comp2.name}");
-        wireObj.transform.SetParent(transform);
-        
-        // Add LineRenderer
-        LineRenderer line = wireObj.AddComponent<LineRenderer>();
-        
-        // Add CircuitWire component
-        CircuitWire circuitWire = wireObj.AddComponent<CircuitWire>();
-        circuitWire.Initialize(comp1, comp2);
-        
-        // Store wire reference
-        _wires.Add(wireObj);
-        
-        Debug.Log($"Created circuit wire between {comp1.name} and {comp2.name}");
-    }
     
     void CreateTerminalWire(ComponentTerminal terminal1, ComponentTerminal terminal2)
     {
         // Create wire GameObject
         GameObject wireObj = new GameObject($"Wire_{terminal1.ParentComponent.name}_to_{terminal2.ParentComponent.name}");
         wireObj.transform.SetParent(transform);
-        
+
         // Add CircuitWire component and configure for terminal-to-terminal connection
         CircuitWire circuitWire = wireObj.AddComponent<CircuitWire>();
         circuitWire.startTerminal = terminal1;
         circuitWire.endTerminal = terminal2;
-        
+
+        // CRITICAL DEBUG: Log terminal assignment order
+        Debug.Log($"🔌 WIRE CREATED: Start={terminal1.name} (Input:{terminal1.isInput}), End={terminal2.name} (Input:{terminal2.isInput})");
+        Debug.Log($"   Start Component: {terminal1.ParentComponent.name}, End Component: {terminal2.ParentComponent.name}");
+
         // Initialize the wire with terminal connection
         circuitWire.InitializeWithTerminals(terminal1, terminal2);
-        
+
         // Connect terminals electrically
         terminal1.ConnectToTerminal(terminal2, circuitWire);
-        
+
         // Store wire reference
         _wires.Add(wireObj);
-        
-        Debug.Log($"Created terminal wire between {terminal1.name} and {terminal2.name}");
+
+        Debug.Log($"✅ Terminal wire created - animation should flow from START to END based on click order");
     }
     
     Material CreateWireMaterial()
@@ -261,6 +274,10 @@ public class ConnectTool : MonoBehaviour
         mat.color = wireColor;
         return mat;
     }
+    
+    // Performance optimization for wire preview
+    private float wirePreviewUpdateInterval = 0.02f; // 50 FPS for smooth preview
+    private float nextWirePreviewUpdate = 0f;
     
     void Update()
     {
@@ -273,17 +290,16 @@ public class ConnectTool : MonoBehaviour
         {
             SetSelectMode();
         }
-        
+
+        // W key to create draggable wire
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            CreateDraggableWire();
+        }
+
         // ESC to cancel connection mode
         if (Input.GetKeyDown(KeyCode.Escape) && _currentMode == Mode.Connect)
         {
-            if (_firstComponent != null)
-            {
-                _firstComponent.SetHighlight(false);
-                _firstComponent = null;
-                HideWirePreview();
-                Debug.Log("Cancelled component connection");
-            }
             if (_firstTerminal != null)
             {
                 _firstTerminal.SetHighlight(false);
@@ -292,11 +308,16 @@ public class ConnectTool : MonoBehaviour
                 Debug.Log("Cancelled terminal connection");
             }
         }
-        
-        // Update wire preview when in connect mode with first component or terminal selected
-        if (_currentMode == Mode.Connect && (_firstComponent != null || _firstTerminal != null))
+
+        // Update wire preview when in connect mode with first terminal selected
+        // Throttle updates for performance
+        if (_currentMode == Mode.Connect && _firstTerminal != null)
         {
-            UpdateWirePreview();
+            if (Time.time >= nextWirePreviewUpdate)
+            {
+                UpdateWirePreview();
+                nextWirePreviewUpdate = Time.time + wirePreviewUpdateInterval;
+            }
         }
     }
     
@@ -304,34 +325,22 @@ public class ConnectTool : MonoBehaviour
     {
         if (_previewLineRenderer == null || _mainCamera == null)
             return;
-            
-        if (_firstComponent == null && _firstTerminal == null)
+
+        if (_firstTerminal == null)
             return;
-        
+
         // Show preview if hidden
         if (!_wirePreview.activeInHierarchy)
         {
             _wirePreview.SetActive(true);
         }
-        
-        // Start position: first component or terminal
-        Vector3 startPos;
-        if (_firstTerminal != null)
-        {
-            startPos = _firstTerminal.GetConnectionPoint();
-        }
-        else if (_firstComponent != null)
-        {
-            startPos = _firstComponent.transform.position + Vector3.up * 0.6f;
-        }
-        else
-        {
-            return;
-        }
-        
+
+        // Start position: first terminal
+        Vector3 startPos = _firstTerminal.GetConnectionPoint();
+
         // End position: mouse cursor in world space
         Vector3 endPos = GetMouseWorldPosition();
-        
+
         // Update line renderer
         _previewLineRenderer.SetPosition(0, startPos);
         _previewLineRenderer.SetPosition(1, endPos);
@@ -366,6 +375,46 @@ public class ConnectTool : MonoBehaviour
     public bool IsConnectMode()
     {
         return _currentMode == Mode.Connect;
+    }
+
+
+    private void ShowWirePreview(Vector3 startPosition)
+    {
+        if (_wirePreview != null)
+        {
+            _wirePreview.SetActive(true);
+            if (_previewLineRenderer != null)
+            {
+                _previewLineRenderer.SetPosition(0, startPosition);
+                _previewLineRenderer.SetPosition(1, startPosition); // Will be updated in UpdateWirePreview
+            }
+        }
+    }
+
+    void CreateDraggableWire()
+    {
+        // Get cursor position in world space
+        Vector3 cursorPos = GetMouseWorldPosition();
+
+        // Create wire slightly offset so both endpoints are visible
+        Vector3 startPos = cursorPos + Vector3.left * 0.5f;
+        Vector3 endPos = cursorPos + Vector3.right * 0.5f;
+
+        // Create wire GameObject
+        GameObject wireObj = new GameObject("Draggable_Wire");
+        wireObj.transform.SetParent(transform);
+
+        // Add CircuitWire component
+        CircuitWire circuitWire = wireObj.AddComponent<CircuitWire>();
+
+        // Initialize with draggable endpoints
+        circuitWire.InitializeWithEndpoints(startPos, endPos);
+
+        // Store wire reference
+        _wires.Add(wireObj);
+
+        Debug.Log($"[WIRE CREATED] Press W to create draggable wires. Drag endpoints to terminals to connect.");
+        Debug.Log($"Created draggable wire at {cursorPos} - drag endpoints to connect to component terminals");
     }
 }
 
