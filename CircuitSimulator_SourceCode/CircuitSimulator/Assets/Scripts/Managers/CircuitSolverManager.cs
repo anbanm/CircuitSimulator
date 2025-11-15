@@ -35,6 +35,9 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
     private CircuitNodeManager nodeManager;
     private CircuitDebugManager debugManager;
     private ComponentTerminalManager terminalManager;
+
+    // Visual flow graph for animation (separate from electrical solver)
+    private VisualFlowGraph visualFlowGraph;
     
     public void Initialize()
     {
@@ -43,6 +46,9 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
 
         // Initialize interface properties
         IsDebugEnabled = debugSolver;
+
+        // Initialize visual flow graph (separate from electrical solver)
+        visualFlowGraph = new VisualFlowGraph();
 
         // Get manager references with null checks
         circuitManager = CircuitManager.Instance;
@@ -162,6 +168,7 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         {
             Debug.LogWarning("No components to solve");
             LastSolveResult = "No components to solve";
+            ClearAllComponentValues();  // Clear old values when no circuit
             OnSolveError?.Invoke(LastSolveResult);
             return false;
         }
@@ -173,11 +180,12 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         {
             // Build logical circuit from 3D components
             var logicalComponents = BuildLogicalCircuit();
-            
+
             if (logicalComponents.Count == 0)
             {
                 Debug.LogWarning("No valid circuit components found");
                 LastSolveResult = "No valid circuit components found";
+                ClearAllComponentValues();  // Clear old values when circuit is invalid
                 OnSolveError?.Invoke(LastSolveResult);
                 return false;
             }
@@ -197,18 +205,59 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
             debugManager?.LogToFile(LastSolveResult);
             Debug.Log($"✅ Circuit solved: {logicalComponents.Count} components");
 
+            // Assign wire flow directions based on connection path from Battery+
+            AssignWireFlowDirections();
+
             // Fire success event
             OnCircuitSolved?.Invoke();
+
+            // Fire global circuit solved event for all subscribers (e.g., wires)
+            var eventManager = FindFirstObjectByType<CircuitEventManager>();
+            eventManager?.OnCircuitSolved();
+
             return true;
         }
         catch (System.Exception ex)
         {
             Debug.LogError($"Circuit solving failed: {ex.Message}");
+            Debug.LogError($"Stack trace: {ex.StackTrace}"); // Show full stack trace
             LastSolveResult = $"Circuit solving failed: {ex.Message}";
-            debugManager?.LogToFile($"ERROR: {ex.Message}");
+            debugManager?.LogToFile($"ERROR: {ex.Message}\nStack: {ex.StackTrace}");
+            ClearAllComponentValues();  // Clear old values when solve fails
             OnSolveError?.Invoke(LastSolveResult);
             IsCircuitSolved = false;
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Clear all current and voltage values when circuit is invalid or disconnected
+    /// </summary>
+    void ClearAllComponentValues()
+    {
+        if (circuitManager == null) return;
+
+        Debug.Log("🧹 Clearing all component values (circuit invalid or disconnected)");
+
+        // Clear all component values
+        foreach (var component in circuitManager.Components)
+        {
+            if (component != null)
+            {
+                component.current = 0f;
+                component.voltageDrop = 0f;
+            }
+        }
+
+        // Clear all wire values
+        foreach (var wireObj in circuitManager.Wires)
+        {
+            var wire = wireObj.GetComponent<CircuitWire>();
+            if (wire != null)
+            {
+                wire.current = 0f;
+                wire.voltageDrop = 0f;
+            }
         }
     }
     
@@ -241,18 +290,21 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
                 Debug.LogWarning($"Component {comp3D.name} does not have proper terminals");
                 continue;
             }
-            
-            var inputTerminal = terminals.Find(t => t.isInput);
-            var outputTerminal = terminals.Find(t => !t.isInput);
-            
-            if (inputTerminal?.electricalNode == null || outputTerminal?.electricalNode == null)
+
+            // NEW APPROACH: Use positional indexing instead of isInput flag
+            // terminals[0] = TerminalA or NegativeTerminal → NodeA
+            // terminals[1] = TerminalB or PositiveTerminal → NodeB
+            var firstTerminal = terminals[0];
+            var secondTerminal = terminals[1];
+
+            if (firstTerminal?.electricalNode == null || secondTerminal?.electricalNode == null)
             {
                 Debug.LogWarning($"Component {comp3D.name} terminals do not have electrical nodes");
                 continue;
             }
-            
+
             // Create appropriate logical component
-            CircuitComponent logicalComp = CreateLogicalComponent(comp3D, inputTerminal.electricalNode, outputTerminal.electricalNode);
+            CircuitComponent logicalComp = CreateLogicalComponent(comp3D, firstTerminal.electricalNode, secondTerminal.electricalNode);
             if (logicalComp != null)
             {
                 logicalComponents.Add(logicalComp);
@@ -261,11 +313,11 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
                 if (debugSolver)
                 {
                     debugManager?.LogToFile($"Created {logicalComp.GetType().Name}: {logicalComp.Id}");
-                    debugManager?.LogToFile($"  → Input Terminal: {inputTerminal.name}, Node: {inputTerminal.electricalNode.Id}");
-                    debugManager?.LogToFile($"  → Output Terminal: {outputTerminal.name}, Node: {outputTerminal.electricalNode.Id}");
+                    debugManager?.LogToFile($"  → First Terminal: {firstTerminal.name}, Node: {firstTerminal.electricalNode.Id}");
+                    debugManager?.LogToFile($"  → Second Terminal: {secondTerminal.name}, Node: {secondTerminal.electricalNode.Id}");
                 }
 
-                Debug.Log($"📦 Component {comp3D.name}: InputNode={inputTerminal.electricalNode.Id} (HashCode={inputTerminal.electricalNode.GetHashCode()}), OutputNode={outputTerminal.electricalNode.Id} (HashCode={outputTerminal.electricalNode.GetHashCode()})");
+                Debug.Log($"📦 Component {comp3D.name}: NodeA={firstTerminal.electricalNode.Id} (HashCode={firstTerminal.electricalNode.GetHashCode()}), NodeB={secondTerminal.electricalNode.Id} (HashCode={secondTerminal.electricalNode.GetHashCode()})");
             }
         }
         
@@ -367,6 +419,41 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
                 Debug.LogWarning($"⚠️ Could not find 3D component for logical component {logicalComp.Id}");
             }
         }
+    }
+
+    /// <summary>
+    /// Assigns wire flow directions using a clean component-to-component visual graph
+    /// COMPLETELY SEPARATE from the electrical solver's merged node graph
+    /// Uses BFS from Battery+ to traverse the topological wire connections
+    /// </summary>
+    void AssignWireFlowDirections()
+    {
+        Debug.Log("=== ASSIGNING WIRE FLOW DIRECTIONS (Visual Graph) ===");
+
+        // Step 1: Clear all existing flags
+        foreach (var wireObj in circuitManager.Wires)
+        {
+            var wire = wireObj.GetComponent<CircuitWire>();
+            if (wire != null)
+            {
+                if (wire.startEndpoint != null) wire.startEndpoint.isStart = false;
+                if (wire.endEndpoint != null) wire.endEndpoint.isStart = false;
+            }
+        }
+
+        // Step 2: Build the visual flow graph from current wire connections
+        visualFlowGraph.BuildFromScene(circuitManager.Wires);
+
+        // Step 3: Find the battery
+        CircuitComponent3D battery = circuitManager.Components.Find(c => c.ComponentType == ComponentType.Battery);
+        if (battery == null)
+        {
+            Debug.LogWarning("⚠️ No battery found, cannot assign wire flow directions");
+            return;
+        }
+
+        // Step 4: Use the visual graph to assign flow directions via BFS
+        visualFlowGraph.AssignFlowDirectionsFromBattery(battery, terminalManager);
     }
 
     #region ICircuitSolver Implementation

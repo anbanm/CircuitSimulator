@@ -251,10 +251,6 @@ public class ConnectTool : MonoBehaviour
         circuitWire.startTerminal = terminal1;
         circuitWire.endTerminal = terminal2;
 
-        // CRITICAL DEBUG: Log terminal assignment order
-        Debug.Log($"🔌 WIRE CREATED: Start={terminal1.name} (Input:{terminal1.isInput}), End={terminal2.name} (Input:{terminal2.isInput})");
-        Debug.Log($"   Start Component: {terminal1.ParentComponent.name}, End Component: {terminal2.ParentComponent.name}");
-
         // Initialize the wire with terminal connection
         circuitWire.InitializeWithTerminals(terminal1, terminal2);
 
@@ -263,8 +259,6 @@ public class ConnectTool : MonoBehaviour
 
         // Store wire reference
         _wires.Add(wireObj);
-
-        Debug.Log($"✅ Terminal wire created - animation should flow from START to END based on click order");
     }
     
     Material CreateWireMaterial()

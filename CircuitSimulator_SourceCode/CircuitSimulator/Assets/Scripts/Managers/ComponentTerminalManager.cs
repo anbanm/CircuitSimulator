@@ -25,29 +25,64 @@ public class ComponentTerminalManager : MonoBehaviour
     public void SetupComponentTerminals(CircuitComponent3D component)
     {
         if (component == null) return;
-        
+
+        // CRITICAL FIX: Check if terminals already exist - don't recreate them unnecessarily!
+        // This prevents destroying terminals when a wire is deleted, which was causing
+        // all components to lose their terminals.
+        if (componentTerminals.ContainsKey(component) && componentTerminals[component].Count > 0)
+        {
+            // Terminals already exist and are valid, skip recreation
+            Debug.Log($"Terminals already exist for {component.name}, skipping recreation");
+            return;
+        }
+
+        // NEW FIX: Check if terminal GameObjects already exist as children (loaded from scene)
+        // If so, register them instead of destroying and recreating
+        var existingTerminals = component.GetComponentsInChildren<ComponentTerminal>();
+        if (existingTerminals != null && existingTerminals.Length >= 2)
+        {
+            Debug.Log($"Found {existingTerminals.Length} existing terminal GameObjects for {component.name}, registering them");
+            componentTerminals[component] = new List<ComponentTerminal>(existingTerminals);
+            return;
+        }
+
         RemoveComponentTerminals(component);
         var terminals = new List<ComponentTerminal>();
         
         switch (component.ComponentType)
         {
             case ComponentType.Battery:
+                // Battery is POLARIZED - has specific negative/positive terminals
                 terminals.Add(CreateTerminal(component, Vector3.left * terminalDistance, true, "NegativeTerminal"));
                 terminals.Add(CreateTerminal(component, Vector3.right * terminalDistance, false, "PositiveTerminal"));
                 break;
-                
+
             case ComponentType.Resistor:
             case ComponentType.Bulb:
-                terminals.Add(CreateTerminal(component, Vector3.left * terminalDistance, true, "InputTerminal"));
-                terminals.Add(CreateTerminal(component, Vector3.right * terminalDistance, false, "OutputTerminal"));
-                break;
-                
             case ComponentType.Switch:
-                terminals.Add(CreateTerminal(component, Vector3.left * terminalDistance, true, "InputTerminal"));
-                terminals.Add(CreateTerminal(component, Vector3.right * terminalDistance, false, "OutputTerminal"));
+                // Non-polarized components - just generic TerminalA and TerminalB
+                // NO INPUT/OUTPUT - direction is determined by connection order!
+                terminals.Add(CreateTerminal(component, Vector3.left * terminalDistance, false, "TerminalA"));
+                terminals.Add(CreateTerminal(component, Vector3.right * terminalDistance, false, "TerminalB"));
+                break;
+
+            case ComponentType.Junction:
+                // Junctions need 4 neutral terminals for multi-way connections (parallel circuits)
+                // All terminals are "neutral" - neither strictly input nor output
+                // Position terminals in cardinal directions for intuitive wire connections
+                terminals.Add(CreateTerminal(component, Vector3.left * terminalDistance, false, "LeftTerminal"));
+                terminals.Add(CreateTerminal(component, Vector3.right * terminalDistance, false, "RightTerminal"));
+                terminals.Add(CreateTerminal(component, Vector3.forward * terminalDistance, false, "FrontTerminal"));
+                terminals.Add(CreateTerminal(component, Vector3.back * terminalDistance, false, "BackTerminal"));
+
+                // Make junction terminals visually distinct (purple/neutral color)
+                foreach (var terminal in terminals)
+                {
+                    terminal.terminalColor = new Color(0.7f, 0.5f, 0.9f, 1f); // Purple for neutral
+                }
                 break;
         }
-        
+
         componentTerminals[component] = terminals;
         Debug.Log($"Created {terminals.Count} terminals for {component.name}");
     }
@@ -130,20 +165,51 @@ public class ComponentTerminalManager : MonoBehaviour
         if (terminal1 == null || terminal2 == null) return false;
         if (terminal1 == terminal2) return false;
         if (terminal1.ParentComponent == terminal2.ParentComponent) return false;
-        
-        return terminal1.isInput != terminal2.isInput;
+
+        // NEW PHILOSOPHY: Terminals are non-polarized (except battery)
+        // Any terminal can connect to any other terminal on a different component
+        // Direction is determined by CONNECTION ORDER, not terminal types!
+
+        // All connections are valid as long as they're on different components
+        return true;
     }
     
+    /// <summary>
+    /// Get the first terminal (TerminalA or NegativeTerminal for battery)
+    /// </summary>
+    public ComponentTerminal GetFirstTerminal(CircuitComponent3D component)
+    {
+        var terminals = GetComponentTerminals(component);
+        if (terminals.Count > 0) return terminals[0];
+        return null;
+    }
+
+    /// <summary>
+    /// Get the second terminal (TerminalB or PositiveTerminal for battery)
+    /// </summary>
+    public ComponentTerminal GetSecondTerminal(CircuitComponent3D component)
+    {
+        var terminals = GetComponentTerminals(component);
+        if (terminals.Count > 1) return terminals[1];
+        return null;
+    }
+
+    /// <summary>
+    /// DEPRECATED: Use GetFirstTerminal instead. Kept for backward compatibility.
+    /// </summary>
     public ComponentTerminal GetInputTerminal(CircuitComponent3D component)
     {
         var terminals = GetComponentTerminals(component);
-        return terminals.Find(t => t.isInput);
+        return terminals.Find(t => t.isInput) ?? GetFirstTerminal(component);
     }
-    
+
+    /// <summary>
+    /// DEPRECATED: Use GetSecondTerminal instead. Kept for backward compatibility.
+    /// </summary>
     public ComponentTerminal GetOutputTerminal(CircuitComponent3D component)
     {
         var terminals = GetComponentTerminals(component);
-        return terminals.Find(t => !t.isInput);
+        return terminals.Find(t => !t.isInput) ?? GetSecondTerminal(component);
     }
     
     public void OnComponentRegistered(CircuitComponent3D component)
@@ -162,22 +228,25 @@ public class ComponentTerminalManager : MonoBehaviour
         {
             var component = componentPair.Key;
             var terminals = componentPair.Value;
-            
+
             if (component.logicalComponent == null) continue;
-            
+
             if (terminals.Count >= 2)
             {
-                var inputTerminal = terminals.Find(t => t.isInput);
-                var outputTerminal = terminals.Find(t => !t.isInput);
-                
-                if (inputTerminal?.electricalNode != null && outputTerminal?.electricalNode != null)
+                // NEW APPROACH: Use positional assignment instead of isInput
+                // terminals[0] = TerminalA or NegativeTerminal → NodeA
+                // terminals[1] = TerminalB or PositiveTerminal → NodeB
+                var firstTerminal = terminals[0];
+                var secondTerminal = terminals[1];
+
+                if (firstTerminal?.electricalNode != null && secondTerminal?.electricalNode != null)
                 {
-                    component.logicalComponent.NodeA = inputTerminal.electricalNode;
-                    component.logicalComponent.NodeB = outputTerminal.electricalNode;
+                    component.logicalComponent.NodeA = firstTerminal.electricalNode;
+                    component.logicalComponent.NodeB = secondTerminal.electricalNode;
                 }
             }
         }
-        
+
         Debug.Log("Updated logical connections for all components");
     }
 

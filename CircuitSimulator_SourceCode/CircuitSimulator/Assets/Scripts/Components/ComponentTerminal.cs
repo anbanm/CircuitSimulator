@@ -112,16 +112,29 @@ public class ComponentTerminal : MonoBehaviour
         // Create unique node for this terminal
         string nodeId = $"{parentComponent.name}_{(isInput ? "Input" : "Output")}_{GetInstanceID()}";
         electricalNode = new CircuitNode(nodeId);
-        
-        Debug.Log($"Created electrical node: {nodeId}");
+
+        Debug.Log($"🔌 CREATED ELECTRICAL NODE: {nodeId} (HashCode: {electricalNode.GetHashCode()})");
+        Debug.Log($"   → Terminal: {name}, IsInput: {isInput}, Parent: {parentComponent?.name}");
     }
     
     public void SetHighlight(bool highlight)
     {
         if (meshRenderer == null) return;
-        
+
         isHighlighted = highlight;
         meshRenderer.material = highlight ? highlightMaterial : originalMaterial;
+    }
+
+    /// <summary>
+    /// Debug method to check terminal status
+    /// </summary>
+    public void LogTerminalStatus(string context = "")
+    {
+        Debug.Log($"🔍 TERMINAL STATUS ({context}): {name}");
+        Debug.Log($"   → Parent: {parentComponent?.name ?? "NULL"}");
+        Debug.Log($"   → IsInput: {isInput}");
+        Debug.Log($"   → ElectricalNode: {electricalNode?.Id ?? "NULL"} (HashCode: {(electricalNode != null ? electricalNode.GetHashCode().ToString() : "N/A")})");
+        Debug.Log($"   → Transform Position: {transform.position}");
     }
     
     /// <summary>

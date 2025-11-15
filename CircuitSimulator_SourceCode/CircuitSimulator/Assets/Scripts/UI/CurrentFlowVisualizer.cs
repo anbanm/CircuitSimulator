@@ -53,8 +53,9 @@ public class CurrentFlowVisualizer : MonoBehaviour
         if (solverManager != null)
         {
             solverManager.OnCircuitSolved += OnCircuitSolved;
+            solverManager.OnSolveError += OnSolveError;  // Also listen for errors to clear dots
             if (showDebugInfo)
-                Debug.Log($"✅ CurrentFlowVisualizer subscribed to OnCircuitSolved event");
+                Debug.Log($"✅ CurrentFlowVisualizer subscribed to circuit events");
         }
         else
         {
@@ -78,6 +79,18 @@ public class CurrentFlowVisualizer : MonoBehaviour
 
         if (showDebugInfo)
             Debug.Log($"⚡ CurrentFlowVisualizer received OnCircuitSolved event - updating immediately!");
+    }
+
+    /// <summary>
+    /// EVENT HANDLER: Called when circuit solve fails (broken/incomplete circuit)
+    /// Clears all dots since current should be 0
+    /// </summary>
+    void OnSolveError(string errorMessage)
+    {
+        UpdateCurrentFlow();  // This will detect current = 0 and clear dots
+
+        if (showDebugInfo)
+            Debug.Log($"⚠️ CurrentFlowVisualizer received OnSolveError: {errorMessage} - clearing dots");
     }
     
     void Update()
@@ -112,8 +125,17 @@ public class CurrentFlowVisualizer : MonoBehaviour
 
         if (Mathf.Abs(newCurrent - currentMagnitude) > 0.001f)
         {
+            bool wasActive = isFlowActive;
             currentMagnitude = newCurrent;
             isFlowActive = Mathf.Abs(currentMagnitude) > minCurrentToShow; // Use absolute value for activation check
+
+            // If flow stopped (current dropped to ~0), clear all existing dots immediately
+            if (wasActive && !isFlowActive)
+            {
+                ClearAllDots();
+                if (showDebugInfo)
+                    Debug.Log($"🛑 Wire {name}: Current dropped to 0, clearing all dots");
+            }
 
             // Adjust spawn rate based on current magnitude (absolute value)
             float absCurrent = Mathf.Abs(currentMagnitude);
@@ -132,11 +154,37 @@ public class CurrentFlowVisualizer : MonoBehaviour
     {
         if (wireRenderer.positionCount < 2) return;
 
-        // Create dot at the correct starting position based on current direction
-        // Positive current: start at beginning (position 0)
-        // Negative current: start at end (last position)
+        // ===== NEW APPROACH: Use endpoint isStart flags instead of current sign =====
+        // Determine which endpoint is the flow start based on isStart flags
+        bool flowForward = true; // Default to forward if flags not set
+
+        if (circuitWire.startEndpoint != null && circuitWire.endEndpoint != null)
+        {
+            if (circuitWire.startEndpoint.isStart)
+            {
+                flowForward = true; // Flow from start → end
+            }
+            else if (circuitWire.endEndpoint.isStart)
+            {
+                flowForward = false; // Flow from end → start
+            }
+            else
+            {
+                // Fallback: No isStart flags set yet, use current magnitude sign
+                flowForward = (currentMagnitude >= 0);
+                if (showDebugInfo)
+                    Debug.LogWarning($"⚠️ No isStart flags set on {name}, falling back to current sign");
+            }
+        }
+        else
+        {
+            // Fallback if endpoints missing
+            flowForward = (currentMagnitude >= 0);
+        }
+
+        // Create dot at the correct starting position based on flow direction
         Vector3 startPos;
-        if (currentMagnitude >= 0)
+        if (flowForward)
         {
             startPos = wireRenderer.GetPosition(0); // Start at beginning
         }
@@ -148,13 +196,13 @@ public class CurrentFlowVisualizer : MonoBehaviour
         GameObject dotObj = CreateDotGameObject(startPos);
         CurrentDot dot = dotObj.AddComponent<CurrentDot>();
 
-        // Initialize dot with direction information
-        dot.Initialize(wireRenderer, currentMagnitude, maxSpeed, currentColor, dotSize);
+        // Initialize dot with flow direction (use absolute current for speed calculation)
+        dot.Initialize(wireRenderer, flowForward, Mathf.Abs(currentMagnitude), maxSpeed, currentColor, dotSize);
 
         activeDots.Add(dot);
 
         if (showDebugInfo)
-            Debug.Log($"Spawned current dot on {name}, direction={(currentMagnitude >= 0 ? "forward" : "reverse")}, active dots: {activeDots.Count}");
+            Debug.Log($"Spawned current dot on {name}, flowForward={flowForward}, startEndpoint.isStart={circuitWire.startEndpoint?.isStart}, endEndpoint.isStart={circuitWire.endEndpoint?.isStart}, active dots: {activeDots.Count}");
     }
     
     GameObject CreateDotGameObject(Vector3 position)
@@ -213,6 +261,21 @@ public class CurrentFlowVisualizer : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// Clear all dots immediately (used when circuit breaks or current drops to 0)
+    /// </summary>
+    void ClearAllDots()
+    {
+        for (int i = activeDots.Count - 1; i >= 0; i--)
+        {
+            if (activeDots[i] != null && activeDots[i].gameObject != null)
+            {
+                Destroy(activeDots[i].gameObject);
+            }
+        }
+        activeDots.Clear();
+    }
     
     float GetWireCurrentMagnitude()
     {
@@ -244,6 +307,7 @@ public class CurrentFlowVisualizer : MonoBehaviour
         if (solverManager != null)
         {
             solverManager.OnCircuitSolved -= OnCircuitSolved;
+            solverManager.OnSolveError -= OnSolveError;
         }
 
         // Clean up all dots
@@ -295,51 +359,52 @@ public class CurrentFlowVisualizer : MonoBehaviour
 public class CurrentDot : MonoBehaviour
 {
     private LineRenderer wireRenderer;
-    private float currentMagnitude;
+    private bool flowForward; // True = flow from start→end, False = flow from end→start
+    private float currentMagnitudeAbs; // Absolute value for speed calculation
     private float maxSpeed;
     private float currentPosition = 0f; // 0 to 1 along wire
     private bool isCompleted = false;
-    
+
     public bool IsCompleted => isCompleted;
-    
-    public void Initialize(LineRenderer wire, float current, float maxSpeed, Color color, float size)
+
+    public void Initialize(LineRenderer wire, bool flowForward, float currentMagnitudeAbs, float maxSpeed, Color color, float size)
     {
         this.wireRenderer = wire;
-        this.currentMagnitude = current;
+        this.flowForward = flowForward;
+        this.currentMagnitudeAbs = currentMagnitudeAbs;
         this.maxSpeed = maxSpeed;
 
         // Set visual properties
         transform.localScale = Vector3.one * size;
 
-        // Position at correct end based on current direction
-        // Positive current: start at 0, move to 1
-        // Negative current: start at 1, move to 0
-        currentPosition = (current >= 0) ? 0f : 1f;
+        // Position at correct end based on flow direction
+        // flowForward=true: start at 0, move to 1
+        // flowForward=false: start at 1, move to 0
+        currentPosition = flowForward ? 0f : 1f;
         UpdatePosition();
     }
-    
+
     public void UpdateMovement()
     {
         if (isCompleted || wireRenderer == null) return;
 
-        // Calculate movement speed based on current magnitude (use absolute value)
+        // Calculate movement speed based on current magnitude (absolute value)
         // Higher current = faster dots (educational: more current = more electron flow)
-        float absCurrent = Mathf.Abs(currentMagnitude);
-        float speed = Mathf.Lerp(0.1f, maxSpeed, absCurrent / 3f);
+        float speed = Mathf.Lerp(0.1f, maxSpeed, currentMagnitudeAbs / 3f);
 
-        // Determine direction: positive current = forward (0→1), negative current = reverse (1→0)
-        float direction = currentMagnitude >= 0 ? 1f : -1f;
+        // Determine direction: flowForward = +1, flowBackward = -1
+        float direction = flowForward ? 1f : -1f;
 
         // Move along wire in the correct direction
         currentPosition += direction * speed * Time.deltaTime;
 
         // Check if completed (reached either end depending on direction)
-        if (currentMagnitude >= 0 && currentPosition >= 1f) // Forward direction
+        if (flowForward && currentPosition >= 1f) // Forward direction
         {
             isCompleted = true;
             return;
         }
-        else if (currentMagnitude < 0 && currentPosition <= 0f) // Reverse direction
+        else if (!flowForward && currentPosition <= 0f) // Reverse direction
         {
             isCompleted = true;
             return;

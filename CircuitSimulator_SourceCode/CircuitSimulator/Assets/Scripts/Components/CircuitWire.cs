@@ -13,6 +13,12 @@ public class CircuitWire : MonoBehaviour
     public Color selectedColor = Color.cyan;
     public Color currentFlowColor = Color.yellow;
     public float wireWidth = 0.1f;
+
+    [Header("Flow Direction (Set on Solve)")]
+    [Tooltip("Terminal where current flow STARTS (source end)")]
+    public string flowStartTerminal = "Not set";
+    [Tooltip("Terminal where current flow ENDS (destination end)")]
+    public string flowEndTerminal = "Not set";
     
     private LineRenderer lineRenderer;
     private CircuitComponent3D component1;
@@ -57,7 +63,66 @@ public class CircuitWire : MonoBehaviour
         get => component2;
         set => component2 = value;
     }
-    
+
+    void Awake()
+    {
+        // Subscribe to circuit solved event for dynamic direction updates
+        CircuitEventManager.CircuitSolved += OnCircuitSolvedHandler;
+    }
+
+    void OnCircuitSolvedHandler()
+    {
+        // Force immediate update of current direction after circuit is solved
+        Debug.Log($"🔄 Wire {name}: CircuitSolved event received, updating direction...");
+
+        // DISABLED: OrientWireTowardSource() conflicts with VisualFlowGraph BFS
+        // VisualFlowGraph now handles flow direction assignment via isStart flags
+        // OrientWireTowardSource() was physically swapping endpoints, fighting with BFS
+        // OrientWireTowardSource();
+
+        UpdateCurrentFromComponents(debugDetails: true); // Enable detailed logging for circuit solve events only
+        MarkDirty(); // Ensure visual update happens immediately
+        Debug.Log($"   → Current after update: {current:F3}A");
+
+        // Log the complete flow path for this wire
+        LogFlowPath();
+    }
+
+    void LogFlowPath()
+    {
+        if (!IsFullyConnected()) return;
+
+        // Get terminal names with better formatting
+        string startCompName = component1?.name ?? "NULL";
+        string endCompName = component2?.name ?? "NULL";
+        string startTermName = startTerminal?.name ?? "NULL";
+        string endTermName = endTerminal?.name ?? "NULL";
+
+        // Format component type and terminal info
+        string startInfo = $"{startCompName} ({startTermName})";
+        string endInfo = $"{endCompName} ({endTermName})";
+
+        // Show flow direction based on current
+        string flowDirection = current >= 0 ? "→" : "←";
+        string flowPath = current >= 0 ?
+            $"{startInfo} {flowDirection} {endInfo}" :
+            $"{endInfo} {flowDirection} {startInfo}";
+
+        // Set Inspector properties for visual feedback
+        if (current >= 0)
+        {
+            flowStartTerminal = startInfo;
+            flowEndTerminal = endInfo;
+        }
+        else
+        {
+            flowStartTerminal = endInfo;
+            flowEndTerminal = startInfo;
+        }
+
+        Debug.Log($"⚡ FLOW PATH: {flowPath} | Current: {Mathf.Abs(current):F3}A");
+    }
+
     public void Initialize(CircuitComponent3D comp1, CircuitComponent3D comp2)
     {
         component1 = comp1;
@@ -144,41 +209,24 @@ public class CircuitWire : MonoBehaviour
     // Called when an endpoint connects to a terminal
     public void OnEndpointConnected(WireEndpoint endpoint)
     {
-        Debug.Log($"🔌 Endpoint {endpoint.name} connected to terminal, Current registration state: Components={isRegisteredWithComponents}, Manager={isRegisteredWithManager}");
-
         // Update component references based on connected terminals
         if (startEndpoint != null && startEndpoint.IsConnected)
         {
             startTerminal = startEndpoint.ConnectedTerminal;
             component1 = startTerminal.ParentComponent;
-            Debug.Log($"  → Start endpoint connected to {component1.name}, Terminal: {startTerminal.name} (IsInput: {startTerminal.isInput})");
         }
 
         if (endEndpoint != null && endEndpoint.IsConnected)
         {
             endTerminal = endEndpoint.ConnectedTerminal;
             component2 = endTerminal.ParentComponent;
-            Debug.Log($"  → End endpoint connected to {component2.name}, Terminal: {endTerminal.name} (IsInput: {endTerminal.isInput})");
-        }
-
-        // Log animation direction update
-        if (startTerminal != null && endTerminal != null)
-        {
-            bool startIsOutput = !startTerminal.isInput;
-            bool endIsInput = endTerminal.isInput;
-            string direction = (startIsOutput && endIsInput) ? "OUTPUT→INPUT (forward)" :
-                             (!startIsOutput && !endIsInput) ? "INPUT→OUTPUT (reversed)" :
-                             "MIXED (unusual)";
-            Debug.Log($"  🎬 Animation direction updated: {direction}");
         }
 
         // If both endpoints connected, register with circuit system
         if (IsFullyConnected())
         {
-            Debug.Log($"🔗 Both endpoints connected! Checking registration...");
 
             // CRITICAL FIX: Double-check component wire lists to prevent duplicate registration
-            // This handles race conditions where OnEndpointConnected() is called multiple times
             bool alreadyInComponent1 = (component1 != null && component1.connectedWires.Contains(this));
             bool alreadyInComponent2 = (component2 != null && component2.connectedWires.Contains(this));
             bool actuallyRegisteredWithComponents = alreadyInComponent1 || alreadyInComponent2;
@@ -186,27 +234,12 @@ public class CircuitWire : MonoBehaviour
             // Only register if not already registered to prevent duplicates
             if (!isRegisteredWithComponents && !actuallyRegisteredWithComponents)
             {
-                Debug.Log($"  → REGISTERING with components (was not registered)");
-                // CRITICAL: Set flag IMMEDIATELY to prevent race conditions
                 isRegisteredWithComponents = true;
-
                 RegisterWithComponents();
-
-                // Log wire counts AFTER registration
-                if (component1 != null)
-                    Debug.Log($"  → {component1.name} now has {component1.connectedWires.Count} wires");
-                if (component2 != null)
-                    Debug.Log($"  → {component2.name} now has {component2.connectedWires.Count} wires");
             }
-            else
+            else if (!isRegisteredWithComponents && actuallyRegisteredWithComponents)
             {
-                Debug.LogWarning($"⚠️ Wire ALREADY registered with components! Flag={isRegisteredWithComponents}, InComp1={alreadyInComponent1}, InComp2={alreadyInComponent2}");
-                // Sync the flag if it's out of sync
-                if (!isRegisteredWithComponents && actuallyRegisteredWithComponents)
-                {
-                    Debug.Log($"  → Syncing flag: isRegisteredWithComponents = true");
-                    isRegisteredWithComponents = true;
-                }
+                isRegisteredWithComponents = true;
             }
 
             // CRITICAL FIX: Double-check CircuitManager wire list to prevent duplicate registration
@@ -215,27 +248,25 @@ public class CircuitWire : MonoBehaviour
 
             if (!isRegisteredWithManager && !actuallyRegisteredWithManager)
             {
-                Debug.Log($"  → REGISTERING with CircuitManager");
-                // CRITICAL: Set flag IMMEDIATELY to prevent race conditions
                 isRegisteredWithManager = true;
-
                 RegisterWithManager();
             }
-            else
+            else if (!isRegisteredWithManager && actuallyRegisteredWithManager)
             {
-                Debug.LogWarning($"⚠️ Wire ALREADY registered with CircuitManager! Flag={isRegisteredWithManager}, InManager={actuallyRegisteredWithManager}");
-                // Sync the flag if it's out of sync
-                if (!isRegisteredWithManager && actuallyRegisteredWithManager)
-                {
-                    Debug.Log($"  → Syncing flag: isRegisteredWithManager = true");
-                    isRegisteredWithManager = true;
-                }
+                isRegisteredWithManager = true;
             }
 
             // Connect terminals electrically (only once)
             if (startTerminal != null && endTerminal != null)
             {
                 startTerminal.ConnectToTerminal(endTerminal, this);
+            }
+
+            // Force circuit to re-solve so animation direction updates
+            var circuitManager = FindFirstObjectByType<CircuitManager>();
+            if (circuitManager != null)
+            {
+                circuitManager.MarkCircuitChanged();
             }
 
             name = $"Wire_{component1.name}_to_{component2.name}";
@@ -315,6 +346,19 @@ public class CircuitWire : MonoBehaviour
         }
 
         Debug.Log($"🔓 Disconnect complete. New state: Components={isRegisteredWithComponents}, Manager={isRegisteredWithManager}");
+
+        // Clear current values when disconnected
+        current = 0f;
+        voltageDrop = 0f;
+
+        // Trigger circuit re-solve to update all component values
+        var circuitManager = FindFirstObjectByType<CircuitManager>();
+        if (circuitManager != null)
+        {
+            circuitManager.MarkCircuitChanged();
+            Debug.Log("  → Triggered circuit re-solve after disconnection");
+        }
+
         MarkDirty();
     }
 
@@ -452,7 +496,7 @@ public class CircuitWire : MonoBehaviour
         isDirty = true;
     }
     
-    void UpdateCurrentFromComponents()
+    void UpdateCurrentFromComponents(bool debugDetails = false) // Debug only when requested
     {
         // Get current from circuit solver for accurate educational visualization
         // This ensures the current flow dots show the correct speed based on actual circuit analysis
@@ -481,56 +525,163 @@ public class CircuitWire : MonoBehaviour
                 // Wire current flows between the two connected components
                 if (component1 != null && component2 != null)
                 {
+                    // OrientWireTowardSource() is now called ONLY on circuit solve (not every frame)
+                    // This prevents expensive BFS pathfinding from running constantly
+
                     // EDUCATIONAL PHYSICS: Kirchhoff's Current Law (KCL)
                     // Current through a wire MUST equal current through connected components
                     // Any difference indicates a solver error that we should detect
 
-                    // CRITICAL FIX: Keep sign for direction! Don't use Mathf.Abs()
-                    // The solver calculates current direction based on node ordering (NodeA to NodeB)
-                    // We need to determine if the wire orientation matches the current direction
-                    float current1 = component1.current; // Keep sign for direction!
-                    float current2 = component2.current; // Keep sign for direction!
+                    // Now that wire is properly oriented, use component1's current
+                    float current1 = component1.current;
+                    float current2 = component2.current;
 
-                    // Use the component's current WITH DIRECTION
-                    // Determine direction based on TERMINAL POLARITY (input vs output)
-                    // Current flows: OUTPUT terminal → INPUT terminal
-                    float wireCurrent = Mathf.Abs(current1); // Start with magnitude
-
-                    // TERMINAL-BASED DIRECTION (respects wire drawing order + terminal type)
-                    if (startTerminal != null && endTerminal != null)
+                    if (debugDetails)
                     {
-                        // DEBUG: Log terminal types and direction decision
-                        Debug.Log($"🔌 Wire {name}: Start={startTerminal.name} (IsInput:{startTerminal.isInput}), " +
-                                 $"End={endTerminal.name} (IsInput:{endTerminal.isInput}), Magnitude={wireCurrent:F3}A");
+                        Debug.Log($"🔍 === WIRE DIRECTION DEBUG: {name} ===");
+                        Debug.Log($"  Component1: {component1.name}, Current: {current1:F3}A");
+                        Debug.Log($"  Component2: {component2.name}, Current: {current2:F3}A");
+                    }
 
-                        // Current flows from OUTPUT to INPUT
-                        // If wire is drawn OUTPUT→INPUT: direction is correct (positive)
-                        // If wire is drawn INPUT→OUTPUT: direction is reversed (negative)
+                    // BATTERY-BASED DIRECTION: Use battery as directional reference for conventional current flow
+                    // Conventional current flows FROM battery + terminal THROUGH circuit TO battery - terminal
+                    // This creates an educational current loop that students can visualize
+                    float wireCurrent = current1;
+                    bool directionDetermined = false;
 
-                        bool startIsOutput = !startTerminal.isInput;
-                        bool endIsInput = endTerminal.isInput;
+                    // Check component types for special handling
+                    bool comp1IsBattery = component1.ComponentType == ComponentType.Battery;
+                    bool comp2IsBattery = component2.ComponentType == ComponentType.Battery;
+                    bool comp1IsJunction = component1.ComponentType == ComponentType.Junction;
+                    bool comp2IsJunction = component2.ComponentType == ComponentType.Junction;
 
-                        if (startIsOutput && endIsInput)
+                    if (debugDetails)
+                    {
+                        Debug.Log($"  Component1: {component1.ComponentType}, Component2: {component2.ComponentType}");
+                        Debug.Log($"  StartTerminal: {startTerminal?.name} (on {startTerminal?.ParentComponent?.name}), EndTerminal: {endTerminal?.name} (on {endTerminal?.ParentComponent?.name})");
+                    }
+
+                    // CASE 0: Wire connects to a Junction - junctions just pass current through
+                    // Use the direction from the non-junction component
+                    if (comp1IsJunction && !comp2IsJunction)
+                    {
+                        // Junction at start, real component at end
+                        // Wire direction comes from the end component
+                        bool endIsOutput = !endTerminal.isInput;
+                        if (endIsOutput)
                         {
-                            // Perfect: wire drawn in correct direction (output → input)
-                            Debug.Log($"   ➡️ Direction: FORWARD (output→input), Final={wireCurrent:F3}A");
-                        }
-                        else if (!startIsOutput && !endIsInput)
-                        {
-                            // Wire drawn backwards: input → output
-                            wireCurrent = -wireCurrent; // Reverse direction
-                            Debug.Log($"   ⬅️ Direction: REVERSED (input→output becomes output→input), Final={wireCurrent:F3}A");
+                            // Connected to component's OUTPUT → current exits component, flows toward junction
+                            wireCurrent = -current2; // Flows toward start (negative)
+                            if (debugDetails)
+                                Debug.Log($"  ✓ Junction at START, component OUTPUT at END → current flows toward junction (negative) = {wireCurrent:F3}A");
                         }
                         else
                         {
-                            // Mixed: output→output or input→input (should not happen in valid circuits)
-                            Debug.LogWarning($"   ⚠️ Unusual connection: {(startIsOutput ? "output" : "input")}→{(endIsInput ? "input" : "output")}");
+                            // Connected to component's INPUT → current enters component, flows from junction
+                            wireCurrent = current2; // Flows away from start (positive)
+                            if (debugDetails)
+                                Debug.Log($"  ✓ Junction at START, component INPUT at END → current flows from junction (positive) = {wireCurrent:F3}A");
                         }
+                        directionDetermined = true;
                     }
-                    else
+                    else if (comp2IsJunction && !comp1IsJunction)
                     {
-                        Debug.LogWarning($"⚠️ Wire {name}: Missing terminals! " +
-                                       $"Start={startTerminal?.name}, End={endTerminal?.name}");
+                        // Real component at start, junction at end
+                        // Wire direction comes from the start component
+                        bool startIsOutput = !startTerminal.isInput;
+                        if (startIsOutput)
+                        {
+                            // Connected to component's OUTPUT → current exits component toward junction
+                            wireCurrent = current1; // Flows away from start (positive)
+                            if (debugDetails)
+                                Debug.Log($"  ✓ Component OUTPUT at START, junction at END → current flows toward junction (positive) = {wireCurrent:F3}A");
+                        }
+                        else
+                        {
+                            // Connected to component's INPUT → current enters component from junction
+                            wireCurrent = -current1; // Flows toward start (negative)
+                            if (debugDetails)
+                                Debug.Log($"  ✓ Component INPUT at START, junction at END → current flows from junction (negative) = {wireCurrent:F3}A");
+                        }
+                        directionDetermined = true;
+                    }
+                    else if (comp1IsJunction && comp2IsJunction)
+                    {
+                        // Junction-to-junction wire - just use magnitude
+                        wireCurrent = Mathf.Abs(current1);
+                        if (debugDetails)
+                            Debug.Log($"  ✓ Junction-to-junction wire → use current magnitude = {wireCurrent:F3}A");
+                        directionDetermined = true;
+                    }
+
+                    // CASE 1: Battery wires - use terminal polarity to determine direction
+                    if (comp1IsBattery && !directionDetermined)
+                    {
+                        // Battery at START - check which terminal we're connected to
+                        bool connectedToPositive = startTerminal != null && startTerminal.name.Contains("Positive");
+
+                        if (connectedToPositive)
+                        {
+                            // Connected to + terminal: current flows OUT (away from start)
+                            wireCurrent = current1;  // Positive = start→end
+                        }
+                        else
+                        {
+                            // Connected to - terminal: current flows IN (toward start)
+                            wireCurrent = -current1;  // Negative = end→start
+                        }
+
+                        if (debugDetails)
+                            Debug.Log($"  ✓ Battery at START, terminal={startTerminal?.name}, wireCurrent={wireCurrent:F3}A");
+
+                        directionDetermined = true;
+                    }
+                    else if (comp2IsBattery && !directionDetermined)
+                    {
+                        // Battery at END - check which terminal we're connected to
+                        bool connectedToPositive = endTerminal != null && endTerminal.name.Contains("Positive");
+
+                        if (connectedToPositive)
+                        {
+                            // Connected to + terminal: current flows OUT (toward start)
+                            wireCurrent = -current2;  // Negative = end→start
+                        }
+                        else
+                        {
+                            // Connected to - terminal: current flows IN (away from start)
+                            wireCurrent = current2;  // Positive = start→end
+                        }
+
+                        if (debugDetails)
+                            Debug.Log($"  ✓ Battery at END, terminal={endTerminal?.name}, wireCurrent={wireCurrent:F3}A");
+
+                        directionDetermined = true;
+                    }
+
+                    // CASE 2: Non-battery components
+                    // Wire is already oriented (component1 closer to battery), so just use solver current
+                    if (!directionDetermined)
+                    {
+                        // Simple! Wire is oriented correctly, current flows component1→component2
+                        wireCurrent = Mathf.Abs(current1); // Always positive (flows start→end)
+
+                        if (debugDetails)
+                            Debug.Log($"  ✓ Symmetric component (oriented) → wireCurrent = {wireCurrent:F3}A (always positive)");
+
+                        directionDetermined = true;
+                    }
+
+                    if (debugDetails && directionDetermined)
+                    {
+                        Debug.Log($"✅ Wire {name}: Direction determined, INITIAL wireCurrent = {wireCurrent:F3}A");
+                    }
+
+                    // No swapping! CurrentDot handles positive/negative current naturally
+                    // Positive current: dots flow start→end (position 0→1)
+                    // Negative current: dots flow end→start (position 1→0)
+                    if (debugDetails)
+                    {
+                        Debug.Log($"✅ Wire {name}: FINAL wireCurrent = {wireCurrent:F3}A (direction={(wireCurrent >= 0 ? "forward" : "reverse")})");
                     }
 
                     // EDUCATIONAL CHECK: Verify Kirchhoff's Current Law
@@ -538,12 +689,7 @@ public class CircuitWire : MonoBehaviour
                     float currentDifference = Mathf.Abs(Mathf.Abs(current1) - Mathf.Abs(current2));
                     if (currentDifference > 0.01f) // Tolerance for numerical precision
                     {
-                        Debug.LogWarning($"⚠️ KCL Violation in {name}! Component currents differ: " +
-                                       $"{component1.name}={current1:F3}A, {component2.name}={current2:F3}A. " +
-                                       $"This indicates a solver error or circuit topology issue.");
-
-                        // For educational purposes, use the average magnitude
-                        // Direction is already determined by terminal voltages above
+                        // Use the average magnitude to handle small solver errors
                         float avgMagnitude = (Mathf.Abs(current1) + Mathf.Abs(current2)) / 2f;
                         wireCurrent = (wireCurrent >= 0) ? avgMagnitude : -avgMagnitude;
                     }
@@ -552,12 +698,6 @@ public class CircuitWire : MonoBehaviour
                     if (Mathf.Abs(wireCurrent - current) > 0.001f)
                     {
                         current = wireCurrent;
-
-                        // Debug info for educational purposes
-                        if (Mathf.Abs(current) > 0.01f)
-                        {
-                            Debug.Log($"Wire {name}: Current updated to {current:F3}A (from components: {current1:F3}A, {current2:F3}A)");
-                        }
                     }
                 }
             }
@@ -785,8 +925,13 @@ public class CircuitWire : MonoBehaviour
         }
 
         // Update capsule collider
+        // CRITICAL FIX: Shorten collider to leave gaps for endpoints to be clickable!
+        // Each endpoint has size 0.4f, so we leave 0.5f gap on each end
+        float endpointGap = 0.5f; // Leave room for endpoints
+        float colliderHeight = Mathf.Max(0.1f, length - (endpointGap * 2)); // Min 0.1f to avoid zero height
+
         wireCollider.center = Vector3.zero; // Centered on GameObject
-        wireCollider.height = length;
+        wireCollider.height = colliderHeight;
         wireCollider.direction = 2; // Z-axis
         wireCollider.enabled = true;
 
@@ -911,8 +1056,244 @@ public class CircuitWire : MonoBehaviour
         return mat;
     }
     
+    /// <summary>
+    /// Orient wire based on electrical node connections (NodeA/NodeB from solver)
+    /// This creates consistent flow direction regardless of component instance names
+    /// Called on every solve to handle topology changes
+    /// </summary>
+    void OrientWireTowardSource()
+    {
+        // Skip if either component is a battery (battery wires already oriented by terminal polarity)
+        bool comp1IsBattery = component1 != null && component1.ComponentType == ComponentType.Battery;
+        bool comp2IsBattery = component2 != null && component2.ComponentType == ComponentType.Battery;
+
+        if (comp1IsBattery || comp2IsBattery)
+        {
+            return; // Battery wires use terminal polarity for direction
+        }
+
+        // ====== NEW APPROACH: Use ONLY electrical node connections ======
+        // Ideal wire orientation: START→OUTPUT (NodeB), END→INPUT (NodeA)
+        // This ensures current flows: Component1.OUTPUT → Wire → Component2.INPUT
+
+        bool needsSwap = false;
+        string reason = "";
+
+        // Validate we have all required data
+        if (startTerminal == null || endTerminal == null ||
+            startTerminal.electricalNode == null || endTerminal.electricalNode == null)
+        {
+            Debug.LogWarning($"⚠️ {name}: Missing terminal or node data, cannot orient");
+            return;
+        }
+
+        if (component1.logicalComponent == null || component2.logicalComponent == null)
+        {
+            Debug.LogWarning($"⚠️ {name}: Missing logical components, cannot orient");
+            return;
+        }
+
+        // Check current wire orientation
+        CircuitNode startNode = startTerminal.electricalNode;
+        CircuitNode endNode = endTerminal.electricalNode;
+        CircuitNode comp1NodeA = component1.logicalComponent.NodeA;
+        CircuitNode comp1NodeB = component1.logicalComponent.NodeB;
+        CircuitNode comp2NodeA = component2.logicalComponent.NodeA;
+        CircuitNode comp2NodeB = component2.logicalComponent.NodeB;
+
+        Debug.Log($"🔍 NODE-BASED Orient check: {name}");
+        Debug.Log($"  START terminal → Node {startNode.Id} (HashCode={startNode.GetHashCode()})");
+        Debug.Log($"  END terminal → Node {endNode.Id} (HashCode={endNode.GetHashCode()})");
+        Debug.Log($"  {component1.name}: NodeA={comp1NodeA.Id} (Hash={comp1NodeA.GetHashCode()}), NodeB={comp1NodeB.Id} (Hash={comp1NodeB.GetHashCode()})");
+        Debug.Log($"  {component2.name}: NodeA={comp2NodeA.Id} (Hash={comp2NodeA.GetHashCode()}), NodeB={comp2NodeB.Id} (Hash={comp2NodeB.GetHashCode()})");
+
+        // Determine correct orientation based on node connections
+        // IDEAL: startTerminal connects to comp1's OUTPUT (NodeB), endTerminal connects to comp2's INPUT (NodeA)
+
+        bool startAtComp1Output = (startNode == comp1NodeB);
+        bool startAtComp1Input = (startNode == comp1NodeA);
+        bool endAtComp2Input = (endNode == comp2NodeA);
+        bool endAtComp2Output = (endNode == comp2NodeB);
+
+        if (startAtComp1Output && endAtComp2Input)
+        {
+            // PERFECT: Wire flows from comp1's OUTPUT to comp2's INPUT
+            needsSwap = false;
+            reason = $"✓ Correct: START at {component1.name}.OUTPUT → END at {component2.name}.INPUT";
+        }
+        else if (startAtComp1Input && endAtComp2Output)
+        {
+            // BACKWARDS: Wire flows from comp1's INPUT to comp2's OUTPUT (wrong direction!)
+            needsSwap = true;
+            reason = $"⚠️ SWAPPING! Wire is backwards: START at {component1.name}.INPUT → END at {component2.name}.OUTPUT";
+        }
+        else
+        {
+            // Ambiguous or mixed connection - try checking from the other direction
+            bool endAtComp1Output = (endNode == comp1NodeB);
+            bool endAtComp1Input = (endNode == comp1NodeA);
+            bool startAtComp2Input = (startNode == comp2NodeA);
+            bool startAtComp2Output = (startNode == comp2NodeB);
+
+            if (endAtComp1Output && startAtComp2Input)
+            {
+                // Wire is BACKWARDS: comp1.OUTPUT is at END, comp2.INPUT is at START
+                needsSwap = true;
+                reason = $"⚠️ SWAPPING! Wire is backwards: END at {component1.name}.OUTPUT ← START at {component2.name}.INPUT";
+            }
+            else if (endAtComp1Input && startAtComp2Output)
+            {
+                // Current orientation is correct: comp1.INPUT at END, comp2.OUTPUT at START
+                needsSwap = false;
+                reason = $"✓ Correct: END at {component1.name}.INPUT ← START at {component2.name}.OUTPUT";
+            }
+            else
+            {
+                // Cannot determine orientation - nodes don't match expected pattern
+                Debug.LogWarning($"  ⚠️ Cannot determine orientation for {name}: Node connections don't match expected patterns");
+                Debug.LogWarning($"    startAtComp1Out={startAtComp1Output}, startAtComp1In={startAtComp1Input}");
+                Debug.LogWarning($"    endAtComp2In={endAtComp2Input}, endAtComp2Out={endAtComp2Output}");
+                Debug.LogWarning($"    endAtComp1Out={endAtComp1Output}, endAtComp1In={endAtComp1Input}");
+                Debug.LogWarning($"    startAtComp2In={startAtComp2Input}, startAtComp2Out={startAtComp2Output}");
+                return; // Cannot orient, skip swap
+            }
+        }
+
+        Debug.Log($"  {reason}");
+
+        if (!needsSwap)
+        {
+            Debug.Log($"  ✅ Wire orientation is CORRECT, no changes needed");
+            return; // Already correct, no swap needed
+        }
+
+        // If we get here, needsSwap is true, so perform the swap
+        Debug.Log($"  🔄 Performing wire endpoint swap...");
+
+        // Swap components
+        var tempComp = component1;
+        component1 = component2;
+        component2 = tempComp;
+
+        // Swap terminals
+        var tempTerm = startTerminal;
+        startTerminal = endTerminal;
+        endTerminal = tempTerm;
+
+        // Swap endpoints
+        var tempEnd = startEndpoint;
+        startEndpoint = endEndpoint;
+        endEndpoint = tempEnd;
+
+        // Swap visual components
+        var tempVisual = startComponent;
+        startComponent = endComponent;
+        endComponent = tempVisual;
+
+        // Update LineRenderer
+        if (lineRenderer != null && lineRenderer.positionCount >= 2)
+        {
+            Vector3 pos0 = lineRenderer.GetPosition(0);
+            Vector3 pos1 = lineRenderer.GetPosition(1);
+            lineRenderer.SetPosition(0, pos1);
+            lineRenderer.SetPosition(1, pos0);
+        }
+
+        Debug.Log($"  ✅ Wire endpoints swapped successfully!");
+    }
+
+    /// <summary>
+    /// Calculate distance from a component to the nearest battery (breadth-first search)
+    /// NOTE: This method is now DEPRECATED - we use connection-order-based flow direction instead
+    /// </summary>
+    int GetDistanceToBattery(CircuitComponent3D component)
+    {
+        if (component == null) return 999; // Infinite distance
+
+        Debug.Log($"🔍 BFS START from {component.name} (looking for battery)");
+
+        // BFS to find shortest path to battery
+        var visited = new System.Collections.Generic.HashSet<CircuitComponent3D>();
+        var queue = new System.Collections.Generic.Queue<(CircuitComponent3D comp, int dist)>();
+
+        queue.Enqueue((component, 0));
+        visited.Add(component);
+
+        while (queue.Count > 0)
+        {
+            var (current, distance) = queue.Dequeue();
+            Debug.Log($"  📍 Visiting {current.name} at distance {distance}, Type={current.ComponentType}");
+
+            // Found a battery!
+            if (current.ComponentType == ComponentType.Battery)
+            {
+                Debug.Log($"  ✅ Found battery {current.name} at distance {distance}!");
+                return distance;
+            }
+
+            // Explore connected components through wires
+            if (current.connectedWires != null)
+            {
+                Debug.Log($"  🔌 {current.name} has {current.connectedWires.Count} connected wires");
+                foreach (var wireObj in current.connectedWires)
+                {
+                    // Check if wire GameObject still exists before accessing it
+                    if (wireObj == null)
+                    {
+                        Debug.Log($"    ⚠️ Skipping null wire GameObject");
+                        continue; // Skip destroyed wires
+                    }
+
+                    var wire = wireObj.GetComponent<CircuitWire>();
+                    if (wire == null)
+                    {
+                        Debug.Log($"    ⚠️ Wire GameObject has no CircuitWire component");
+                        continue;
+                    }
+                    if (wire == this)
+                    {
+                        Debug.Log($"    ⚠️ Skipping self-wire {wire.name}");
+                        continue; // Skip this wire
+                    }
+
+                    Debug.Log($"    🔗 Checking wire {wire.name} (comp1={wire.component1?.name}, comp2={wire.component2?.name})");
+
+                    // Get the other component on this wire
+                    CircuitComponent3D nextComp = null;
+                    if (wire.component1 == current) nextComp = wire.component2;
+                    else if (wire.component2 == current) nextComp = wire.component1;
+
+                    if (nextComp != null && !visited.Contains(nextComp))
+                    {
+                        Debug.Log($"    ➡️ Found next component: {nextComp.name} (distance will be {distance + 1})");
+                        visited.Add(nextComp);
+                        queue.Enqueue((nextComp, distance + 1));
+                    }
+                    else if (nextComp == null)
+                    {
+                        Debug.Log($"    ⚠️ Could not find next component (current={current.name} not in wire's components)");
+                    }
+                    else if (visited.Contains(nextComp))
+                    {
+                        Debug.Log($"    ⏭️ Already visited {nextComp.name}");
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log($"  ⚠️ {current.name} has NULL connectedWires list!");
+            }
+        }
+
+        Debug.Log($"❌ BFS FAILED: No battery found from {component.name} (returning 999)");
+        return 999; // No battery found
+    }
+
     void OnDestroy()
     {
+        // Unsubscribe from events to prevent memory leaks
+        CircuitEventManager.CircuitSolved -= OnCircuitSolvedHandler;
+
         // Destroy endpoint GameObjects (they're not children, so need manual cleanup)
         if (startEndpoint != null && startEndpoint.gameObject != null)
         {

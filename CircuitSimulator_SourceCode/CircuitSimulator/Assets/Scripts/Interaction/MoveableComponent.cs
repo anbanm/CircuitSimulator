@@ -145,11 +145,22 @@ public class MoveableComponent : MonoBehaviour
         
         transform.position = snappedPos;
         
-        // Trigger circuit re-solve when component moves (for real-time feedback)
+        // Trigger circuit re-solve when component moves (only if not in manual mode)
         var manager = CircuitManager.Instance;
         if (manager != null)
         {
-            manager.SolveCircuit();
+            // Check if manual solve mode is enabled
+            var solverManager = FindFirstObjectByType<CircuitSolverManager>();
+            if (solverManager != null && !solverManager.manualSolveMode)
+            {
+                manager.SolveCircuit();
+            }
+            else if (solverManager == null)
+            {
+                // Fallback: if no solver manager, allow auto-solve
+                manager.SolveCircuit();
+            }
+            // Otherwise, in manual mode - wait for user to press Solve button
         }
     }
     
