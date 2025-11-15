@@ -162,12 +162,20 @@ public class ComponentTerminal : MonoBehaviour
         string myOriginalNodeId = electricalNode?.Id ?? "NULL";
         string otherOriginalNodeId = otherTerminal.electricalNode?.Id ?? "NULL";
 
+        // PREVENT SELF-CONNECTION BUG
+        if (this.parentComponent == otherTerminal.parentComponent)
+        {
+            Debug.LogError($"❌ PREVENTED SELF-CONNECTION: {parentComponent.name}.{name} ({myOriginalNodeId}) to {otherTerminal.name} ({otherOriginalNodeId})");
+            Debug.LogError($"   Stack trace: {System.Environment.StackTrace}");
+            return;
+        }
+
         var sharedNode = electricalNode ?? otherTerminal.electricalNode ?? new CircuitNode($"Shared_{GetInstanceID()}");
 
         electricalNode = sharedNode;
         otherTerminal.electricalNode = sharedNode;
 
-        Debug.Log($"🔗 NODE MERGE: {name} (was {myOriginalNodeId}) + {otherTerminal.name} (was {otherOriginalNodeId}) → SHARED NODE: {sharedNode.Id}");
+        Debug.Log($"🔗 NODE MERGE: {parentComponent.name}.{name} (was {myOriginalNodeId}) + {otherTerminal.parentComponent.name}.{otherTerminal.name} (was {otherOriginalNodeId}) → SHARED NODE: {sharedNode.Id}");
 
         // Add components to the shared node
         if (!sharedNode.ConnectedComponents.Contains(parentComponent.logicalComponent))

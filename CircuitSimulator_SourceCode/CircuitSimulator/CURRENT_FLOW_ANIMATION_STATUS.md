@@ -1,196 +1,186 @@
 # Current Flow Animation Status
 
-**Date**: 2025-01-11
-**Status**: ⚠️ IN PROGRESS - Direction logic implemented but not yet working correctly
+**Date**: 2025-01-15
+**Status**: ✅ **COMPLETE** - Flow direction deterministic and correct
 
-## Problem Statement
+## Problem Solved
 
-Current flow animation dots need to flow in the correct direction based on:
-1. **Physical current flow**: Conventional current flows from positive (+) to negative (-)
-2. **Wire drawing order**: User clicks terminals in specific order (start→end)
-3. **Dynamic updates**: Animation should adapt when wire endpoints are moved to different terminals
+### Original Issue
+Wire current flow animation direction was **non-deterministic** - changed randomly on every solve or component click due to two conflicting systems:
 
-## Work Completed Today
+1. **Electrical Solver** - Merged connected terminals into shared nodes for calculations
+2. **OrientWireTowardSource()** - Tried to guess flow direction from node polarity
 
-### ✅ Fixed Issues
+**Result**: Wire endpoints would swap unpredictably, causing dots to animate in wrong/changing directions.
 
-1. **Negative Current Display** (WireValueDisplay.cs:75)
-   - Changed: Display `Mathf.Abs(circuitWire.current)` instead of raw value
-   - Result: Wire labels now show "0.12A" instead of "-0.12A"
+### Root Cause
+```
+User's Circuit: Battery → Bulb1 → Bulb2 → Battery
+Physical Wires: Wire_A, Wire_B, Wire_C
 
-2. **Sign Preservation in CurrentFlowVisualizer** (CurrentFlowVisualizer.cs:217-228)
-   - Removed: `Mathf.Abs()` from `GetWireCurrentMagnitude()`
-   - Kept sign for direction logic while using absolute value for magnitude checks
+Electrical Solver (CORRECT for calculations):
+  Merged Nodes: {Node_1, Node_2, Node_3}
+  Wire_B endpoints: both → Node_2 (merged!)
 
-3. **Sign Preservation in CircuitWire** (CircuitWire.cs:480-481)
-   - Removed: `Mathf.Abs()` from component current reading
-   - Preserved direction information from solver
+Visual Animation (WRONG approach):
+  Tried to use merged nodes to determine flow direction
+  BFS couldn't traverse because it saw "short circuit" (both endpoints → same node)
+  OrientWireTowardSource() guessed based on polarity → fought with BFS
+```
 
-### 🔧 Attempted Fixes (Not Yet Working)
+## Solution: VisualFlowGraph Architecture
 
-#### Approach 1: Voltage-Based Direction (Attempted)
-**Logic**: Current flows from high voltage to low voltage
+### New File: `VisualFlowGraph.cs`
+**Location**: `Assets/Scripts/Managers/VisualFlowGraph.cs`
+
+**Purpose**: Separate visual flow topology from electrical simulation
+
+**Key Components**:
+1. **WireConnection Class** - Component-to-component edges
+   - Tracks: `wire`, `fromComponent`, `fromTerminal`, `toComponent`, `toTerminal`
+   - No reference to electrical nodes
+
+2. **BuildFromScene()** - Constructs visual graph
+   - Reads wire hierarchy (not merged nodes)
+   - Creates bidirectional connections for each wire
+   - Deterministic sorting by wire name
+
+3. **AssignFlowDirectionsFromBattery()** - BFS traversal
+   - Starts from Battery PositiveTerminal
+   - Traverses component-to-component connections
+   - Current flows THROUGH components (enters one terminal, exits another)
+   - Sets `isStart` flags on wire endpoints
+
+### Integration Points
+
+**CircuitSolverManager.cs** (Lines 39-40, 50-51, 424-456):
 ```csharp
-// Check terminal voltages
-if (startVoltage < endVoltage)
-    wireCurrent = -wireCurrent; // Reverse direction
-```
-**Issue**: Requires solver to run first; voltages may not be updated yet
+// Field
+private VisualFlowGraph visualFlowGraph;
 
-#### Approach 2: Terminal Polarity-Based Direction (Current Implementation)
-**Logic**: Current flows OUTPUT terminal → INPUT terminal
+// Initialize
+visualFlowGraph = new VisualFlowGraph();
+
+// Called after circuit solve
+void AssignWireFlowDirections()
+{
+    visualFlowGraph.BuildFromScene(circuitManager.Wires);
+    visualFlowGraph.AssignFlowDirectionsFromBattery(battery, terminalManager);
+}
+```
+
+**CircuitWire.cs** (Lines 78-81):
 ```csharp
-// CircuitWire.cs:488-523
-bool startIsOutput = !startTerminal.isInput;
-bool endIsInput = endTerminal.isInput;
-
-if (startIsOutput && endIsInput)
-    // Forward: OUTPUT→INPUT
-else if (!startIsOutput && !endIsInput)
-    // Reversed: INPUT→OUTPUT (apply negative sign)
+// DISABLED legacy code that fought with VisualFlowGraph
+// OrientWireTowardSource();  // <-- Commented out!
 ```
 
-**Terminal Definitions**:
-- **Battery Red** (+): OUTPUT terminal
-- **Battery Green** (-): INPUT terminal (ground)
-- **Bulb/Resistor**: Both INPUT and OUTPUT terminals
-
-**Expected Behavior**:
-- Battery Red → Bulb: Forward animation (red to bulb)
-- Bulb → Battery Green: Forward animation (bulb to green)
-- If wire drawn backwards: Automatic reversal
-
-**Current Status**: Logic implemented but animation still flows incorrectly
-
-## Debug Logging Added
-
-### ConnectTool.cs:254-267
-Logs terminal assignment when wire is created:
-```
-🔌 WIRE CREATED: Start=LeftTerminal (Input:true), End=RightTerminal (Input:false)
-   Start Component: Battery, End Component: Bulb
-✅ Terminal wire created - animation should flow from START to END based on click order
+**CurrentFlowVisualizer.cs** (Lines 155-184):
+```csharp
+// Uses isStart flags set by VisualFlowGraph
+if (circuitWire.startEndpoint.isStart)
+    flowForward = true;  // Flow from start → end
+else if (circuitWire.endEndpoint.isStart)
+    flowForward = false; // Flow from end → start
 ```
 
-### CircuitWire.cs:154-173
-Logs terminal updates when endpoints are moved:
-```
-🔌 Endpoint StartEndpoint connected to terminal
-  → Start endpoint connected to Battery, Terminal: LeftTerminal (IsInput: false)
-  🎬 Animation direction updated: OUTPUT→INPUT (forward)
-```
+## Technical Details
 
-### CircuitWire.cs:492-517
-Logs direction decision during current update:
+### BFS Semantics
+Current flows **THROUGH** components, not just between nodes:
+
 ```
-🔌 Wire Wire_Battery_to_Bulb: Start=LeftTerminal (IsInput:false), End=RightTerminal (IsInput:true), Magnitude=0.120A
-   ➡️ Direction: FORWARD (output→input), Final=0.120A
+Battery+ → [enters Bulb1.TerminalB] → Bulb1 → [exits Bulb1.TerminalA] → Wire → ...
 ```
 
-## Root Cause Analysis
+**Queue State**:
+- `(component, exitTerminal)` - Where current will EXIT from
+- BFS processes connections FROM the exit terminal
+- Next component: enters via `toTerminal`, exits via OTHER terminal
 
-### Potential Issues:
+### Deterministic Ordering
+**Problem**: Dictionary iteration order is non-deterministic in C#
+**Solution**: Sort by name at every decision point
 
-1. **Terminal Type Definitions May Be Incorrect**
-   - Need to verify: Is Battery Red really marked as `isInput=false` (OUTPUT)?
-   - Need to verify: Is Battery Green really marked as `isInput=true` (INPUT)?
+```csharp
+// Sort wire connections
+connections.Sort((a, b) => string.Compare(a.wire.name, b.wire.name));
 
-2. **Wire Orientation vs Physical Layout**
-   - Wire's start/end may not match visual left/right positions
-   - LineRenderer position[0] vs position[1] may not align with terminal assignment
+// Sort terminal selection
+var exitTerminal = destTerminals
+    .Where(t => t != connection.toTerminal)
+    .OrderBy(t => t.name)
+    .FirstOrDefault();
+```
 
-3. **Solver Node Ordering**
-   - Solver calculates current based on NodeA→NodeB direction
-   - This may not match wire's start→end orientation
-   - Component current sign may already be "pre-reversed" by solver
+## Verification Results
 
-4. **CurrentFlowVisualizer Spawn Logic**
-   - Spawns dots at position[0] for positive, position[1] for negative
-   - May need to spawn based on terminal type, not wire position index
+### Test Case: Battery → Bulb1 → Bulb2 → Battery
 
-## Next Steps for Tomorrow
+**BFS Log Output** (consistent every solve):
+```
+🔋 Starting BFS from Battery+ (PositiveTerminal)
+  📍 Visiting Battery_0, exiting from PositiveTerminal
+    🔗 Wire_Battery_0_to_Bulb_2: START endpoint is flow start
+  📍 Visiting Bulb_2, exiting from TerminalA
+    🔗 Wire_Bulb_1_to_Bulb_2: END endpoint is flow start
+  📍 Visiting Bulb_1, exiting from TerminalA
+    🔗 Wire_Battery_0_to_Bulb_1: END endpoint is flow start
+✅ Flow directions assigned: 3 wires processed, 3 components visited
+```
 
-### Investigation Needed:
+**Before Fix**:
+- Clicking components → direction changes randomly
+- BFS processed 0-4 wires inconsistently
+- OrientWireTowardSource logs: "⚠️ SWAPPING! Wire is backwards"
 
-1. **Verify Terminal Types**
-   ```csharp
-   // Check in ComponentTerminalManager or ComponentTerminal creation
-   // For Battery: Red should be OUTPUT (isInput=false), Green should be INPUT (isInput=true)
-   ```
+**After Fix**:
+- Clicking components → direction stays consistent ✅
+- BFS always processes exactly 3 wires in same order ✅
+- No more endpoint swapping ✅
 
-2. **Check LineRenderer Position Order**
-   ```csharp
-   // Verify: Does position[0] correspond to startTerminal?
-   // Or is there a mismatch between wire endpoints and LineRenderer positions?
-   ```
+## Benefits
 
-3. **Test Solver Current Sign**
-   ```csharp
-   // Create simple circuit: Battery → Bulb → Battery
-   // Log: component1.current (should be positive if flowing out)
-   // Log: component2.current (should match in magnitude)
-   ```
+✅ **Deterministic** - Same flow direction every solve
+✅ **Correct Topology** - Follows actual circuit connections
+✅ **Clean Separation** - Visual concerns separate from electrical solver
+✅ **Handles Reconnection** - Wires can be reconnected in any order
+✅ **No Fighting Systems** - Single source of truth for flow direction
 
-### Potential Solutions:
+## Files Modified
 
-#### Option A: Use Actual Terminal Voltage (Post-Solve)
-- Wait until solver finishes
-- Compare `startTerminal.electricalNode.Voltage` vs `endTerminal.electricalNode.Voltage`
-- Flow from higher voltage to lower voltage
+1. **NEW**: `Assets/Scripts/Managers/VisualFlowGraph.cs` (259 lines)
+2. **MODIFIED**: `Assets/Scripts/Managers/CircuitSolverManager.cs`
+   - Added VisualFlowGraph integration (~30 lines)
+   - Simplified AssignWireFlowDirections from ~160 to ~30 lines
+3. **MODIFIED**: `Assets/Scripts/Components/CircuitWire.cs`
+   - Disabled OrientWireTowardSource() (line 81)
+4. **MODIFIED**: `Assets/Scripts/Managers/ComponentTerminalManager.cs`
+   - Fixed scene-loaded terminal registration (lines 39-47)
+5. **MODIFIED**: `Assets/Scripts/UI/CurrentFlowVisualizer.cs`
+   - Uses isStart flags from VisualFlowGraph (lines 155-184)
 
-#### Option B: Use Battery Detection
-- Detect if component is Battery
-- Battery output (Red/+) emits current
-- All other components receive current
-- Use battery position to determine "source" direction
+## Commit
 
-#### Option C: Ignore Wire Orientation Entirely
-- Always spawn dots at HIGH voltage terminal
-- Always flow toward LOW voltage terminal
-- Completely ignore wire drawing order (may confuse users)
+**Git Hash**: `e942e5b`
+**Commit Message**: "✨ FEATURE: Visual Flow Graph - Deterministic Current Animation Direction"
+**Date**: 2025-01-15
 
-#### Option D: Use CircuitNode Voltage Gradient
-- Get voltage at both wire endpoints from solver
-- Current magnitude from component
-- Direction from voltage difference: `sign(V_start - V_end)`
+## Future Improvements
 
-## Files Modified Today
+### Optional Enhancements
+- [ ] Support for multiple batteries (currently assumes single battery)
+- [ ] Handle parallel branches (currently works, could optimize traversal)
+- [ ] Visualize BFS traversal order in debug mode
+- [ ] Export visual graph as GraphViz DOT file for debugging
 
-1. **CurrentFlowVisualizer.cs**
-   - Lines 106-129: Updated flow activation logic
-   - Lines 131-158: Spawn position based on direction
-   - Lines 217-238: Removed Mathf.Abs() from current reading
-
-2. **CircuitWire.cs**
-   - Lines 145-173: Added terminal logging in OnEndpointConnected()
-   - Lines 483-523: Terminal polarity-based direction logic
-   - Lines 480-481: Preserved sign from component current
-
-3. **WireValueDisplay.cs**
-   - Line 75: Display absolute value only (no negative signs)
-
-4. **ConnectTool.cs**
-   - Lines 254-267: Added wire creation logging with terminal types
-
-## Testing Checklist for Tomorrow
-
-- [ ] Create Battery → Bulb → Battery circuit
-- [ ] Log all terminal types (isInput values)
-- [ ] Log solver current signs for both components
-- [ ] Log terminal voltages after solving
-- [ ] Compare wire orientation (start/end) with physical positions
-- [ ] Test animation direction with different click orders
-- [ ] Test endpoint dragging to new terminals
-- [ ] Verify CurrentFlowVisualizer receives correct signed current
-
-## References
-
-- **CurrentFlowVisualizer.cs**: Animation dot spawning and movement
-- **CircuitWire.cs**: Wire current calculation and direction logic
-- **ComponentTerminal.cs**: Terminal definitions (isInput property)
-- **ComponentTerminalManager.cs**: Terminal creation and electrical node management
-- **CircuitSolver.cs**: Current calculation (proven accurate, don't modify)
+### Not Needed
+- ~~Node-based flow detection~~ - VisualFlowGraph is topology-based ✅
+- ~~Polarity detection~~ - Handled by BFS from Battery+ ✅
+- ~~Endpoint swapping~~ - BFS sets flags directly ✅
 
 ---
 
-**Conclusion**: The terminal polarity-based approach is theoretically sound, but something in the implementation chain is causing incorrect animation direction. Tomorrow's debugging should focus on verifying terminal type assignments and tracing the current sign through the entire data flow.
+**Status**: Production-ready ✅
+**Regression Risk**: Low (legacy code disabled, new system isolated)
+**Performance Impact**: Minimal (BFS runs once per solve, O(components + wires))

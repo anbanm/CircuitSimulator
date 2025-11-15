@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12345678901234567890123456789012, type: 3}
+  m_Name: Challenge_M1_PowerTheHouse
+  challengeTitle: Power the House
+  challengeId: M1_PowerTheHouse
+  description: "Help the Johnson family get electricity to their house! You need to connect the power source to make the lights turn on. Remember: electricity needs a complete path to flow."
+  primaryMisconception: 0
+  secondaryMisconceptions: []
+  difficulty: 0
+  recommendedGradeLevel: 7
+  availableComponents:
+  - {fileID: 11400000, guid: 23456789012345678901234567890123, type: 2}
+  - {fileID: 11400000, guid: 34567890123456789012345678901234, type: 2}
+  maxComponentsAllowed: 5
+  preplacedObjects:
+  - componentDefinition: {fileID: 11400000, guid: 45678901234567890123456789012345, type: 2}
+    position: {x: 5, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0}
+    isFixed: 1
+    isTarget: 1
+    label: "Johnson House"
+  goals:
+  - goalId: "connect_power"
+    description: "Connect the battery to the house"
+    type: 0
+    validation:
+      type: 0
+      targetComponentId: "house"
+      expectedVoltage: 12
+      expectedCurrent: 1.2
+      tolerance: 0.1
+      requiredConnections:
+      - componentA: "battery"
+        componentB: "house"
+        mustBeDirectConnection: 0
+    pointValue: 50
+    isRequired: 1
+  - goalId: "complete_circuit"
+    description: "Make sure electricity can flow in a complete loop"
+    type: 4
+    validation:
+      type: 0
+      targetComponentId: ""
+      expectedVoltage: 0
+      expectedCurrent: 0
+      tolerance: 0.1
+      requiredConnections: []
+    pointValue: 50
+    isRequired: 1
+  misconceptionChecks:
+  - type: 0
+    detectionMethod: "incomplete_circuit"
+    feedback: "Remember: electricity needs to flow in a complete loop! It goes out from the battery and must come back to complete the circuit."
+    showImmediateFeedback: 1
+  feedbackMessages:
+  - type: 0
+    message: "Excellent! You've successfully powered the house by creating a complete circuit!"
+    soundEffect: {fileID: 0}
+    showVisualEffect: 1
+  - type: 1
+    message: "The house isn't getting power. Check your connections and make sure you have a complete circuit."
+    soundEffect: {fileID: 0}
+    showVisualEffect: 1
+  hintSystem:
+    hintsEnabled: 1
+    hintDelay: 30
+    hints:
+    - text: "Try placing a battery near the house. Remember, you'll need to connect them with wires."
+      highlightComponents: 1
+      componentIdsToHighlight:
+      - "house"
+      type: 0
+    - text: "Electricity needs a complete path. Connect one wire from the battery to the house, and another wire back to complete the loop."
+      highlightComponents: 1
+      componentIdsToHighlight:
+      - "battery"
+      - "house"
+      type: 0
+    - text: "Look for the + and - symbols on the battery. These show where electricity enters and exits."
+      highlightComponents: 1
+      componentIdsToHighlight:
+      - "battery"
+      type: 0
+  requiredCompletionPercentage: 1
+  requireAllGoalsComplete: 1
+  allowPartialCredit: 0

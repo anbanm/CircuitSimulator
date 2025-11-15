@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56789012345678901234567890123456, type: 3}
+  m_Name: ComponentDef_House
+  displayName: House
+  description: "A family home that needs electrical power to turn on the lights and appliances."
+  baseType: 2
+  electricalProperties:
+    defaultVoltage: 0
+    defaultResistance: 10
+    defaultCurrent: 0
+    isVoltageSource: 0
+    isCurrentSource: 0
+    hasVariableResistance: 0
+    isSwitch: 0
+    defaultSwitchState: 0
+    openResistance: Infinity
+    closedResistance: 0.001
+  visualProperties:
+    customPrefab: {fileID: 0}
+    primitiveType: 0
+    scale: {x: 2, y: 1.5, z: 1.5}
+    defaultMaterial: {fileID: 0}
+    activeMaterial: {fileID: 0}
+    errorMaterial: {fileID: 0}
+    defaultColor: {r: 0.8, g: 0.6, b: 0.4, a: 1}
+    activeColor: {r: 1, g: 1, b: 0.3, a: 1}
+    errorColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+    hasGlowEffect: 1
+    hasCurrentAnimation: 0
+    showsVoltageIndicator: 1
+  isEducationalFocus: 1
+  educationalNote: "This house represents a real-world electrical load. When connected properly to a power source, it will 'light up' to show that electricity is flowing through it."
+  availableInChallenges: 1
+  addressesMisconceptions:
+  - 0
+  - 1
