@@ -71,7 +71,7 @@ public class CircuitLoader : MonoBehaviour
     /// <summary>
     /// Creates a single component from save data.
     /// </summary>
-    private CircuitComponent3D CreateComponent(ComponentData data)
+    private CircuitComponent3D CreateComponent(ComponentSaveData data)
     {
         if (factory == null)
         {

@@ -10,7 +10,7 @@ using UnityEngine;
 public class CircuitSaveData
 {
     public string version = "1.0";
-    public ComponentData[] components;
+    public ComponentSaveData[] components;
     public WireData[] wires;
 }
 
@@ -19,7 +19,7 @@ public class CircuitSaveData
 /// Stores position in world coordinates and electrical properties.
 /// </summary>
 [Serializable]
-public class ComponentData
+public class ComponentSaveData
 {
     public string id;           // Component name (e.g., "Battery_0", "Bulb_1")
     public string type;         // Component type (e.g., "Battery", "Bulb", "Resistor", "Switch")

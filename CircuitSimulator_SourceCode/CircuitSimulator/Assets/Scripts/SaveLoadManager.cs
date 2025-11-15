@@ -38,18 +38,18 @@ public class SaveLoadManager : MonoBehaviour
         if (!enableKeyboardShortcuts)
             return;
 
-        // Ctrl+S: Quick save
-        if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.S))
+        // F5: Quick save (common game shortcut)
+        if (Input.GetKeyDown(KeyCode.F5))
         {
             SaveCircuit("quicksave");
-            Debug.Log("⚡ Quick saved (Ctrl+S)");
+            Debug.Log("⚡ Quick saved (F5)");
         }
 
-        // Ctrl+L: Quick load
-        if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.L))
+        // F6: Quick load (common game shortcut)
+        if (Input.GetKeyDown(KeyCode.F6))
         {
             LoadCircuit("quicksave");
-            Debug.Log("⚡ Quick loaded (Ctrl+L)");
+            Debug.Log("⚡ Quick loaded (F6)");
         }
     }
 

@@ -57,9 +57,9 @@ public static class CircuitSerializer
     /// <summary>
     /// Converts a list of 3D components to serializable component data.
     /// </summary>
-    private static ComponentData[] SerializeComponents(List<CircuitComponent3D> components)
+    private static ComponentSaveData[] SerializeComponents(List<CircuitComponent3D> components)
     {
-        return components.Select(c => new ComponentData
+        return components.Select(c => new ComponentSaveData
         {
             id = c.name,
             type = c.ComponentType.ToString(),
