@@ -10,6 +10,7 @@ public class ScreenSpaceLabels : MonoBehaviour
     public bool scaleWithDistance = true;
     public float minFontSize = 10f;
     public float maxFontSize = 24f;
+    public float updateInterval = 0.1f; // Frame throttling for Update()
     
     private CircuitComponent3D circuitComponent;
     private Camera mainCamera;
@@ -17,10 +18,18 @@ public class ScreenSpaceLabels : MonoBehaviour
     private Text labelText;
     private GameObject labelObject;
     
+    // Performance optimization
+    private float lastUpdateTime;
+    private int lastFontSize = -1; // Cache font size to avoid unnecessary updates
+    
     void Start()
     {
         circuitComponent = GetComponent<CircuitComponent3D>();
         mainCamera = Camera.main;
+        if (mainCamera == null)
+        {
+            Debug.LogWarning("ScreenSpaceLabels: Camera.main is null, label positioning may not work correctly");
+        }
         CreateScreenSpaceLabel();
     }
     
@@ -28,7 +37,12 @@ public class ScreenSpaceLabels : MonoBehaviour
     {
         // Find or create screen space canvas
         screenCanvas = FindFirstObjectByType<Canvas>();
-        if (screenCanvas == null || screenCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
+        if (screenCanvas == null)
+        {
+            Debug.LogWarning("ScreenSpaceLabels: No canvas found, creating new one");
+            CreateScreenCanvas();
+        }
+        else if (screenCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
         {
             CreateScreenCanvas();
         }
@@ -68,6 +82,23 @@ public class ScreenSpaceLabels : MonoBehaviour
     
     void Update()
     {
+        // Frame throttling for performance
+        if (Time.time - lastUpdateTime < updateInterval)
+            return;
+        lastUpdateTime = Time.time;
+        
+        // Early exit if essential components are missing
+        if (circuitComponent == null || labelObject == null)
+            return;
+        
+        // Cache camera reference if needed
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+            if (mainCamera == null)
+                return;
+        }
+        
         UpdateLabelText();
         UpdateLabelPosition();
     }
@@ -128,7 +159,7 @@ public class ScreenSpaceLabels : MonoBehaviour
             return;
         }
         
-        // Calculate distance-based scaling
+        // Calculate distance-based scaling (optimized with caching)
         if (scaleWithDistance)
         {
             float distance = Vector3.Distance(mainCamera.transform.position, transform.position);
@@ -137,9 +168,11 @@ public class ScreenSpaceLabels : MonoBehaviour
             float scaleFactor = Mathf.Clamp(20f / distance, 0.5f, 2f);
             int newFontSize = Mathf.RoundToInt(Mathf.Clamp(baseFontSize * scaleFactor, minFontSize, maxFontSize));
             
-            if (labelText.fontSize != newFontSize)
+            // Only update if font size actually changed (performance optimization)
+            if (newFontSize != lastFontSize)
             {
                 labelText.fontSize = newFontSize;
+                lastFontSize = newFontSize;
                 
                 // Adjust label size based on font size
                 RectTransform rect = labelObject.GetComponent<RectTransform>();

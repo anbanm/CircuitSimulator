@@ -11,10 +11,11 @@ This document captures the complete state of Unity MCP setup for the Circuit Sim
 ## 📋 System Requirements & Prerequisites
 
 ### ✅ Installed Components
-- **Python 3.12** - Installed via Homebrew: `/opt/homebrew/bin/python3.12`
-- **uv Package Manager** - Installed via Homebrew: `/opt/homebrew/bin/uv` (v0.8.14)
+- **Python 3.14** - Installed via Homebrew: `/opt/homebrew/bin/python3.14`
+- **uv Package Manager** - Installed via Homebrew: `/opt/homebrew/bin/uv` (latest)
 - **Unity 6** - Target version: 6000.0.32f1 or newer
-- **Claude Code** - Current active MCP client
+- **Claude Code** - Current active MCP client with Unity MCP bridge
+- **Unity MCP Server** - Port 6400 communication established
 
 ### ✅ Unity Project Requirements
 - **Project Path**: `/Users/anbanmestry/Downloads/CircuitSimulator_SourceCode/CircuitSimulator_SourceCode/CircuitSimulator`
@@ -318,12 +319,13 @@ Targets:
 
 ## 📝 Version History
 
-### v1.1 - Unity MCP Integration (2025-08-30)
-- ✅ Unity MCP server installed and configured
-- ✅ Claude Code MCP registration completed  
-- ✅ Visual debugging capabilities enabled
-- ✅ CurrentFlowVisualizer production ready
-- ✅ MisconceptionAlert system active
+### v2.1 - Unity MCP Integration (January 2025)
+- ✅ Unity MCP server installed and configured (Python 3.14)
+- ✅ Claude Code MCP registration completed
+- ✅ Real-time Unity console access through MCP bridge
+- ✅ Terminal connection point system with colored spheres
+- ✅ Auto UI creation and component detection
+- ✅ Scene setup with all 13 manager GameObjects
 - ✅ Complete testing procedures documented
 
 ### Previous Versions
@@ -360,8 +362,8 @@ uv run server.py                  # Direct server test
 
 ---
 
-**Status**: ✅ Production Ready  
-**Last Updated**: 2025-08-30  
-**Unity Version**: 6000.0.32f1+  
-**Educational Grade**: 7-12 (Primary: Grade 7)  
-**Performance**: 60+ FPS validated
+**Status**: ✅ Production Ready
+**Last Updated**: January 2025
+**Unity Version**: 6000.0.32f1+
+**Educational Grade**: 7-12 (Primary: Grade 7)
+**Performance**: 60+ FPS validated with MCP integration

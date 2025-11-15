@@ -44,6 +44,18 @@ public class WorkspaceManager : MonoBehaviour
     private void InitializeWorkspace()
     {
         playerCamera = Camera.main;
+        if (playerCamera == null)
+        {
+            Debug.LogError("No main camera found! Make sure a camera is tagged as 'MainCamera'");
+            // Try to find any camera as fallback
+            playerCamera = FindFirstObjectByType<Camera>();
+            if (playerCamera == null)
+            {
+                Debug.LogError("No camera found in scene! WorkspaceManager requires a camera.");
+                enabled = false;
+                return;
+            }
+        }
         
         // Create or setup workspace plane
         if (workspacePlane == null)
@@ -180,14 +192,26 @@ public class WorkspaceManager : MonoBehaviour
             var components = FindObjectsByType<CircuitComponent3D>(FindObjectsSortMode.None);
             foreach (var comp in components)
             {
-                DestroyImmediate(comp.gameObject);
+                if (comp != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(comp.gameObject);
+                    else
+                        DestroyImmediate(comp.gameObject);
+                }
             }
             
             // Clear all wires
             var wires = FindObjectsByType<CircuitWire>(FindObjectsSortMode.None);
             foreach (var wire in wires)
             {
-                DestroyImmediate(wire.gameObject);
+                if (wire != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(wire.gameObject);
+                    else
+                        DestroyImmediate(wire.gameObject);
+                }
             }
         }
     }

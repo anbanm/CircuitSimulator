@@ -40,16 +40,44 @@ public class MeasurementDisplayManager : MonoBehaviour
     
     private void UpdateAllMeasurements()
     {
-        // DISABLED - Dashboard blocks removed
-        // Values now show directly on components via PersistentLabel system
-        
         var circuitManager = CircuitManager.Instance;
         if (circuitManager == null) return;
-        
-        // Only update simple status (no dashboard blocks)
+
+        // Create simple UI text display
+        CreateSimpleUIDisplay();
+
         int componentCount = circuitManager.ComponentCount;
         int wireCount = circuitManager.WireCount;
         UpdateStatusDisplay($"Components: {componentCount}, Wires: {wireCount}");
+    }
+
+    private UnityEngine.UI.Text uiText;
+    private bool uiCreated = false;
+
+    private void CreateSimpleUIDisplay()
+    {
+        if (uiCreated) return;
+
+        // Find the MeasurementDisplay panel
+        var panel = gameObject;
+
+        // Create a Text component to show circuit info
+        var textObj = new GameObject("CircuitInfo");
+        textObj.transform.SetParent(panel.transform);
+
+        var rectTransform = textObj.AddComponent<RectTransform>();
+        rectTransform.anchoredPosition = Vector2.zero;
+        rectTransform.sizeDelta = new Vector2(280, 180);
+
+        uiText = textObj.AddComponent<UnityEngine.UI.Text>();
+        uiText.text = "Circuit Simulator v2.0\n\nKeyboard Controls:\nB - Battery\nR - Resistor\nL - Light Bulb\nC - Connect Mode\nV - Select Mode\nSpace - Solve";
+        uiText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        uiText.fontSize = 12;
+        uiText.color = Color.white;
+        uiText.alignment = TextAnchor.UpperLeft;
+
+        uiCreated = true;
+        Debug.Log("Created measurement display UI");
     }
     
     private void UpdateMeasurementDisplay(string label, string value)

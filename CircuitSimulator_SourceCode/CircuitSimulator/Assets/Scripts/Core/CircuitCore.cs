@@ -45,6 +45,13 @@ public abstract class CircuitComponent
 
     protected CircuitComponent(string id, CircuitNode nodeA, CircuitNode nodeB)
     {
+        if (string.IsNullOrEmpty(id))
+            throw new System.ArgumentException("Component ID cannot be null or empty", nameof(id));
+        if (nodeA == null)
+            throw new System.ArgumentNullException(nameof(nodeA), "NodeA cannot be null");
+        if (nodeB == null)
+            throw new System.ArgumentNullException(nameof(nodeB), "NodeB cannot be null");
+            
         Id = id;
         NodeA = nodeA;
         NodeB = nodeB;
@@ -68,6 +75,7 @@ public class Bulb : CircuitComponent
     }
 }
 
+// test
 public class Resistor : CircuitComponent
 {
     private float resistance;
@@ -91,7 +99,9 @@ public class Wire : CircuitComponent
 public class Switch : CircuitComponent
 {
     private bool isClosed;
-    public override float Resistance => isClosed ? 0f : float.MaxValue;
+    // Use a very high resistance (1 trillion ohms) instead of float.MaxValue to avoid numerical instability
+    private const float OPEN_RESISTANCE = 1e12f;
+    public override float Resistance => isClosed ? 0f : OPEN_RESISTANCE;
 
     public Switch(string id, CircuitNode a, CircuitNode b, bool closed)
         : base(id, a, b)

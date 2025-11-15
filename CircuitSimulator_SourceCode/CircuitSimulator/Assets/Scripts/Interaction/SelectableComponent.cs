@@ -22,15 +22,17 @@ public class SelectableComponent : MonoBehaviour
     void OnMouseDown()
     {
         // Check if connect tool is active
-        ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
-        if (connectTool != null && connectTool.IsConnectMode())
+        if (ComponentRegistry.Instance != null)
         {
-            connectTool.OnComponentClicked(this);
+            ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
+            if (connectTool != null && connectTool.IsConnectMode())
+            {
+                connectTool.OnComponentClicked(this);
+                return;
+            }
         }
-        else
-        {
-            SelectThis();
-        }
+        
+        SelectThis();
     }
     
     void OnMouseOver()
@@ -119,12 +121,13 @@ public class SelectableComponent : MonoBehaviour
         {
             Deselect();
         }
-        
-        // Delete key to remove selected component
-        if (Input.GetKeyDown(KeyCode.Delete) && isSelected)
-        {
-            DeleteThis();
-        }
+
+        // Delete key handling DISABLED - handled by InteractionComponent in v2.0
+        // If you're using old components, uncomment this:
+        // if (Input.GetKeyDown(KeyCode.Delete) && isSelected)
+        // {
+        //     DeleteThis();
+        // }
     }
     
     void DeleteThis()

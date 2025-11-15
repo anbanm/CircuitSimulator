@@ -257,11 +257,15 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
             {
                 logicalComponents.Add(logicalComp);
                 comp3D.logicalComponent = logicalComp;
-                
+
                 if (debugSolver)
                 {
-                    debugManager?.LogToFile($"Created {logicalComp.GetType().Name}: {logicalComp.Id} with terminals");
+                    debugManager?.LogToFile($"Created {logicalComp.GetType().Name}: {logicalComp.Id}");
+                    debugManager?.LogToFile($"  → Input Terminal: {inputTerminal.name}, Node: {inputTerminal.electricalNode.Id}");
+                    debugManager?.LogToFile($"  → Output Terminal: {outputTerminal.name}, Node: {outputTerminal.electricalNode.Id}");
                 }
+
+                Debug.Log($"📦 Component {comp3D.name}: InputNode={inputTerminal.electricalNode.Id} (HashCode={inputTerminal.electricalNode.GetHashCode()}), OutputNode={outputTerminal.electricalNode.Id} (HashCode={outputTerminal.electricalNode.GetHashCode()})");
             }
         }
         
@@ -336,6 +340,8 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
     
     public void UpdateComponentsFromSolver(List<CircuitComponent> solvedComponents)
     {
+        Debug.Log($"=== UPDATING {solvedComponents.Count} COMPONENTS WITH SOLVED VALUES ===");
+
         foreach (var logicalComp in solvedComponents)
         {
             // Find corresponding 3D component
@@ -345,14 +351,20 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
                 // Update 3D component with solved values
                 comp3D.current = logicalComp.Current;
                 comp3D.voltageDrop = logicalComp.VoltageDrop;
-                
+
+                Debug.Log($"✅ Updated {comp3D.name}: Current={comp3D.current:F4}A, VoltageDrop={comp3D.voltageDrop:F4}V");
+
                 // Update visual feedback
                 comp3D.UpdateVisualFeedback();
-                
+
                 if (debugSolver)
                 {
                     debugManager?.LogToFile($"Updated {comp3D.name}: I={comp3D.current:F3}A, V={comp3D.voltageDrop:F2}V");
                 }
+            }
+            else
+            {
+                Debug.LogWarning($"⚠️ Could not find 3D component for logical component {logicalComp.Id}");
             }
         }
     }

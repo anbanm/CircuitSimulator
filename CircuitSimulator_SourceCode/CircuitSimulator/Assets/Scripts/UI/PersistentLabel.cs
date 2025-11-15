@@ -41,6 +41,11 @@ public class PersistentLabel : MonoBehaviour
         return label;
     }
     
+    // Performance optimization: throttle position updates
+    private float updateInterval = 0.1f; // 10 FPS update rate
+    private float nextUpdateTime = 0f;
+    private Vector3 lastTargetPosition;
+    
     void Update()
     {
         // If target component is destroyed, destroy this label
@@ -50,8 +55,14 @@ public class PersistentLabel : MonoBehaviour
             return;
         }
         
-        // Follow the component (only position, text updates are event-driven)
-        transform.position = targetComponent.transform.position + offset;
+        // Only update position if component has moved or enough time has passed
+        Vector3 currentTargetPosition = targetComponent.transform.position;
+        if (Time.time >= nextUpdateTime || Vector3.Distance(currentTargetPosition, lastTargetPosition) > 0.01f)
+        {
+            transform.position = currentTargetPosition + offset;
+            lastTargetPosition = currentTargetPosition;
+            nextUpdateTime = Time.time + updateInterval;
+        }
     }
     
     void OnDestroy()

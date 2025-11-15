@@ -192,10 +192,10 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         {
             // Use the current count of placed components for positioning
             int currentIndex = placedComponents.Count;
-            
-            // Calculate position with proper offset
-            Vector3 position = canvasPlane.position + new Vector3(currentIndex * spacing, 0.5f, 0);
-            
+
+            // FIXED: Use camera-relative positioning instead of old grid system
+            Vector3 position = GetNextPlacementPosition();
+
             // Create component object
             GameObject componentObject = CreateComponentObject(name, position);
             if (componentObject == null)
@@ -261,7 +261,7 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
     private GameObject CreatePrimitiveForComponent(string componentName, Vector3 position)
     {
         GameObject componentObject;
-        
+
         switch (componentName)
         {
             case "Battery":
@@ -269,33 +269,134 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
                 componentObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 componentObject.transform.localScale = new Vector3(1.5f, 0.8f, 0.6f);
                 break;
-                
+
             case "Resistor":
-                // Resistor = Cylinder (cylindrical like real resistor)  
+                // Resistor = Cylinder (cylindrical like real resistor)
                 componentObject = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 componentObject.transform.localScale = new Vector3(0.4f, 1.2f, 0.4f);
                 componentObject.transform.Rotate(0, 0, 90); // Horizontal
                 break;
-                
+
             case "Bulb":
                 // Bulb = Sphere (bulb-shaped)
                 componentObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 componentObject.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
                 break;
-                
+
             case "Switch":
                 // Switch = Capsule (toggle switch shape)
                 componentObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 componentObject.transform.localScale = new Vector3(0.6f, 0.4f, 1.0f);
                 componentObject.transform.Rotate(90, 0, 0); // Flat orientation
                 break;
-                
+
             default:
                 componentObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 break;
         }
-        
+
+        // DISABLED: ComponentConnectionPoints creates duplicate terminals
+        // ComponentTerminalManager handles terminal creation now
+        // AddComponentConnectionPoints(componentObject, componentName);
+
         return componentObject;
+    }
+
+    private void AddComponentConnectionPoints(GameObject componentObject, string componentName)
+    {
+        // Add ComponentConnectionPoints script for gizmo-based terminal positioning
+        ComponentConnectionPoints connectionPoints = componentObject.AddComponent<ComponentConnectionPoints>();
+
+        // Setup default connection points based on component type
+        switch (componentName)
+        {
+            case "Battery":
+                // Battery: Positive on right, Negative on left
+                connectionPoints.connectionPoints = new List<ComponentConnectionPoints.ConnectionPoint>
+                {
+                    new ComponentConnectionPoints.ConnectionPoint
+                    {
+                        localPosition = new Vector3(-0.75f, 0, 0), // Left side = Negative
+                        polarity = ElectricalPolarity.Negative,
+                        gizmoColor = Color.blue,
+                        label = "-"
+                    },
+                    new ComponentConnectionPoints.ConnectionPoint
+                    {
+                        localPosition = new Vector3(0.75f, 0, 0), // Right side = Positive
+                        polarity = ElectricalPolarity.Positive,
+                        gizmoColor = Color.red,
+                        label = "+"
+                    }
+                };
+                break;
+
+            case "Resistor":
+            case "Bulb":
+                // Resistor/Bulb: Bidirectional terminals (no polarity)
+                connectionPoints.connectionPoints = new List<ComponentConnectionPoints.ConnectionPoint>
+                {
+                    new ComponentConnectionPoints.ConnectionPoint
+                    {
+                        localPosition = new Vector3(-0.6f, 0, 0), // Terminal A
+                        polarity = ElectricalPolarity.Neutral,
+                        gizmoColor = Color.yellow,
+                        label = "A"
+                    },
+                    new ComponentConnectionPoints.ConnectionPoint
+                    {
+                        localPosition = new Vector3(0.6f, 0, 0), // Terminal B
+                        polarity = ElectricalPolarity.Neutral,
+                        gizmoColor = Color.yellow,
+                        label = "B"
+                    }
+                };
+                break;
+
+            case "Switch":
+                // Switch: Bidirectional terminals (no true polarity, just endpoints)
+                connectionPoints.connectionPoints = new List<ComponentConnectionPoints.ConnectionPoint>
+                {
+                    new ComponentConnectionPoints.ConnectionPoint
+                    {
+                        localPosition = new Vector3(-0.5f, 0, 0), // Terminal 1
+                        polarity = ElectricalPolarity.Neutral,
+                        gizmoColor = Color.green,
+                        label = "1"
+                    },
+                    new ComponentConnectionPoints.ConnectionPoint
+                    {
+                        localPosition = new Vector3(0.5f, 0, 0), // Terminal 2
+                        polarity = ElectricalPolarity.Neutral,
+                        gizmoColor = Color.green,
+                        label = "2"
+                    }
+                };
+                break;
+
+            default:
+                // Default: Two neutral terminals
+                connectionPoints.connectionPoints = new List<ComponentConnectionPoints.ConnectionPoint>
+                {
+                    new ComponentConnectionPoints.ConnectionPoint
+                    {
+                        localPosition = new Vector3(-0.5f, 0, 0),
+                        polarity = ElectricalPolarity.Neutral,
+                        gizmoColor = Color.white,
+                        label = "1"
+                    },
+                    new ComponentConnectionPoints.ConnectionPoint
+                    {
+                        localPosition = new Vector3(0.5f, 0, 0),
+                        polarity = ElectricalPolarity.Neutral,
+                        gizmoColor = Color.white,
+                        label = "2"
+                    }
+                };
+                break;
+        }
+
+        Debug.Log($"Added ComponentConnectionPoints to {componentName} with {connectionPoints.connectionPoints.Count} terminals");
     }
     
     private GameObject GetPrefabForComponent(string componentName)
@@ -781,17 +882,53 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
     // Helper Methods
     private Vector3 GetNextPlacementPosition()
     {
-        if (UseRandomizedPositioning)
+        // Place components in front of camera at workspace level (Y=0.5)
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null)
         {
-            return new Vector3(
-                UnityEngine.Random.Range(-5f, 5f),
-                0.5f,
-                UnityEngine.Random.Range(-5f, 5f)
-            );
+            mainCamera = FindFirstObjectByType<Camera>();
         }
 
-        var basePosition = ComponentParent != null ? ComponentParent.position : Vector3.zero;
-        return basePosition + new Vector3(placedComponents.Count * ComponentSpacing, 0.5f, 0);
+        Vector3 spawnPosition;
+
+        if (mainCamera != null)
+        {
+            // Get camera forward direction (projected onto XZ plane)
+            Vector3 cameraForward = mainCamera.transform.forward;
+            cameraForward.y = 0;
+            cameraForward.Normalize();
+
+            // Get camera position
+            Vector3 cameraPos = mainCamera.transform.position;
+
+            // Calculate spawn point: In front of camera, on workspace plane
+            float distanceFromCamera = 8f; // Spawn 8 units in front of camera
+            Vector3 centerPoint = cameraPos + (cameraForward * distanceFromCamera);
+            centerPoint.y = 0.5f; // Always at workspace height
+
+            // Spread components in a grid pattern
+            int componentsPlaced = placedComponents.Count;
+            int row = componentsPlaced / 3; // 3 components per row
+            int col = componentsPlaced % 3;
+
+            // Calculate offset from center
+            Vector3 cameraRight = mainCamera.transform.right;
+            cameraRight.y = 0;
+            cameraRight.Normalize();
+
+            Vector3 rowOffset = -cameraForward * (row * ComponentSpacing);
+            Vector3 colOffset = cameraRight * ((col - 1) * ComponentSpacing); // -1, 0, +1 for centering
+
+            spawnPosition = centerPoint + rowOffset + colOffset;
+        }
+        else
+        {
+            // Fallback: Use old grid system
+            var basePosition = ComponentParent != null ? ComponentParent.position : Vector3.zero;
+            spawnPosition = basePosition + new Vector3(placedComponents.Count * ComponentSpacing, 0.5f, 0);
+        }
+
+        return spawnPosition;
     }
 
     private ComponentType ConvertBaseType(CircuitSimulator.BaseComponentType baseType)

@@ -8,7 +8,8 @@ public enum ComponentType
     Resistor,
     Bulb,
     Switch,
-    Wire
+    Wire,
+    Junction
 }
 
 // 3D representation of circuit components
@@ -29,7 +30,7 @@ public class CircuitComponent3D : MonoBehaviour
     
     // Wire connections (used by CircuitWire system)
     [System.NonSerialized]
-    private List<GameObject> connectedWires = new List<GameObject>();
+    public List<CircuitWire> connectedWires = new List<CircuitWire>();
     
     void Start()
     {
@@ -47,7 +48,14 @@ public class CircuitComponent3D : MonoBehaviour
         }
         
         // Register with label manager for persistent labels
-        LabelManager.Instance.RegisterComponent(this);
+        if (LabelManager.Instance != null)
+        {
+            LabelManager.Instance.RegisterComponent(this);
+        }
+        else
+        {
+            Debug.LogWarning($"LabelManager not found! {name} will not have persistent labels.");
+        }
     }
     
     void SetupConnectionTerminals()
@@ -87,7 +95,7 @@ public class CircuitComponent3D : MonoBehaviour
     }
     
     // Wire connection methods (used by CircuitWire system)
-    public void AddConnectedWire(GameObject wire)
+    public void AddConnectedWire(CircuitWire wire)
     {
         if (wire != null && !connectedWires.Contains(wire))
         {
@@ -95,8 +103,17 @@ public class CircuitComponent3D : MonoBehaviour
             Debug.Log($"{name}: Added wire connection to {wire.name}");
         }
     }
-    
-    public void RemoveConnectedWire(GameObject wire)
+
+    public void AddConnectedWire(GameObject wireGO)
+    {
+        var wire = wireGO?.GetComponent<CircuitWire>();
+        if (wire != null)
+        {
+            AddConnectedWire(wire);
+        }
+    }
+
+    public void RemoveConnectedWire(CircuitWire wire)
     {
         if (wire != null && connectedWires.Contains(wire))
         {
@@ -104,12 +121,21 @@ public class CircuitComponent3D : MonoBehaviour
             Debug.Log($"{name}: Removed wire connection to {wire.name}");
         }
     }
-    
-    public List<GameObject> GetConnectedWires()
+
+    public void RemoveConnectedWire(GameObject wireGO)
     {
-        return new List<GameObject>(connectedWires);
+        var wire = wireGO?.GetComponent<CircuitWire>();
+        if (wire != null)
+        {
+            RemoveConnectedWire(wire);
+        }
     }
-    
+
+    public List<CircuitWire> GetConnectedWires()
+    {
+        return new List<CircuitWire>(connectedWires);
+    }
+
     public int GetWireCount()
     {
         return connectedWires.Count;

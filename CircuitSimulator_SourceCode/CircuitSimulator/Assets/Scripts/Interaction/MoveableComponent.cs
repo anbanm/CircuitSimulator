@@ -10,11 +10,56 @@ public class MoveableComponent : MonoBehaviour
     private Vector3 _dragOffset;
     private Camera _mainCamera;
     private SelectableComponent _selectableComponent;
+    private Transform _workspacePlane;
     
     void Start()
     {
         _mainCamera = Camera.main;
+        if (_mainCamera == null)
+        {
+            Debug.LogError($"No MainCamera found for MoveableComponent on {gameObject.name}!");
+            // Try to find any camera as fallback
+            _mainCamera = FindFirstObjectByType<Camera>();
+            if (_mainCamera == null)
+            {
+                Debug.LogError("No camera found in scene! MoveableComponent requires a camera.");
+                enabled = false;
+                return;
+            }
+        }
+        
         _selectableComponent = GetComponent<SelectableComponent>();
+        if (_selectableComponent == null)
+        {
+            Debug.LogWarning($"No SelectableComponent found on {gameObject.name}. Component will not be moveable.");
+            enabled = false;
+        }
+
+        // Find the actual workspace plane for accurate raycasting
+        FindWorkspacePlane();
+    }
+
+    void FindWorkspacePlane()
+    {
+        // Try to find CircuitWorkspace first (created by WorkspaceManager)
+        GameObject workspace = GameObject.Find("CircuitWorkspace");
+        if (workspace != null)
+        {
+            _workspacePlane = workspace.transform;
+            Debug.Log($"[MoveableComponent] Found CircuitWorkspace plane at {_workspacePlane.position}");
+            return;
+        }
+
+        // Fallback: Find Components GameObject
+        GameObject components = GameObject.Find("Components");
+        if (components != null)
+        {
+            _workspacePlane = components.transform;
+            Debug.Log($"[MoveableComponent] Using Components GameObject as workspace plane at {_workspacePlane.position}");
+            return;
+        }
+
+        Debug.LogWarning("[MoveableComponent] No workspace plane found, will use default plane at Y=0.5");
     }
     
     void OnMouseDown()
@@ -29,29 +74,32 @@ public class MoveableComponent : MonoBehaviour
     void StartDragging()
     {
         _isDragging = true;
-        
+
         // Calculate offset between mouse position and object center
         Vector3 mouseWorldPos = GetMouseWorldPosition();
+
+        // Only calculate offset for X and Z (horizontal plane), Y is fixed
         _dragOffset = transform.position - mouseWorldPos;
-        
-        Debug.Log($"Started dragging: {gameObject.name}");
+        _dragOffset.y = 0; // Ignore Y offset since we lock Y during dragging
+
+        Debug.Log($"Started dragging: {gameObject.name} at {transform.position}");
     }
     
     void Update()
     {
-        if (_isDragging)
+        // Early exit if not dragging to save performance
+        if (!_isDragging) return;
+        
+        HandleDragging();
+        
+        // Stop dragging on mouse release
+        if (Input.GetMouseButtonUp(0))
         {
-            HandleDragging();
-            
-            // Stop dragging on mouse release
-            if (Input.GetMouseButtonUp(0))
-            {
-                StopDragging();
-            }
+            StopDragging();
         }
         
         // ESC to cancel dragging
-        if (Input.GetKeyDown(KeyCode.Escape) && _isDragging)
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
             StopDragging();
         }
@@ -60,12 +108,13 @@ public class MoveableComponent : MonoBehaviour
     void HandleDragging()
     {
         Vector3 targetPosition = GetMouseWorldPosition() + _dragOffset;
-        
-        // Keep Y position fixed (stay on plane)
-        targetPosition.y = transform.position.y;
-        
-        // Smooth movement
-        transform.position = Vector3.Lerp(transform.position, targetPosition, moveSpeed * Time.deltaTime);
+
+        // Keep Y position fixed at workspace height + 0.5
+        float workspaceY = _workspacePlane != null ? _workspacePlane.position.y : 0f;
+        targetPosition.y = workspaceY + 0.5f;
+
+        // Direct movement for responsive dragging (no lerp lag)
+        transform.position = targetPosition;
     }
     
     void StopDragging()
@@ -153,18 +202,30 @@ public class MoveableComponent : MonoBehaviour
     Vector3 GetMouseWorldPosition()
     {
         if (_mainCamera == null) return Vector3.zero;
-        
+
         // Cast ray from camera through mouse position to the plane
         Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
-        
-        // Create a plane at Y = 0.5 (where our components sit)
-        Plane plane = new Plane(Vector3.up, new Vector3(0, 0.5f, 0));
-        
+
+        // Use the actual workspace plane if available
+        Plane plane;
+        if (_workspacePlane != null)
+        {
+            // Create plane using the workspace transform's up direction and position
+            // Offset slightly above the plane (Y + 0.5) so components sit on top
+            Vector3 planePoint = _workspacePlane.position + _workspacePlane.up * 0.5f;
+            plane = new Plane(_workspacePlane.up, planePoint);
+        }
+        else
+        {
+            // Fallback: Create a plane at Y = 0.5 (default behavior)
+            plane = new Plane(Vector3.up, new Vector3(0, 0.5f, 0));
+        }
+
         if (plane.Raycast(ray, out float distance))
         {
             return ray.GetPoint(distance);
         }
-        
+
         return Vector3.zero;
     }
     

@@ -42,9 +42,22 @@ public class PaletteUIManager : MonoBehaviour
     
     private void CreatePaletteButtons()
     {
+        // Auto-find palette container if not assigned
+        if (paletteContainer == null)
+        {
+            paletteContainer = FindPaletteContainer();
+        }
+
+        // Create button prefab if not assigned
+        if (buttonPrefab == null)
+        {
+            buttonPrefab = CreateButtonPrefab();
+        }
+
         if (buttonPrefab == null || paletteContainer == null)
         {
-            Debug.LogWarning("Cannot create palette buttons - buttonPrefab or paletteContainer not assigned");
+            Debug.LogWarning("[PaletteUIManager] Cannot create UI buttons - falling back to keyboard shortcuts");
+            Debug.Log("Controls: B=Battery, R=Resistor, L=Bulb, S=Switch, C=Connect Mode, V=Select Mode");
             return;
         }
         
@@ -230,9 +243,103 @@ public class PaletteUIManager : MonoBehaviour
         
         Debug.Log("Circuit reset complete");
     }
-    
+
+    private Transform FindPaletteContainer()
+    {
+        // Try to find existing palette container
+        GameObject paletteObj = GameObject.Find("ComponentPalette");
+        if (paletteObj != null)
+        {
+            Debug.Log("[PaletteUIManager] Found existing ComponentPalette container");
+            return paletteObj.transform;
+        }
+
+        // Look for Canvas and create palette panel
+        Canvas mainCanvas = FindFirstObjectByType<Canvas>();
+        if (mainCanvas != null)
+        {
+            GameObject palettePanel = CreatePalettePanel(mainCanvas.transform);
+            Debug.Log("[PaletteUIManager] Created ComponentPalette panel in Canvas");
+            return palettePanel.transform;
+        }
+
+        Debug.LogError("[PaletteUIManager] No Canvas found - cannot create palette container");
+        return null;
+    }
+
+    private GameObject CreatePalettePanel(Transform canvasTransform)
+    {
+        // Create main palette panel
+        GameObject palettePanel = new GameObject("ComponentPalette");
+        palettePanel.transform.SetParent(canvasTransform);
+
+        // Add RectTransform and set up layout
+        RectTransform rectTransform = palettePanel.AddComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(0, 1); // Top-left anchor
+        rectTransform.anchorMax = new Vector2(0, 1);
+        rectTransform.anchoredPosition = new Vector2(10, -10); // Offset from top-left
+        rectTransform.sizeDelta = new Vector2(200, 400); // Width x Height
+
+        // Add background image
+        Image background = palettePanel.AddComponent<Image>();
+        background.color = new Color(0.1f, 0.1f, 0.1f, 0.8f); // Dark semi-transparent
+
+        // Add layout group for automatic button arrangement
+        VerticalLayoutGroup layoutGroup = palettePanel.AddComponent<VerticalLayoutGroup>();
+        layoutGroup.spacing = 5f;
+        layoutGroup.padding = new RectOffset(10, 10, 10, 10);
+        layoutGroup.childAlignment = TextAnchor.UpperCenter;
+        layoutGroup.childControlWidth = true;
+        layoutGroup.childControlHeight = false;
+        layoutGroup.childForceExpandWidth = true;
+        layoutGroup.childForceExpandHeight = false;
+
+        // Add content size fitter to adjust panel size
+        ContentSizeFitter sizeFitter = palettePanel.AddComponent<ContentSizeFitter>();
+        sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        return palettePanel;
+    }
+
+    private Button CreateButtonPrefab()
+    {
+        // Create a basic button prefab programmatically
+        GameObject buttonObj = new GameObject("ButtonPrefab");
+
+        // Add RectTransform
+        RectTransform rectTransform = buttonObj.AddComponent<RectTransform>();
+        rectTransform.sizeDelta = new Vector2(180, 30); // Button size
+
+        // Add Image component for button background
+        Image buttonImage = buttonObj.AddComponent<Image>();
+        buttonImage.color = new Color(0.3f, 0.3f, 0.4f, 1f); // Default gray
+
+        // Add Button component
+        Button button = buttonObj.AddComponent<Button>();
+
+        // Create text child for button label
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(buttonObj.transform);
+
+        RectTransform textRect = textObj.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.sizeDelta = Vector2.zero;
+        textRect.anchoredPosition = Vector2.zero;
+
+        Text buttonText = textObj.AddComponent<Text>();
+        buttonText.text = "Button";
+        buttonText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        buttonText.fontSize = 14;
+        buttonText.color = Color.white;
+        buttonText.alignment = TextAnchor.MiddleCenter;
+
+        Debug.Log("[PaletteUIManager] Created button prefab programmatically");
+        return button;
+    }
+
     #endregion
-    
+
     #region Component Actions
     
     public void PlaceBattery()
@@ -295,8 +402,43 @@ public class PaletteUIManager : MonoBehaviour
     
     #endregion
     
+    #region Unity Lifecycle
+
+    void Start()
+    {
+        // Auto-initialize if not already initialized
+        if (factoryManager == null)
+        {
+            factoryManager = FindFirstObjectByType<ComponentFactoryManager>();
+            if (factoryManager == null)
+            {
+                Debug.LogError("[PaletteUIManager] ComponentFactoryManager not found!");
+            }
+            else
+            {
+                Debug.Log("[PaletteUIManager] Found ComponentFactoryManager, ready to create components");
+            }
+        }
+
+        if (controlManager == null)
+        {
+            controlManager = FindFirstObjectByType<CircuitControlManager>();
+        }
+
+        // Ensure ConnectTool exists
+        EnsureConnectToolExists();
+
+        // CRITICAL FIX: Actually initialize the UI buttons
+        if (factoryManager != null)
+        {
+            Initialize(factoryManager, controlManager);
+        }
+    }
+
+    #endregion
+
     #region Keyboard Shortcuts
-    
+
     void Update()
     {
         HandleKeyboardShortcuts();

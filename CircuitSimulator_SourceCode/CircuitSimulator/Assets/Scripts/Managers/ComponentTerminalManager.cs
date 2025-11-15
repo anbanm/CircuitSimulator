@@ -57,15 +57,23 @@ public class ComponentTerminalManager : MonoBehaviour
         GameObject terminalObj = new GameObject(terminalName);
         terminalObj.transform.SetParent(component.transform);
         terminalObj.transform.localPosition = localPosition;
-        
+
         var terminal = terminalObj.AddComponent<ComponentTerminal>();
         terminal.isInput = isInput;
         terminal.terminalColor = isInput ? inputColor : outputColor;
         terminal.highlightColor = terminalHighlightColor;
-        
+        terminal.terminalSize = 0.5f;  // Increased to 0.5f for maximum visibility
+
+        // CRITICAL FIX: Initialize terminal IMMEDIATELY, don't wait for Start()
+        // This ensures electricalNode is created before BuildLogicalCircuit() runs
+        terminal.InitializeTerminal(component);
+
         var collider = terminalObj.AddComponent<SphereCollider>();
-        collider.radius = 0.3f;
-        
+        collider.radius = 0.5f;  // Match terminal visual size
+
+        Vector3 worldPos = terminalObj.transform.position;
+        Debug.Log($"🔌 Created terminal: {terminalName}, Local: {localPosition}, World: {worldPos}, Color: {terminal.terminalColor}, Input: {isInput}");
+
         return terminal;
     }
     
@@ -75,8 +83,13 @@ public class ComponentTerminalManager : MonoBehaviour
         {
             foreach (var terminal in componentTerminals[component])
             {
-                if (terminal != null)
-                    DestroyImmediate(terminal.gameObject);
+                if (terminal != null && terminal.gameObject != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(terminal.gameObject);
+                    else
+                        DestroyImmediate(terminal.gameObject);
+                }
             }
             componentTerminals.Remove(component);
         }
@@ -166,5 +179,56 @@ public class ComponentTerminalManager : MonoBehaviour
         }
         
         Debug.Log("Updated logical connections for all components");
+    }
+
+    /// <summary>
+    /// Creates a wire connection between two components automatically
+    /// Used by scenario system for automatic circuit creation
+    /// </summary>
+    public void CreateWireBetweenComponents(CircuitComponent3D fromComponent, CircuitComponent3D toComponent)
+    {
+        if (fromComponent == null || toComponent == null)
+        {
+            Debug.LogWarning("Cannot create wire between null components");
+            return;
+        }
+
+        // Get terminals for both components
+        var fromOutputTerminal = GetOutputTerminal(fromComponent);
+        var toInputTerminal = GetInputTerminal(toComponent);
+
+        if (fromOutputTerminal == null || toInputTerminal == null)
+        {
+            Debug.LogWarning($"Cannot create wire: missing terminals on {fromComponent.name} or {toComponent.name}");
+            return;
+        }
+
+        // Create wire GameObject
+        GameObject wireObject = new GameObject($"Wire_{fromComponent.name}_to_{toComponent.name}");
+        var wire = wireObject.AddComponent<CircuitWire>();
+
+        // Initialize wire with components
+        wire.Initialize(fromComponent, toComponent);
+
+        // Connect to components
+        wire.startComponent = fromComponent;
+        wire.endComponent = toComponent;
+
+        // Add to component wire lists
+        if (fromComponent.connectedWires == null)
+            fromComponent.connectedWires = new List<CircuitWire>();
+        if (toComponent.connectedWires == null)
+            toComponent.connectedWires = new List<CircuitWire>();
+
+        fromComponent.connectedWires.Add(wire);
+        toComponent.connectedWires.Add(wire);
+
+        // Register with circuit manager
+        if (circuitManager != null)
+        {
+            circuitManager.RegisterWire(wireObject);
+        }
+
+        Debug.Log($"Created wire between {fromComponent.name} and {toComponent.name}");
     }
 }

@@ -59,7 +59,7 @@ public class SolverButtonFix : MonoBehaviour
         CircuitManager circuitManager = CircuitManager.Instance;
         if (circuitManager == null)
         {
-            circuitManager = FindObjectOfType<CircuitManager>();
+            circuitManager = FindFirstObjectByType<CircuitManager>();;
         }
         
         if (circuitManager != null)

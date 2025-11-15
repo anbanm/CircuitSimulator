@@ -13,7 +13,7 @@ public class ComponentTerminal : MonoBehaviour
     [Header("Visual Settings")]
     public Color terminalColor = Color.white;
     public Color highlightColor = Color.yellow;
-    public float terminalSize = 0.2f;
+    public float terminalSize = 0.5f;  // Increased to 0.5f for maximum visibility
     
     private CircuitComponent3D parentComponent;
     private MeshRenderer meshRenderer;
@@ -23,58 +23,87 @@ public class ComponentTerminal : MonoBehaviour
     
     public CircuitComponent3D ParentComponent => parentComponent;
     public bool IsConnected => electricalNode != null && electricalNode.ConnectedComponents.Count > 1;
-    
-    void Start()
+
+    /// <summary>
+    /// Initialize terminal immediately after creation (don't wait for Start)
+    /// CRITICAL: This must be called by ComponentTerminalManager to avoid timing issues
+    /// </summary>
+    public void InitializeTerminal(CircuitComponent3D parent)
     {
-        // Get parent component
-        parentComponent = GetComponentInParent<CircuitComponent3D>();
-        if (parentComponent == null)
-        {
-            Debug.LogError($"ComponentTerminal {name} must be child of CircuitComponent3D!");
-            return;
-        }
-        
+        parentComponent = parent;
+
         // Setup visual appearance
         SetupVisualAppearance();
-        
-        // Create electrical node
+
+        // Create electrical node IMMEDIATELY
         CreateElectricalNode();
-        
-        Debug.Log($"Terminal created: {name} (Input: {isInput})");
+
+        Debug.Log($"✅ Terminal initialized: {name} (Input: {isInput}), ElectricalNode: {electricalNode?.Id}");
+    }
+
+    void Start()
+    {
+        // Fallback: If not already initialized, initialize now
+        if (parentComponent == null)
+        {
+            parentComponent = GetComponentInParent<CircuitComponent3D>();
+            if (parentComponent == null)
+            {
+                Debug.LogError($"ComponentTerminal {name} must be child of CircuitComponent3D!");
+                return;
+            }
+
+            SetupVisualAppearance();
+            CreateElectricalNode();
+
+            Debug.Log($"⚠️ Terminal late-initialized in Start(): {name} (Input: {isInput})");
+        }
     }
     
     void SetupVisualAppearance()
     {
+        Debug.Log($"🎨 Setting up terminal visual: {name}, Color: {terminalColor}, Size: {terminalSize}");
+
         // Create terminal geometry (small sphere)
         var meshFilter = gameObject.AddComponent<MeshFilter>();
         meshFilter.mesh = CreateSphereMesh();
-        
+
         meshRenderer = gameObject.AddComponent<MeshRenderer>();
-        
-        // Create materials
+
+        // Create materials with emission for better visibility
         originalMaterial = new Material(Shader.Find("Standard"));
         originalMaterial.color = terminalColor;
         originalMaterial.SetFloat("_Metallic", 0.8f);
         originalMaterial.SetFloat("_Glossiness", 0.9f);
-        
+        // Add subtle emission to make terminals always visible
+        originalMaterial.EnableKeyword("_EMISSION");
+        originalMaterial.SetColor("_EmissionColor", terminalColor * 0.3f);
+
         highlightMaterial = new Material(Shader.Find("Standard"));
         highlightMaterial.color = highlightColor;
         highlightMaterial.SetFloat("_Metallic", 0.8f);
         highlightMaterial.SetFloat("_Glossiness", 0.9f);
+        // Stronger emission for highlight
         highlightMaterial.EnableKeyword("_EMISSION");
-        highlightMaterial.SetColor("_EmissionColor", highlightColor * 0.5f);
-        
+        highlightMaterial.SetColor("_EmissionColor", highlightColor * 0.7f);
+
         meshRenderer.material = originalMaterial;
-        
+        meshRenderer.enabled = true;  // Ensure renderer is enabled
+
         // Scale terminal
         transform.localScale = Vector3.one * terminalSize;
+
+        Debug.Log($"✅ Terminal visual complete: {name}, World Position: {transform.position}, Renderer enabled: {meshRenderer.enabled}");
     }
     
     Mesh CreateSphereMesh()
     {
         var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         var mesh = sphere.GetComponent<MeshFilter>().mesh;
-        DestroyImmediate(sphere);
+        if (Application.isPlaying)
+            Destroy(sphere);
+        else
+            DestroyImmediate(sphere);
         return mesh;
     }
     
@@ -116,15 +145,21 @@ public class ComponentTerminal : MonoBehaviour
     {
         // For now, merge the nodes by having both terminals reference the same node
         // In a more sophisticated system, we might have explicit connections
+
+        string myOriginalNodeId = electricalNode?.Id ?? "NULL";
+        string otherOriginalNodeId = otherTerminal.electricalNode?.Id ?? "NULL";
+
         var sharedNode = electricalNode ?? otherTerminal.electricalNode ?? new CircuitNode($"Shared_{GetInstanceID()}");
-        
+
         electricalNode = sharedNode;
         otherTerminal.electricalNode = sharedNode;
-        
+
+        Debug.Log($"🔗 NODE MERGE: {name} (was {myOriginalNodeId}) + {otherTerminal.name} (was {otherOriginalNodeId}) → SHARED NODE: {sharedNode.Id}");
+
         // Add components to the shared node
         if (!sharedNode.ConnectedComponents.Contains(parentComponent.logicalComponent))
             sharedNode.ConnectedComponents.Add(parentComponent.logicalComponent);
-            
+
         if (!sharedNode.ConnectedComponents.Contains(otherTerminal.parentComponent.logicalComponent))
             sharedNode.ConnectedComponents.Add(otherTerminal.parentComponent.logicalComponent);
     }
@@ -160,7 +195,19 @@ public class ComponentTerminal : MonoBehaviour
     void OnDestroy()
     {
         // Clean up materials
-        if (originalMaterial != null) DestroyImmediate(originalMaterial);
-        if (highlightMaterial != null) DestroyImmediate(highlightMaterial);
+        if (originalMaterial != null)
+        {
+            if (Application.isPlaying)
+                Destroy(originalMaterial);
+            else
+                DestroyImmediate(originalMaterial);
+        }
+        if (highlightMaterial != null)
+        {
+            if (Application.isPlaying)
+                Destroy(highlightMaterial);
+            else
+                DestroyImmediate(highlightMaterial);
+        }
     }
 }

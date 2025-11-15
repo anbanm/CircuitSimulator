@@ -79,7 +79,11 @@ public class CircuitSolver
             
             foreach (var component in node.ConnectedComponents)
             {
-                if (component.Resistance > 0f && component.Resistance != float.MaxValue)
+                // Add minimum resistance threshold to prevent division by very small numbers
+                const float MIN_RESISTANCE = 1e-6f; // 1 micro-ohm minimum
+                const float MAX_RESISTANCE = 1e12f; // 1 trillion ohms maximum (same as open switch)
+                
+                if (component.Resistance > MIN_RESISTANCE && component.Resistance < MAX_RESISTANCE)
                 {
                     float conductance = 1f / component.Resistance;
                     totalConductance += conductance;
@@ -160,9 +164,12 @@ public class CircuitSolver
                 float totalConductance = 0f;
                 
                 // Apply KCL: sum of currents into node = 0
+                const float MIN_RESISTANCE = 1e-6f; // Consistent with earlier fix
+                const float MAX_RESISTANCE = 1e12f;
+                
                 foreach (var component in node.ConnectedComponents)
                 {
-                    if (component.Resistance > 0f && component.Resistance != float.MaxValue)
+                    if (component.Resistance > MIN_RESISTANCE && component.Resistance < MAX_RESISTANCE)
                     {
                         var otherNode = component.NodeA == node ? component.NodeB : component.NodeA;
                         float conductance = 1f / component.Resistance;
@@ -172,7 +179,9 @@ public class CircuitSolver
                     }
                 }
                 
-                if (totalConductance > 0f)
+                // Prevent division by very small conductance values
+                const float MIN_CONDUCTANCE = 1e-12f; // Equivalent to 1 trillion ohm resistance
+                if (totalConductance > MIN_CONDUCTANCE)
                 {
                     node.Voltage = totalCurrent / totalConductance;
                 }
@@ -200,7 +209,7 @@ public class CircuitSolver
                 bat.VoltageDrop = bat.Voltage;
                 // Battery current will be calculated after other components
             }
-            else if (component.Resistance > 0f && component.Resistance != float.MaxValue)
+            else if (component.Resistance > 1e-6f && component.Resistance < 1e12f) // Use same constants
             {
                 // Calculate voltage drop across component
                 float voltageA = component.NodeA.Voltage;
@@ -208,7 +217,15 @@ public class CircuitSolver
                 component.VoltageDrop = Math.Abs(voltageA - voltageB);
                 
                 // Calculate current through component using Ohm's law
-                component.Current = component.VoltageDrop / component.Resistance;
+                // Extra safety check to prevent division by extremely small values
+                if (component.Resistance > 1e-6f)
+                {
+                    component.Current = component.VoltageDrop / component.Resistance;
+                }
+                else
+                {
+                    component.Current = 0f; // Treat as short circuit
+                }
             }
             else if (component is Wire || (component is Switch sw && sw.Resistance == 0f))
             {
@@ -317,7 +334,7 @@ public class CircuitSolver
         if (battery == null) return 0f;
         
         var nonBatteryComponents = components.Where(c => !(c is Battery) && 
-            c.Resistance > 0f && c.Resistance != float.MaxValue).ToList();
+            c.Resistance > 1e-6f && c.Resistance < 1e12f).ToList();
         
         if (nonBatteryComponents.Count == 0) return 0f;
         

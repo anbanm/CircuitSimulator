@@ -10,6 +10,7 @@ public class ComponentPropertyPopup : MonoBehaviour
     [Header("Popup Settings")]
     public float popupDistance = 2f;
     public float popupHeight = 1.5f;
+    public float updateInterval = 0.1f; // Frame throttling for Update()
     
     private GameObject popupCanvas;
     private InputField voltageInput;
@@ -17,6 +18,12 @@ public class ComponentPropertyPopup : MonoBehaviour
     private Text titleText;
     private Button applyButton;
     private Button cancelButton;
+    
+    // Cached references for performance
+    private GameObject voltageLabel;
+    private GameObject resistanceLabel;
+    private Camera cachedMainCamera;
+    private float lastUpdateTime;
     
     private CircuitComponent3D currentComponent;
     private static ComponentPropertyPopup instance;
@@ -84,12 +91,12 @@ public class ComponentPropertyPopup : MonoBehaviour
         titleText.alignment = TextAnchor.MiddleCenter;
         
         // Create voltage input field
-        GameObject voltageLabel = CreateUIText("VoltageLabel", panel.transform, new Vector2(-70, 20), "Voltage:");
+        voltageLabel = CreateUIText("VoltageLabel", panel.transform, new Vector2(-70, 20), "Voltage:");
         GameObject voltageField = CreateInputField("VoltageInput", panel.transform, new Vector2(30, 20));
         voltageInput = voltageField.GetComponent<InputField>();
         
         // Create resistance input field
-        GameObject resistanceLabel = CreateUIText("ResistanceLabel", panel.transform, new Vector2(-70, -20), "Resistance:");
+        resistanceLabel = CreateUIText("ResistanceLabel", panel.transform, new Vector2(-70, -20), "Resistance:");
         GameObject resistanceField = CreateInputField("ResistanceInput", panel.transform, new Vector2(30, -20));
         resistanceInput = resistanceField.GetComponent<InputField>();
         
@@ -197,8 +204,16 @@ public class ComponentPropertyPopup : MonoBehaviour
         currentComponent = component;
         
         // Position popup relative to camera view
-        Camera mainCamera = Camera.main;
-        if (mainCamera == null) return;
+        if (cachedMainCamera == null)
+        {
+            cachedMainCamera = Camera.main;
+            if (cachedMainCamera == null)
+            {
+                Debug.LogWarning("ComponentPropertyPopup: Camera.main is null, cannot position popup");
+                return;
+            }
+        }
+        Camera mainCamera = cachedMainCamera;
         
         Vector3 componentPos = component.transform.position;
         Vector3 cameraPos = mainCamera.transform.position;
@@ -239,16 +254,14 @@ public class ComponentPropertyPopup : MonoBehaviour
         if (voltageInput != null && voltageInput.gameObject != null)
         {
             voltageInput.gameObject.SetActive(showVoltage);
-            // Also hide/show the label
-            GameObject voltageLabel = GameObject.Find("VoltageLabel");
+            // Use cached reference instead of GameObject.Find
             if (voltageLabel != null) voltageLabel.SetActive(showVoltage);
         }
         
         if (resistanceInput != null && resistanceInput.gameObject != null)
         {
             resistanceInput.gameObject.SetActive(showResistance);
-            // Also hide/show the label
-            GameObject resistanceLabel = GameObject.Find("ResistanceLabel");
+            // Use cached reference instead of GameObject.Find
             if (resistanceLabel != null) resistanceLabel.SetActive(showResistance);
         }
         
@@ -303,21 +316,50 @@ public class ComponentPropertyPopup : MonoBehaviour
     
     void Update()
     {
+        // Frame throttling for performance
+        if (Time.time - lastUpdateTime < updateInterval)
+            return;
+        lastUpdateTime = Time.time;
+        
+        // Early exit if popup is not active
+        if (popupCanvas == null || !popupCanvas.activeInHierarchy)
+        {
+            // Still check for ESC to close if popup exists
+            if (popupCanvas != null && Input.GetKeyDown(KeyCode.Escape))
+            {
+                ClosePopup();
+            }
+            return;
+        }
+        
         // Close on ESC
-        if (popupCanvas != null && popupCanvas.activeInHierarchy && Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
             ClosePopup();
+            return;
+        }
+        
+        // Early exit if component is null
+        if (currentComponent == null)
+        {
+            ClosePopup();
+            return;
+        }
+        
+        // Cache camera reference if needed
+        if (cachedMainCamera == null)
+        {
+            cachedMainCamera = Camera.main;
         }
         
         // Keep popup facing camera and positioned correctly
-        if (popupCanvas != null && popupCanvas.activeInHierarchy && currentComponent != null && Camera.main != null)
+        if (cachedMainCamera != null)
         {
-            Camera mainCamera = Camera.main;
             Vector3 componentPos = currentComponent.transform.position;
-            Vector3 cameraPos = mainCamera.transform.position;
-            Vector3 cameraForward = mainCamera.transform.forward;
-            Vector3 cameraRight = mainCamera.transform.right;
-            Vector3 cameraUp = mainCamera.transform.up;
+            Vector3 cameraPos = cachedMainCamera.transform.position;
+            Vector3 cameraForward = cachedMainCamera.transform.forward;
+            Vector3 cameraRight = cachedMainCamera.transform.right;
+            Vector3 cameraUp = cachedMainCamera.transform.up;
             
             // Calculate distance from camera to component
             float distanceToComponent = Vector3.Distance(cameraPos, componentPos);

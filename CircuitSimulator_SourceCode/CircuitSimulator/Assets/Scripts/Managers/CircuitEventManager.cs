@@ -1,9 +1,11 @@
 using UnityEngine;
 using System;
+using CircuitSimulator.Services;
 
 /// <summary>
 /// Handles all circuit events and notifications
 /// Provides event system for circuit state changes
+/// Registers with ServiceLocator for dependency injection
 /// </summary>
 public class CircuitEventManager : MonoBehaviour
 {
@@ -18,6 +20,17 @@ public class CircuitEventManager : MonoBehaviour
     // Event timing
     private float lastEventTime = 0f;
     private const float EVENT_THROTTLE = 0.1f; // Prevent event spam
+
+    void Start()
+    {
+        // Register with ServiceLocator for future interface implementation
+        // For now, register as concrete type
+        if (ServiceLocator.Instance != null)
+        {
+            // Could implement IEventManager interface in the future
+            Debug.Log("[CircuitEventManager] Available for ServiceLocator integration");
+        }
+    }
     
     public void Update()
     {

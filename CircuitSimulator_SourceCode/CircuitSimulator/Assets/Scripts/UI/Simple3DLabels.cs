@@ -5,6 +5,7 @@ public class Simple3DLabels : MonoBehaviour
     [Header("Label Settings")]
     public Vector3 labelOffset = new Vector3(0, 1.2f, 0);
     public float textSize = 0.05f; // Smaller text size
+    public float updateInterval = 0.1f; // Frame throttling for Update()
     
     [Header("AR Optimization")]
     public bool optimizeForAR = true;
@@ -16,10 +17,17 @@ public class Simple3DLabels : MonoBehaviour
     private TextMesh textMesh;
     private Camera mainCamera;
     
+    // Performance optimization
+    private float lastUpdateTime;
+    
     void Start()
     {
         circuitComponent = GetComponent<CircuitComponent3D>();
         mainCamera = Camera.main;
+        if (mainCamera == null)
+        {
+            Debug.LogWarning("Simple3DLabels: Camera.main is null, label positioning may not work correctly");
+        }
         CreateSimpleLabel();
     }
     
@@ -49,6 +57,23 @@ public class Simple3DLabels : MonoBehaviour
     
     void Update()
     {
+        // Frame throttling for performance
+        if (Time.time - lastUpdateTime < updateInterval)
+            return;
+        lastUpdateTime = Time.time;
+        
+        // Early exit if essential components are missing
+        if (circuitComponent == null || labelObject == null)
+            return;
+        
+        // Cache camera reference if needed
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+            if (mainCamera == null)
+                return;
+        }
+        
         UpdateLabelText();
         FaceCamera();
         
@@ -61,16 +86,12 @@ public class Simple3DLabels : MonoBehaviour
     
     void HandleARVisibility()
     {
-        if (mainCamera != null)
-        {
-            float distance = Vector3.Distance(mainCamera.transform.position, transform.position);
-            bool shouldShow = distance <= maxVisibilityDistance;
-            
-            if (labelObject != null)
-            {
-                labelObject.SetActive(shouldShow);
-            }
-        }
+        // mainCamera null check is already done in Update()
+        float distance = Vector3.Distance(mainCamera.transform.position, transform.position);
+        bool shouldShow = distance <= maxVisibilityDistance;
+        
+        // labelObject null check is already done in Update()
+        labelObject.SetActive(shouldShow);
     }
     
     void UpdateLabelText()
@@ -116,14 +137,12 @@ public class Simple3DLabels : MonoBehaviour
     
     void FaceCamera()
     {
-        if (mainCamera != null && labelObject != null)
-        {
-            // Make label always face camera
-            labelObject.transform.LookAt(mainCamera.transform);
-            
-            // Flip the text so it's not backwards
-            labelObject.transform.Rotate(0, 180, 0);
-        }
+        // mainCamera and labelObject null checks are already done in Update()
+        // Make label always face camera
+        labelObject.transform.LookAt(mainCamera.transform);
+        
+        // Flip the text so it's not backwards
+        labelObject.transform.Rotate(0, 180, 0);
     }
     
     bool ShouldShowLabel()

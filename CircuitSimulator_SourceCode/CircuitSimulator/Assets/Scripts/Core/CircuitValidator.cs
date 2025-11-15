@@ -4,6 +4,16 @@ using UnityEngine;
 
 public class CircuitValidator
 {
+    // Numerical stability constants
+    private const float MIN_RESISTANCE = 1e-6f; // 1 micro-ohm minimum (same as solver)
+    private const float MAX_RESISTANCE = 1e12f; // 1 trillion ohms maximum (same as solver)
+    
+    // Validation thresholds (configurable)
+    private const float REACHABILITY_THRESHOLD = 0.8f; // 80% reachability required
+    private const float SHORT_CIRCUIT_THRESHOLD = 0.1f; // Below 0.1 ohm considered short
+    private const int MAX_COMPONENTS_WARNING = 20; // Warn above 20 components
+    private const int MAX_CONNECTIONS_WARNING = 4; // Warn above 4 connections per component
+    
     public ValidationResult ValidateCircuit(List<CircuitComponent> components)
     {
         var result = new ValidationResult();
@@ -26,7 +36,7 @@ public class CircuitValidator
         }
         
         // Check for resistive components
-        var resistiveComponents = components.Where(c => !(c is Battery) && c.Resistance > 0f && c.Resistance != float.MaxValue).ToList();
+        var resistiveComponents = components.Where(c => !(c is Battery) && c.Resistance > MIN_RESISTANCE && c.Resistance < MAX_RESISTANCE).ToList();
         if (resistiveComponents.Count == 0)
         {
             result.AddWarning("Circuit has no resistive components - may cause infinite current");
@@ -110,7 +120,7 @@ public class CircuitValidator
         var totalNodes = allNodes.Count;
         
         // Allow for some unreachable nodes (due to open switches, etc.)
-        return reachableNodes >= totalNodes * 0.8f; // 80% reachability threshold
+        return reachableNodes >= totalNodes * REACHABILITY_THRESHOLD; // Configurable reachability threshold
     }
     
     private List<CircuitComponent> GetDisconnectedComponents(List<CircuitComponent> components, Battery battery)
@@ -210,7 +220,7 @@ public class CircuitValidator
         {
             // Check if total resistance is essentially zero
             float totalResistance = path.Where(c => !(c is Battery)).Sum(c => c.Resistance);
-            return totalResistance < 0.1f; // Very low resistance threshold
+            return totalResistance < SHORT_CIRCUIT_THRESHOLD; // Configurable short circuit threshold
         }
         
         if (visited.Contains(current)) return false;
@@ -245,7 +255,7 @@ public class CircuitValidator
         // This would check minimum spacing between components for AR tracking
         
         // Validate component count for AR performance
-        if (components.Count > 20)
+        if (components.Count > MAX_COMPONENTS_WARNING)
         {
             result.AddWarning($"Large number of components ({components.Count}) may impact AR performance");
         }
@@ -264,7 +274,7 @@ public class CircuitValidator
             maxConnectionsPerNode = Mathf.Max(maxConnectionsPerNode, node.ConnectedComponents.Count);
         }
         
-        if (maxConnectionsPerNode > 4)
+        if (maxConnectionsPerNode > MAX_CONNECTIONS_WARNING)
         {
             result.AddWarning($"Complex connection point detected ({maxConnectionsPerNode} components) - may be hard to visualize clearly in AR");
         }
