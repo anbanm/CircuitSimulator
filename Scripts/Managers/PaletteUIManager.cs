@@ -64,10 +64,9 @@ public class PaletteUIManager : MonoBehaviour
         Color actionColor = new Color(0.2f, 0.7f, 0.3f, 1f);     // Professional green
         Color utilityColor = new Color(0.5f, 0.5f, 0.6f, 1f);    // Medium gray
         
-        // Mode buttons (at the top) - Simple text, no unicode
-        CreateButton("Select", modeColor, ActivateSelectMode, "Click to select and move components");
-        CreateButton("Connect", modeColor, ActivateConnectMode, "Click two components to connect with wire");
-        
+        // Wire button - creates a physical draggable wire
+        CreateButton("Wire", new Color(0.3f, 0.7f, 0.9f, 1f), CreatePhysicalWire, "Create a draggable wire (W key)");
+
         // Component buttons with simple names
         CreateButton("Battery", new Color(0.8f, 0.2f, 0.2f, 1f), () => factoryManager?.CreateBattery(), "Add power source (12V)");
         CreateButton("Resistor", new Color(0.8f, 0.6f, 0.2f, 1f), () => factoryManager?.CreateResistor(), "Add resistance (10Ω)");
@@ -96,21 +95,26 @@ public class PaletteUIManager : MonoBehaviour
         // Create button
         Button newButton = Instantiate(buttonPrefab, paletteContainer);
         newButton.name = $"Button_{label}";
-        
-        // Set smaller button size (half the original)
+
+        // Keep original button size for readability
         RectTransform buttonRect = newButton.GetComponent<RectTransform>();
         if (buttonRect != null)
         {
+            // Don't scale down - keep at original size or set to readable size
             Vector2 currentSize = buttonRect.sizeDelta;
-            buttonRect.sizeDelta = new Vector2(currentSize.x * 0.5f, currentSize.y * 0.5f);
+            // If size is too small, set to minimum readable size
+            if (currentSize.x < 100 || currentSize.y < 40)
+            {
+                buttonRect.sizeDelta = new Vector2(120, 50);
+            }
         }
-        
+
         // Set button text (handle both Text and TextMeshPro)
         Text buttonText = newButton.GetComponentInChildren<Text>();
         if (buttonText != null)
         {
             buttonText.text = label;
-            buttonText.fontSize = Mathf.Max(8, buttonText.fontSize / 2); // Half font size, minimum 8
+            buttonText.fontSize = Mathf.Max(16, buttonText.fontSize); // Minimum 16 for readability
         }
         else
         {
@@ -119,7 +123,7 @@ public class PaletteUIManager : MonoBehaviour
             if (tmpText != null)
             {
                 tmpText.text = label;
-                tmpText.fontSize = Mathf.Max(8, tmpText.fontSize / 2); // Half font size, minimum 8
+                tmpText.fontSize = Mathf.Max(16, tmpText.fontSize); // Minimum 16 for readability
             }
         }
         
@@ -380,6 +384,48 @@ public class PaletteUIManager : MonoBehaviour
         }
     }
     
+    private void CreatePhysicalWire()
+    {
+        // For button clicks: place wire near last component (mouse is on UI)
+        // Find ConnectTool
+        ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
+        if (connectTool == null)
+        {
+            Debug.LogError("ConnectTool not found! This shouldn't happen.");
+            return;
+        }
+
+        // Get position of last placed component
+        Vector3 componentPos = factoryManager?.GetLastComponentPosition() ?? Vector3.zero;
+
+        // Keep wire on the SAME PLANE as components (Y = 0.5)
+        // Only offset in horizontal plane (X, Z) to make wire visible next to component
+        Vector3 wirePosition = new Vector3(
+            componentPos.x + 1.5f,  // Offset right
+            0.5f,                    // SAME Y as workspace plane
+            componentPos.z           // Same Z depth
+        );
+
+        // Create wire at that position
+        connectTool.CreateDraggableWireAtPosition(wirePosition);
+    }
+
+    private void CreatePhysicalWireAtCursor()
+    {
+        // For W key: place wire at cursor position (user's mouse location)
+        ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
+        if (connectTool != null)
+        {
+            // Use reflection to call private CreateDraggableWire (uses cursor position)
+            var method = connectTool.GetType().GetMethod("CreateDraggableWire",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (method != null)
+            {
+                method.Invoke(connectTool, null);
+            }
+        }
+    }
+
     // Deprecated - kept for compatibility
     private void ActivateWireTool()
     {
@@ -451,7 +497,10 @@ public class PaletteUIManager : MonoBehaviour
         {
             factoryManager?.CreateJunction();
         }
-        // NOTE: W key for wire creation is handled by ConnectTool.cs (CreateDraggableWire)
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            CreatePhysicalWireAtCursor();
+        }
         if (Input.GetKeyDown(KeyCode.Space))
         {
             controlManager?.SolveCircuit();

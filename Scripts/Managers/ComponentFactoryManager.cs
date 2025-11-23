@@ -96,6 +96,20 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         placedComponents.Clear();
         componentCount = 0;
     }
+
+    public Vector3 GetLastComponentPosition()
+    {
+        // Return position of last placed component, or origin if none
+        if (placedComponents != null && placedComponents.Count > 0)
+        {
+            GameObject lastComponent = placedComponents[placedComponents.Count - 1];
+            if (lastComponent != null)
+            {
+                return lastComponent.transform.position;
+            }
+        }
+        return Vector3.zero;
+    }
     
     #region Component Creation
     

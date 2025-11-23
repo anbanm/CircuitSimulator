@@ -384,10 +384,14 @@ public class ConnectTool : MonoBehaviour
     {
         // Get cursor position in world space
         Vector3 cursorPos = GetMouseWorldPosition();
+        CreateDraggableWireAtPosition(cursorPos);
+    }
 
+    public void CreateDraggableWireAtPosition(Vector3 centerPos)
+    {
         // Create wire slightly offset so both endpoints are visible
-        Vector3 startPos = cursorPos + Vector3.left * 0.5f;
-        Vector3 endPos = cursorPos + Vector3.right * 0.5f;
+        Vector3 startPos = centerPos + Vector3.left * 0.5f;
+        Vector3 endPos = centerPos + Vector3.right * 0.5f;
 
         // Create wire GameObject with unique name
         _wireCounter++;
@@ -400,7 +404,6 @@ public class ConnectTool : MonoBehaviour
 
         // Store wire reference
         _wires.Add(wireObj);
-
     }
 }
 
