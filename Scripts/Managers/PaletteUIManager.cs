@@ -82,6 +82,9 @@ public class PaletteUIManager : MonoBehaviour
         
         // Educational assistance toggle
         CreateButton("Help", new Color(0.3f, 0.7f, 0.3f, 1f), () => MisconceptionAlert.Instance.ToggleMisconceptionDetection(), "Toggle learning assistance (M key)");
+
+        // Exit button to validate and return to challenge flow
+        CreateButton("Exit", new Color(0.6f, 0.3f, 0.8f, 1f), ExitSimulator, "Validate circuit and exit (ESC key)");
     }
     
     private void CreateButton(string label, Color color, System.Action onClick, string tooltip = "")
@@ -519,7 +522,50 @@ public class PaletteUIManager : MonoBehaviour
         {
             MisconceptionAlert.Instance.ToggleMisconceptionDetection();
         }
+
+        // ESC key - Exit simulator (with validation)
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            ExitSimulator();
+        }
     }
-    
+
+    #endregion
+
+    #region Exit and Validation
+
+    private void ExitSimulator()
+    {
+        Debug.Log("[PaletteUIManager] Exit button pressed - validating circuit...");
+
+        // Validate circuit before allowing exit
+        if (controlManager != null)
+        {
+            controlManager.ValidateCircuit();
+
+            // Check if circuit is valid by checking if it has been solved successfully
+            CircuitManager circuitManager = controlManager.GetCircuitManager();
+            if (circuitManager != null)
+            {
+                // For now, allow exit regardless (challenge flow will handle validation)
+                // In future, this could check circuitManager.IsCircuitSolved() or similar
+                Debug.Log("[PaletteUIManager] Exiting simulator and returning to challenge flow...");
+
+                // Fire exit event or load scene
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Challenge_scene");
+            }
+            else
+            {
+                Debug.LogWarning("[PaletteUIManager] Cannot validate - CircuitManager not found. Exiting anyway...");
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Challenge_scene");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[PaletteUIManager] Cannot validate - CircuitControlManager not found. Exiting anyway...");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Challenge_scene");
+        }
+    }
+
     #endregion
 }
