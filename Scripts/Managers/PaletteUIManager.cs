@@ -536,27 +536,25 @@ public class PaletteUIManager : MonoBehaviour
 
     private void ExitSimulator()
     {
-        Debug.Log("[PaletteUIManager] Exit button pressed - validating circuit...");
+        Debug.Log("[PaletteUIManager] Exit button pressed");
 
-        // Try to find ChallengeFlowManager first (if simulator was instantiated in Challenge_scene)
-        var challengeFlowManager = FindFirstObjectByType<ChallengeFlowManager>();
-        if (challengeFlowManager != null)
+        // Try to find CircuitSimulatorAdapter (if simulator was instantiated in Challenge_scene)
+        var simulatorAdapter = FindFirstObjectByType<CircuitSimulatorAdapter>();
+        if (simulatorAdapter != null)
         {
-            Debug.Log("[PaletteUIManager] Found ChallengeFlowManager - notifying simulator completion");
+            Debug.Log("[PaletteUIManager] Found CircuitSimulatorAdapter - triggering user exit");
 
-            // Simulator is integrated in challenge flow - notify completion
-            // ChallengeFlowManager will handle the next phase
-            // TODO: Create proper completion event system
-            Debug.LogWarning("[PaletteUIManager] Circuit simulator completion event not yet implemented!");
+            // Trigger OnSimulatorClosed event - ChallengeFlowManager will handle cleanup
+            simulatorAdapter.UserRequestedExit();
             return;
         }
 
-        // If no ChallengeFlowManager found, we're in standalone mode
+        // If no CircuitSimulatorAdapter found, we're in standalone mode
         // Check if we're returning from a challenge (check sessionData)
         var sessionData = UnityEngine.Resources.FindObjectsOfTypeAll<ChallengeSessionData>();
         if (sessionData != null && sessionData.Length > 0 && sessionData[0].isChallengeActive)
         {
-            Debug.Log("[PaletteUIManager] Returning to Challenge_scene after simulator completion");
+            Debug.Log("[PaletteUIManager] Standalone mode - Returning to Challenge_scene");
 
             // Validate circuit
             if (controlManager != null)
