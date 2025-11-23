@@ -538,32 +538,43 @@ public class PaletteUIManager : MonoBehaviour
     {
         Debug.Log("[PaletteUIManager] Exit button pressed - validating circuit...");
 
-        // Validate circuit before allowing exit
-        if (controlManager != null)
+        // Try to find ChallengeFlowManager first (if simulator was instantiated in Challenge_scene)
+        var challengeFlowManager = FindFirstObjectByType<ChallengeFlowManager>();
+        if (challengeFlowManager != null)
         {
-            controlManager.ValidateCircuit();
+            Debug.Log("[PaletteUIManager] Found ChallengeFlowManager - notifying simulator completion");
 
-            // Check if circuit is valid by checking if it has been solved successfully
-            CircuitManager circuitManager = controlManager.GetCircuitManager();
-            if (circuitManager != null)
-            {
-                // For now, allow exit regardless (challenge flow will handle validation)
-                // In future, this could check circuitManager.IsCircuitSolved() or similar
-                Debug.Log("[PaletteUIManager] Exiting simulator and returning to challenge flow...");
+            // Simulator is integrated in challenge flow - notify completion
+            // ChallengeFlowManager will handle the next phase
+            // TODO: Create proper completion event system
+            Debug.LogWarning("[PaletteUIManager] Circuit simulator completion event not yet implemented!");
+            return;
+        }
 
-                // Fire exit event or load scene
-                UnityEngine.SceneManagement.SceneManager.LoadScene("Challenge_scene");
-            }
-            else
+        // If no ChallengeFlowManager found, we're in standalone mode
+        // Check if we're returning from a challenge (check sessionData)
+        var sessionData = UnityEngine.Resources.FindObjectsOfTypeAll<ChallengeSessionData>();
+        if (sessionData != null && sessionData.Length > 0 && sessionData[0].isChallengeActive)
+        {
+            Debug.Log("[PaletteUIManager] Returning to Challenge_scene after simulator completion");
+
+            // Validate circuit
+            if (controlManager != null)
             {
-                Debug.LogWarning("[PaletteUIManager] Cannot validate - CircuitManager not found. Exiting anyway...");
-                UnityEngine.SceneManagement.SceneManager.LoadScene("Challenge_scene");
+                controlManager.ValidateCircuit();
             }
+
+            // Mark that we're returning from simulator (phase 2 complete)
+            sessionData[0].simulatorCompleted = true;
+
+            // Return to Challenge_scene
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Challenge_scene");
         }
         else
         {
-            Debug.LogWarning("[PaletteUIManager] Cannot validate - CircuitControlManager not found. Exiting anyway...");
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Challenge_scene");
+            // Standalone simulator mode - just close
+            Debug.Log("[PaletteUIManager] Standalone simulator mode - closing simulator");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Main_Scene");
         }
     }
 
