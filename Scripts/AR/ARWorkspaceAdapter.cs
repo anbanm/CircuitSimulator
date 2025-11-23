@@ -34,7 +34,6 @@ public class ARWorkspaceAdapter : MonoBehaviour
             EnableARMode();
         }
         
-        Debug.Log("ARWorkspaceAdapter initialized");
     }
     
     public void Update()
@@ -56,7 +55,6 @@ public class ARWorkspaceAdapter : MonoBehaviour
         // Setup AR-specific optimizations
         SetupAROptimizations();
         
-        Debug.Log("AR Mode enabled");
     }
     
     public void DisableARMode()
@@ -66,7 +64,6 @@ public class ARWorkspaceAdapter : MonoBehaviour
         // Restore desktop configuration
         RestoreDesktopConfiguration();
         
-        Debug.Log("AR Mode disabled");
     }
     
     public void SetEnabled(bool enabled)
@@ -96,7 +93,6 @@ public class ARWorkspaceAdapter : MonoBehaviour
         lookDirection.y = 0; // Keep horizontal
         workspaceManager.WorkspacePlane.rotation = Quaternion.LookRotation(-lookDirection);
         
-        Debug.Log($"Workspace configured for AR at position {targetPosition}");
     }
     
     private void SetupAROptimizations()

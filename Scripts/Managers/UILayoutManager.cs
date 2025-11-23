@@ -37,7 +37,6 @@ public class UILayoutManager : MonoBehaviour
         // CreateToolPanel();
         // CreateInfoPanel();
         // CreateControlPanel();
-        Debug.Log("UILayoutManager panels disabled - using PaletteUIManager for clean UI");
     }
     
     #region Tool Panel
@@ -60,7 +59,6 @@ public class UILayoutManager : MonoBehaviour
         CreateComponentButton("🔘 SWITCH", ComponentType.Switch, 3);
         CreateComponentButton("🔌 WIRE", ComponentType.Wire, 4);
         
-        Debug.Log("Tool panel created");
     }
     
     private void CreateComponentButton(string label, ComponentType componentType, int index)
@@ -73,7 +71,6 @@ public class UILayoutManager : MonoBehaviour
         var uiButton = button.AddComponent<UIButton3D>();
         uiButton.OnClick = () => SelectComponent(componentType);
         
-        Debug.Log($"Created component button: {label}");
     }
     
     #endregion
@@ -100,7 +97,6 @@ public class UILayoutManager : MonoBehaviour
         // Create validation display
         CreateValidationDisplay(4);
         
-        Debug.Log("Info panel created");
     }
     
     private void CreateMeasurementDisplay(string label, string value, int index)
@@ -117,7 +113,6 @@ public class UILayoutManager : MonoBehaviour
         var display = labelObj.AddComponent<MeasurementDisplay>();
         display.Initialize(label, valueObj.GetComponent<TMPro.TextMeshPro>());
         
-        Debug.Log($"Created measurement display: {label}");
     }
     
     private void CreateValidationDisplay(int index)
@@ -127,7 +122,6 @@ public class UILayoutManager : MonoBehaviour
         GameObject statusText = CreateText("Circuit Status: Ready", statusPos, infoPanel.transform, 0.9f);
         statusText.GetComponent<TMPro.TextMeshPro>().color = Color.green;
         
-        Debug.Log("Created validation display");
     }
     
     #endregion
@@ -152,7 +146,6 @@ public class UILayoutManager : MonoBehaviour
         CreateControlButton("🗑️ CLEAR", 3, () => ClearAll());
         CreateControlButton("📊 REPORT", 4, () => GenerateReport());
         
-        Debug.Log("Control panel created");
     }
     
     private void CreateControlButton(string label, int index, System.Action action)
@@ -165,7 +158,6 @@ public class UILayoutManager : MonoBehaviour
         var uiButton = button.AddComponent<UIButton3D>();
         uiButton.OnClick = action;
         
-        Debug.Log($"Created control button: {label}");
     }
     
     #endregion
@@ -214,7 +206,6 @@ public class UILayoutManager : MonoBehaviour
     
     private void SelectComponent(ComponentType componentType)
     {
-        Debug.Log($"Selected component: {componentType}");
         
         if (componentType == ComponentType.Wire)
         {
@@ -232,7 +223,6 @@ public class UILayoutManager : MonoBehaviour
     
     private void ActivateWireTool()
     {
-        Debug.Log("🔌 Wire Tool Activated");
         
         var connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
         if (connectTool == null)

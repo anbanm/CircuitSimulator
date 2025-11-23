@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// Draggable endpoint for circuit wires
@@ -16,12 +17,17 @@ public class WireEndpoint : MonoBehaviour
     public Color snapIndicatorColor = Color.yellow;
     public Color connectedColor = Color.blue;
     public Color draggingColor = Color.cyan;
+    public Color junctionColor = Color.green;  // Color for junction points (multiple wires connected)
 
     // State
     private bool isDragging = false;
-    private ComponentTerminal connectedTerminal = null;
+    private ComponentTerminal connectedTerminal = null;  // Physical terminal this endpoint is AT
+    private WireEndpoint snappedToEndpoint = null;       // Another endpoint this is snapped to (visual junction)
     private CircuitWire parentWire;
     private Camera mainCamera;
+
+    // Public accessor for parent wire (needed by JunctionTopologyManager)
+    public CircuitWire ParentWire => parentWire;
 
     // Flow direction (assigned after circuit solving)
     [Header("Flow Direction")]
@@ -36,16 +42,16 @@ public class WireEndpoint : MonoBehaviour
     // Cached references
     private Vector3 dragOffset;
     private ComponentTerminal nearestTerminalWhileDragging = null;
+    private WireEndpoint nearestWireEndpointWhileDragging = null;  // Track wire endpoint for visual feedback
+    private ComponentTerminal lastLoggedSnapTarget = null;  // Track last logged snap to avoid spam
 
-    public bool IsConnected => connectedTerminal != null;
+    public bool IsConnected => connectedTerminal != null || snappedToEndpoint != null;  // FIX: Also consider wire-to-wire junctions
     public ComponentTerminal ConnectedTerminal => connectedTerminal;
+    public WireEndpoint SnappedToEndpoint => snappedToEndpoint;  // For topology discovery
     public bool IsDragging => isDragging;
 
-    void Start()
+    void Awake()
     {
-        // Parent wire will be set via SetParentWire() method
-        // No need to find it via GetComponentInParent since endpoints are siblings
-
         // Get main camera
         mainCamera = Camera.main;
         if (mainCamera == null)
@@ -53,10 +59,13 @@ public class WireEndpoint : MonoBehaviour
             mainCamera = FindFirstObjectByType<Camera>();
         }
 
-        // Setup visual appearance
+        // Setup visual appearance immediately in Awake() so endpoints are visible when created
         SetupVisualAppearance();
+    }
 
-        Debug.Log($"WireEndpoint created: {name}, ParentWire: {(parentWire != null ? parentWire.name : "null")}");
+    void Start()
+    {
+        // Parent wire will be set via SetParentWire() method before Start() is called
     }
 
     /// <summary>
@@ -65,7 +74,6 @@ public class WireEndpoint : MonoBehaviour
     public void SetParentWire(CircuitWire wire)
     {
         parentWire = wire;
-        Debug.Log($"✅ WireEndpoint {name} parent wire set to: {wire.name}");
     }
 
     void Update()
@@ -83,8 +91,6 @@ public class WireEndpoint : MonoBehaviour
 
     void SetupVisualAppearance()
     {
-        Debug.Log($"🔌 Setting up wire endpoint visual: {name}, Size: {endpointSize}");
-
         // Create endpoint sphere
         var meshFilter = gameObject.AddComponent<MeshFilter>();
         meshFilter.mesh = CreateSphereMesh();
@@ -100,6 +106,9 @@ public class WireEndpoint : MonoBehaviour
         endpointMaterial.EnableKeyword("_EMISSION");
         endpointMaterial.SetColor("_EmissionColor", disconnectedColor * 0.3f);
 
+        // Set rendering queue to render on top of other objects
+        endpointMaterial.renderQueue = 3000; // Transparent queue for visibility
+
         meshRenderer.material = endpointMaterial;
         meshRenderer.enabled = true;  // Ensure renderer is enabled
 
@@ -113,7 +122,6 @@ public class WireEndpoint : MonoBehaviour
         // Create snap indicator (hidden by default)
         CreateSnapIndicator();
 
-        Debug.Log($"✅ Wire endpoint visual complete: {name}, World Position: {transform.position}, Size: {endpointSize}, Renderer enabled: {meshRenderer.enabled}");
     }
 
     Mesh CreateSphereMesh()
@@ -180,6 +188,12 @@ public class WireEndpoint : MonoBehaviour
         {
             DetachFromTerminal();
         }
+        
+        // Disconnect from snapped endpoint if snapped
+        if (snappedToEndpoint != null)
+        {
+            DetachFromEndpoint();
+        }
 
         // Calculate drag offset
         Vector3 mouseWorldPos = GetMouseWorldPosition();
@@ -187,8 +201,6 @@ public class WireEndpoint : MonoBehaviour
 
         // Visual feedback
         UpdateColor(draggingColor);
-
-        Debug.Log($"Started dragging endpoint: {name}");
     }
 
     void UpdateDragPosition()
@@ -200,28 +212,59 @@ public class WireEndpoint : MonoBehaviour
         // Check for nearby terminals
         nearestTerminalWhileDragging = FindNearestTerminal();
 
-        // Show snap indicator if near terminal
-        if (nearestTerminalWhileDragging != null)
+        // Show snap indicator if near terminal OR wire endpoint
+        bool hasSnapTarget = nearestTerminalWhileDragging != null || nearestWireEndpointWhileDragging != null;
+
+        if (hasSnapTarget)
         {
             snapIndicator.SetActive(true);
-            snapIndicator.transform.position = nearestTerminalWhileDragging.transform.position;
+
+            // Position snap indicator at the snap target
+            if (nearestWireEndpointWhileDragging != null)
+            {
+                // Snapping to wire endpoint - show indicator at wire endpoint position
+                snapIndicator.transform.position = nearestWireEndpointWhileDragging.transform.position;
+
+                // Show the OTHER endpoint's snap indicator too for visual feedback
+                if (nearestWireEndpointWhileDragging.snapIndicator != null)
+                {
+                    nearestWireEndpointWhileDragging.snapIndicator.SetActive(true);
+                }
+            }
+            else if (nearestTerminalWhileDragging != null)
+            {
+                // Snapping to component terminal
+                snapIndicator.transform.position = nearestTerminalWhileDragging.transform.position;
+            }
         }
         else
         {
             snapIndicator.SetActive(false);
+            // Hide any wire endpoint snap indicators we might have shown
+            if (nearestWireEndpointWhileDragging != null && nearestWireEndpointWhileDragging.snapIndicator != null)
+            {
+                nearestWireEndpointWhileDragging.snapIndicator.SetActive(false);
+            }
         }
     }
 
     void StopDragging()
     {
         isDragging = false;
+        lastLoggedSnapTarget = null;  // Reset snap logging
 
         // Try to snap to nearest terminal
         ComponentTerminal nearestTerminal = FindNearestTerminal();
 
         if (nearestTerminal != null)
         {
+            // Snap to component terminal (or terminal of connected wire endpoint)
             SnapToTerminal(nearestTerminal);
+        }
+        else if (nearestWireEndpointWhileDragging != null)
+        {
+            // Snap to unconnected wire endpoint - connect both to same position
+            SnapToWireEndpoint(nearestWireEndpointWhileDragging);
         }
         else
         {
@@ -232,11 +275,15 @@ public class WireEndpoint : MonoBehaviour
             UpdateColor(disconnectedColor);
         }
 
-        // Hide snap indicator
+        // Hide snap indicators on BOTH endpoints
         snapIndicator.SetActive(false);
-        nearestTerminalWhileDragging = null;
+        if (nearestWireEndpointWhileDragging != null && nearestWireEndpointWhileDragging.snapIndicator != null)
+        {
+            nearestWireEndpointWhileDragging.snapIndicator.SetActive(false);
+        }
 
-        Debug.Log($"Stopped dragging endpoint: {name} (Connected: {IsConnected})");
+        nearestTerminalWhileDragging = null;
+        nearestWireEndpointWhileDragging = null;
     }
 
     /// <summary>
@@ -267,11 +314,47 @@ public class WireEndpoint : MonoBehaviour
 
     ComponentTerminal FindNearestTerminal()
     {
-        // Find all terminals in scene
-        ComponentTerminal[] allTerminals = FindObjectsByType<ComponentTerminal>(FindObjectsSortMode.None);
+        // Clear previous wire endpoint reference
+        nearestWireEndpointWhileDragging = null;
 
         ComponentTerminal nearest = null;
         float minDistance = snapRadius;
+        float minWireEndpointDistance = float.MaxValue;
+        float minTerminalDistance = float.MaxValue;
+
+        // CHECK WIRE ENDPOINTS FIRST (priority for wire-to-wire junctions!)
+        WireEndpoint[] allEndpoints = FindObjectsByType<WireEndpoint>(FindObjectsSortMode.None);
+
+        foreach (var endpoint in allEndpoints)
+        {
+            // Skip self
+            if (endpoint == this) continue;
+
+            // Skip if on same wire
+            if (endpoint.parentWire == this.parentWire) continue;
+
+            // ALLOW SNAPPING TO UNCONNECTED ENDPOINTS (for wire-to-wire junctions)
+            // If endpoint is connected, we'll use its terminal
+            // If endpoint is unconnected, we'll just use it for positioning
+            float distance = Vector3.Distance(transform.position, endpoint.transform.position);
+
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                minWireEndpointDistance = distance;
+                nearestWireEndpointWhileDragging = endpoint;
+
+                // If the endpoint is connected to a terminal, use that terminal
+                // If not connected, nearest will remain null but we'll still track the wire endpoint
+                if (endpoint.IsConnected)
+                {
+                    nearest = endpoint.ConnectedTerminal;
+                }
+            }
+        }
+
+        // Then check component terminals
+        ComponentTerminal[] allTerminals = FindObjectsByType<ComponentTerminal>(FindObjectsSortMode.None);
 
         foreach (var terminal in allTerminals)
         {
@@ -281,11 +364,50 @@ public class WireEndpoint : MonoBehaviour
 
             float distance = Vector3.Distance(transform.position, terminal.transform.position);
 
-            if (distance < minDistance)
+            // Track minimum terminal distance for logging
+            if (distance < minTerminalDistance)
+            {
+                minTerminalDistance = distance;
+            }
+
+            // Only use this terminal if it's closer than any wire endpoint
+            // OR if distances are equal, prefer the wire endpoint (already set)
+            if (distance < minWireEndpointDistance && distance < snapRadius)
             {
                 minDistance = distance;
                 nearest = terminal;
+                nearestWireEndpointWhileDragging = null; // Clear wire endpoint since terminal is closer
             }
+        }
+
+        // Only log when snap target CHANGES (not every frame!)
+        if (nearest != lastLoggedSnapTarget)
+        {
+            if (nearest != null)
+            {
+                if (nearestWireEndpointWhileDragging != null)
+                {
+                    string connStatus = nearestWireEndpointWhileDragging.IsConnected ? "connected" : "unconnected";
+                    Debug.Log($"[SNAP] → Wire endpoint ({connStatus}): {nearestWireEndpointWhileDragging.name} at {minWireEndpointDistance:F2} units");
+                }
+                else
+                {
+                    Debug.Log($"[SNAP] → Terminal: {nearest.name} at {minTerminalDistance:F2} units");
+                }
+            }
+            else if (nearestWireEndpointWhileDragging != null)
+            {
+                // Found wire endpoint but no terminal (unconnected wire endpoint)
+                Debug.Log($"[SNAP] → Unconnected wire: {nearestWireEndpointWhileDragging.name} at {minWireEndpointDistance:F2} units");
+            }
+            else
+            {
+                if (lastLoggedSnapTarget != null)
+                {
+                    Debug.Log($"[SNAP] × Lost snap target");
+                }
+            }
+            lastLoggedSnapTarget = nearest;
         }
 
         return nearest;
@@ -335,6 +457,10 @@ public class WireEndpoint : MonoBehaviour
             return parentWire.startEndpoint;
     }
 
+    /// <summary>
+    /// Snap this endpoint to a component terminal (physical connection)
+    /// VISUAL LAYER ONLY - no electrical logic here
+    /// </summary>
     public void SnapToTerminal(ComponentTerminal terminal)
     {
         if (terminal == null) return;
@@ -343,8 +469,8 @@ public class WireEndpoint : MonoBehaviour
         if (!IsValidTerminalForConnection(terminal))
         {
             Debug.LogWarning($"❌ Cannot snap to {terminal.name}: Both endpoints would be on same component!");
-            UpdateColor(Color.red); // Show red to indicate invalid connection
-            return; // Don't snap!
+            UpdateColor(Color.red);
+            return;
         }
 
         // Detach from old terminal if any
@@ -352,8 +478,14 @@ public class WireEndpoint : MonoBehaviour
         {
             DetachFromTerminal();
         }
+        
+        // Detach from snapped endpoint if any (can't be both snapped and at terminal)
+        if (snappedToEndpoint != null)
+        {
+            DetachFromEndpoint();
+        }
 
-        // Connect to new terminal
+        // Connect to terminal (physical connection only)
         connectedTerminal = terminal;
 
         // Move to terminal position
@@ -361,21 +493,98 @@ public class WireEndpoint : MonoBehaviour
 
         // Visual feedback
         UpdateColor(connectedColor);
+        UpdateJunctionColors(terminal);  // Green if multiple wires on same terminal
 
         // Notify parent wire
         if (parentWire != null)
         {
             parentWire.OnEndpointConnected(this);
         }
+    }
 
-        Debug.Log($"✅ Endpoint snapped to terminal: {terminal.name}");
+    /// <summary>
+    /// Snap to another wire endpoint (for wire-to-wire junctions)
+    /// VISUAL LAYER ONLY - just stores the reference for topology discovery later
+    /// </summary>
+    public void SnapToWireEndpoint(WireEndpoint otherEndpoint)
+    {
+        if (otherEndpoint == null) return;
+
+        // Detach from terminal if any (can't be both snapped and at terminal)
+        if (connectedTerminal != null)
+        {
+            DetachFromTerminal();
+        }
+
+        // Store the snap reference (bidirectional)
+        snappedToEndpoint = otherEndpoint;
+        if (otherEndpoint.snappedToEndpoint != this)
+        {
+            otherEndpoint.snappedToEndpoint = this;
+        }
+
+        // Move to the other endpoint's position
+        Vector3 junctionPosition = otherEndpoint.transform.position;
+        transform.position = junctionPosition;
+
+        // Visual feedback - green for junction
+        UpdateColor(junctionColor);
+        otherEndpoint.UpdateColor(junctionColor);
+
+        // Make junction endpoints larger for visibility
+        transform.localScale = Vector3.one * endpointSize * 1.5f;
+        otherEndpoint.transform.localScale = Vector3.one * endpointSize * 1.5f;
+
+        // Notify parent wire (for visual update)
+        if (parentWire != null)
+        {
+            parentWire.OnEndpointConnected(this);
+        }
+    }
+
+    /// <summary>
+    /// Detach from snapped wire endpoint
+    /// VISUAL LAYER ONLY - clears the snap reference
+    /// </summary>
+    public void DetachFromEndpoint()
+    {
+        if (snappedToEndpoint == null) return;
+
+        // Clear bidirectional reference
+        WireEndpoint other = snappedToEndpoint;
+        snappedToEndpoint = null;
+        if (other != null && other.snappedToEndpoint == this)
+        {
+            other.snappedToEndpoint = null;
+
+            // FIX: Check if other endpoint is still part of terminal junction
+            if (other.IsConnected)
+            {
+                // Update junction colors at terminal (may still be green if multiple wires)
+                UpdateJunctionColors(other.ConnectedTerminal);
+            }
+            else
+            {
+                other.UpdateColor(disconnectedColor);
+            }
+
+            other.transform.localScale = Vector3.one * endpointSize;
+        }
+
+        // Reset visual feedback
+        UpdateColor(disconnectedColor);
+        transform.localScale = Vector3.one * endpointSize;
+
+        // Notify parent wire
+        if (parentWire != null)
+        {
+            parentWire.OnEndpointDisconnected(this);
+        }
     }
 
     public void DetachFromTerminal()
     {
         if (connectedTerminal == null) return;
-
-        Debug.Log($"Endpoint detached from terminal: {connectedTerminal.name}");
 
         connectedTerminal = null;
 
@@ -397,6 +606,37 @@ public class WireEndpoint : MonoBehaviour
             // Update emission color to match, maintaining the glow effect
             endpointMaterial.SetColor("_EmissionColor", color * 0.4f);  // Slightly stronger glow for different states
         }
+    }
+
+    /// <summary>
+    /// Update colors for all endpoints connected to the given terminal
+    /// Uses junction color if multiple wires are connected (parallel circuit junction)
+    /// </summary>
+    void UpdateJunctionColors(ComponentTerminal terminal)
+    {
+        if (terminal == null) return;
+
+        // Find all wire endpoints connected to this terminal
+        WireEndpoint[] allEndpoints = FindObjectsByType<WireEndpoint>(FindObjectsSortMode.None);
+        List<WireEndpoint> endpointsOnThisTerminal = new List<WireEndpoint>();
+
+        foreach (var endpoint in allEndpoints)
+        {
+            if (endpoint.connectedTerminal == terminal)
+            {
+                endpointsOnThisTerminal.Add(endpoint);
+            }
+        }
+
+        // Determine color based on junction status
+        Color colorToUse = endpointsOnThisTerminal.Count >= 2 ? junctionColor : connectedColor;
+
+        // Update all endpoints on this terminal to the same color
+        foreach (var endpoint in endpointsOnThisTerminal)
+        {
+            endpoint.UpdateColor(colorToUse);
+        }
+
     }
 
     Vector3 GetMouseWorldPosition()

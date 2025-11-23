@@ -18,7 +18,6 @@ public class MeasurementDisplayManager : MonoBehaviour
     {
         workspaceManager = workspace;
         FindMeasurementDisplays();
-        Debug.Log("MeasurementDisplayManager initialized");
     }
     
     public void Update()
@@ -35,7 +34,6 @@ public class MeasurementDisplayManager : MonoBehaviour
     {
         var displays = FindObjectsByType<MeasurementDisplay>(FindObjectsSortMode.None);
         measurementDisplays.AddRange(displays);
-        Debug.Log($"Found {measurementDisplays.Count} measurement displays");
     }
     
     private void UpdateAllMeasurements()
@@ -77,7 +75,6 @@ public class MeasurementDisplayManager : MonoBehaviour
         uiText.alignment = TextAnchor.UpperLeft;
 
         uiCreated = true;
-        Debug.Log("Created measurement display UI");
     }
     
     private void UpdateMeasurementDisplay(string label, string value)
@@ -118,7 +115,6 @@ public class MeasurementDisplayManager : MonoBehaviour
         if (!measurementDisplays.Contains(display))
         {
             measurementDisplays.Add(display);
-            Debug.Log($"Registered measurement display: {display.Label}");
         }
     }
     
@@ -127,14 +123,12 @@ public class MeasurementDisplayManager : MonoBehaviour
         if (measurementDisplays.Contains(display))
         {
             measurementDisplays.Remove(display);
-            Debug.Log($"Unregistered measurement display: {display.Label}");
         }
     }
     
     public void SetUpdateInterval(float interval)
     {
         updateInterval = Mathf.Max(0.1f, interval);
-        Debug.Log($"Measurement update interval set to {updateInterval}s");
     }
 }
 
@@ -156,7 +150,6 @@ public class MeasurementDisplay : MonoBehaviour
         var manager = FindFirstObjectByType<MeasurementDisplayManager>();
         manager?.RegisterMeasurementDisplay(this);
         
-        Debug.Log($"MeasurementDisplay initialized: {label}");
     }
     
     public void UpdateValue(string newValue)

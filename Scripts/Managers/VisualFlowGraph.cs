@@ -52,16 +52,15 @@ public class VisualFlowGraph
         outgoingConnections.Clear();
         incomingConnections.Clear();
 
-        Debug.Log("=== BUILDING VISUAL FLOW GRAPH ===");
 
         foreach (var wireObj in wires)
         {
             var wire = wireObj.GetComponent<CircuitWire>();
             if (wire == null) continue;
 
-            // Get the terminals this wire connects
-            var startTerminal = wire.startEndpoint?.ConnectedTerminal;
-            var endTerminal = wire.endEndpoint?.ConnectedTerminal;
+            // Get the terminals this wire connects (junction-aware)
+            var startTerminal = GetTerminalForEndpoint(wire, wire.startEndpoint);
+            var endTerminal = GetTerminalForEndpoint(wire, wire.endEndpoint);
 
             if (startTerminal == null || endTerminal == null)
             {
@@ -108,10 +107,8 @@ public class VisualFlowGraph
                 incomingConnections[startComponent] = new List<WireConnection>();
             incomingConnections[startComponent].Add(connectionBtoA);
 
-            Debug.Log($"  ✅ {connectionAtoB}");
         }
 
-        Debug.Log($"✅ Visual graph built: {outgoingConnections.Count} components, {wires.Count} wires");
     }
 
     /// <summary>
@@ -141,6 +138,47 @@ public class VisualFlowGraph
     }
 
     /// <summary>
+    /// Get terminal for wire endpoint (junction-aware)
+    /// For junction endpoints, traverses across the junction to find the component on the other side
+    /// </summary>
+    private ComponentTerminal GetTerminalForEndpoint(CircuitWire wire, WireEndpoint endpoint)
+    {
+        if (wire == null || endpoint == null) return null;
+
+        // First check if endpoint is directly connected to a terminal
+        if (endpoint.ConnectedTerminal != null)
+        {
+            return endpoint.ConnectedTerminal;
+        }
+
+        // If at junction, traverse ACROSS the junction to find the component on the other side
+        if (endpoint.SnappedToEndpoint != null)
+        {
+            // Get the other wire at this junction
+            WireEndpoint junctionEndpoint = endpoint.SnappedToEndpoint;
+            CircuitWire otherWire = junctionEndpoint.ParentWire;
+
+            if (otherWire != null)
+            {
+                // Get the OPPOSITE endpoint of the other wire (the one NOT at the junction)
+                WireEndpoint acrossJunction = null;
+                if (otherWire.startEndpoint == junctionEndpoint)
+                    acrossJunction = otherWire.endEndpoint;
+                else if (otherWire.endEndpoint == junctionEndpoint)
+                    acrossJunction = otherWire.startEndpoint;
+
+                // Return the terminal on the other side of the junction
+                if (acrossJunction != null && acrossJunction.ConnectedTerminal != null)
+                {
+                    return acrossJunction.ConnectedTerminal;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Assign flow directions starting from Battery+ using BFS on the visual graph
     /// This is INDEPENDENT of the electrical solver's merged nodes
     /// </summary>
@@ -162,7 +200,6 @@ public class VisualFlowGraph
             return;
         }
 
-        Debug.Log($"🔋 Starting BFS from Battery+ ({batteryPositive.name})");
 
         // BFS state
         var visitedComponents = new HashSet<CircuitComponent3D>();
@@ -178,11 +215,9 @@ public class VisualFlowGraph
         while (queue.Count > 0)
         {
             var (currentComponent, exitFromTerminal) = queue.Dequeue();
-            Debug.Log($"  📍 Visiting {currentComponent.name}, exiting from {exitFromTerminal.name}");
 
             // Find all outgoing connections from this component
             var connections = GetOutgoingConnections(currentComponent);
-            Debug.Log($"    Found {connections.Count} outgoing connections");
 
             foreach (var connection in connections)
             {
@@ -197,18 +232,19 @@ public class VisualFlowGraph
                 visitedWires.Add(connection.wire);
 
                 // Assign flow direction: current flows FROM this component TO the other
-                // The endpoint connected to currentTerminal is the START of flow
-                if (connection.wire.startEndpoint?.ConnectedTerminal == connection.fromTerminal)
+                // Use junction-aware terminal lookup to find which endpoint connects to fromTerminal
+                var startTerminal = GetTerminalForEndpoint(connection.wire, connection.wire.startEndpoint);
+                var endTerminal = GetTerminalForEndpoint(connection.wire, connection.wire.endEndpoint);
+
+                if (startTerminal == connection.fromTerminal)
                 {
                     connection.wire.startEndpoint.isStart = true;
                     connection.wire.endEndpoint.isStart = false;
-                    Debug.Log($"    🔗 {connection.wire.name}: START endpoint is flow start");
                 }
-                else if (connection.wire.endEndpoint?.ConnectedTerminal == connection.fromTerminal)
+                else if (endTerminal == connection.fromTerminal)
                 {
                     connection.wire.endEndpoint.isStart = true;
                     connection.wire.startEndpoint.isStart = false;
-                    Debug.Log($"    🔗 {connection.wire.name}: END endpoint is flow start");
                 }
 
                 wiresProcessed++;
@@ -231,13 +267,11 @@ public class VisualFlowGraph
                     if (exitTerminal != null)
                     {
                         queue.Enqueue((connection.toComponent, exitTerminal));
-                        Debug.Log($"      ➡️ Queuing {connection.toComponent.name}, will exit from {exitTerminal.name}");
                     }
                 }
             }
         }
 
-        Debug.Log($"✅ Flow directions assigned: {wiresProcessed} wires processed, {visitedComponents.Count} components visited");
     }
 
     /// <summary>
@@ -245,13 +279,10 @@ public class VisualFlowGraph
     /// </summary>
     public void PrintGraph()
     {
-        Debug.Log("=== VISUAL FLOW GRAPH ===");
         foreach (var kvp in outgoingConnections)
         {
-            Debug.Log($"{kvp.Key.name}:");
             foreach (var conn in kvp.Value)
             {
-                Debug.Log($"  → {conn}");
             }
         }
     }

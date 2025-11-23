@@ -35,6 +35,7 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
     private CircuitNodeManager nodeManager;
     private CircuitDebugManager debugManager;
     private ComponentTerminalManager terminalManager;
+    private JunctionTopologyManager topologyManager;
 
     // Visual flow graph for animation (separate from electrical solver)
     private VisualFlowGraph visualFlowGraph;
@@ -76,12 +77,17 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         {
             Debug.LogWarning("ComponentTerminalManager not found on same GameObject");
         }
-        
+
+        topologyManager = FindFirstObjectByType<JunctionTopologyManager>();
+        if (topologyManager == null)
+        {
+            Debug.LogWarning("JunctionTopologyManager not found in scene");
+        }
+
         // Initialize solver
         circuitSolver = new CircuitSolver();
         CircuitSolver.EnableDebugLog = debugSolver;
         
-        Debug.Log("CircuitSolverManager initialized");
     }
     
     public void Update()
@@ -92,7 +98,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         // DEBUGGING: Force solve if we have components but haven't solved yet
         if (circuitManager.ComponentCount > 0 && !circuitNeedsSolving && lastSolveTime == 0f)
         {
-            Debug.Log("🔧 FORCED SOLVE: Circuit has components but circuitNeedsSolving=false, forcing solve...");
             circuitNeedsSolving = true;
         }
         
@@ -108,7 +113,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         // Handle manual solve shortcut
         if (Input.GetKeyDown(KeyCode.T) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))
         {
-            Debug.Log("Test circuit triggered (Ctrl+T)");
             debugManager?.TestCircuitComponents();
             return;
         }
@@ -118,7 +122,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         {
             debugSolver = !debugSolver;
             CircuitSolver.EnableDebugLog = debugSolver;
-            Debug.Log($"Debug solver: {(debugSolver ? "ON" : "OFF")}");
         }
     }
     
@@ -133,7 +136,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         }
         else
         {
-            Debug.Log("Circuit marked for re-solving");
         }
     }
     
@@ -141,7 +143,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
     {
         // Stop any pending solves by clearing the flag
         circuitNeedsSolving = false;
-        Debug.Log("Auto-solve stopped");
     }
     
     public void ClearSolverCache()
@@ -149,7 +150,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         // Clear any cached solver data
         circuitNeedsSolving = false;
         lastSolveTime = 0f;
-        Debug.Log("Solver cache cleared");
     }
     
     [ContextMenu("Solve Circuit Manually")]
@@ -157,13 +157,14 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
     {
         string header = "=== MANUAL SOLVE TRIGGERED ===";
         debugManager?.LogToFile(header);
-        Debug.Log(header);
         
         SolveCircuit();
     }
     
     public bool SolveCircuit()
     {
+        Debug.Log($"[SOLVER] SolveCircuit() called. CircuitManager: {(circuitManager != null ? "Found" : "NULL")}, Components: {(circuitManager != null ? circuitManager.Components.Count : 0)}");
+
         if (circuitManager == null || circuitManager.Components.Count == 0)
         {
             Debug.LogWarning("No components to solve");
@@ -174,12 +175,14 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         }
 
         OnSolveStarted?.Invoke();
+        Debug.Log($"[SOLVER] Building logical circuit with {circuitManager.ComponentCount} components and {circuitManager.WireCount} wires");
         debugManager?.LogToFile($"=== SOLVING CIRCUIT (Components: {circuitManager.ComponentCount}, Wires: {circuitManager.WireCount}) ===");
 
         try
         {
             // Build logical circuit from 3D components
             var logicalComponents = BuildLogicalCircuit();
+            Debug.Log($"[SOLVER] BuildLogicalCircuit() returned {logicalComponents.Count} logical components");
 
             if (logicalComponents.Count == 0)
             {
@@ -191,7 +194,9 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
             }
 
             // Solve the circuit components directly
+            Debug.Log($"[SOLVER] Calling circuitSolver.Solve() with {logicalComponents.Count} components");
             circuitSolver.Solve(logicalComponents.ToList());
+            Debug.Log("[SOLVER] circuitSolver.Solve() completed successfully");
 
             // Update 3D components with solved values
             UpdateComponentsFromSolver(logicalComponents.ToList());
@@ -203,7 +208,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
 
             LastSolveResult = $"Circuit solved successfully: {logicalComponents.Count} components";
             debugManager?.LogToFile(LastSolveResult);
-            Debug.Log($"✅ Circuit solved: {logicalComponents.Count} components");
 
             // Assign wire flow directions based on connection path from Battery+
             AssignWireFlowDirections();
@@ -237,7 +241,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
     {
         if (circuitManager == null) return;
 
-        Debug.Log("🧹 Clearing all component values (circuit invalid or disconnected)");
 
         // Clear all component values
         foreach (var component in circuitManager.Components)
@@ -274,6 +277,23 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         // CRITICAL FIX: Clear all CircuitNode.ConnectedComponents lists before rebuilding
         // This prevents duplicate component references when logical components are recreated
         ClearAllNodeComponentLists();
+
+        // Build topology to discover junctions and merge terminal nodes
+        JunctionTopologyManager.CircuitTopology topology = null;
+        if (topologyManager != null)
+        {
+            topology = topologyManager.BuildTopology();
+            if (debugSolver)
+            {
+                debugManager?.LogToFile($"Topology discovered: {(topology != null ? topology.junctions.Count : 0)} junctions");
+            }
+
+            // Update wire component references from topology
+            if (topology != null)
+            {
+                UpdateWireComponentReferences(topology);
+            }
+        }
 
         // Use terminal manager to update logical connections
         terminalManager?.UpdateLogicalConnections();
@@ -317,7 +337,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
                     debugManager?.LogToFile($"  → Second Terminal: {secondTerminal.name}, Node: {secondTerminal.electricalNode.Id}");
                 }
 
-                Debug.Log($"📦 Component {comp3D.name}: NodeA={firstTerminal.electricalNode.Id} (HashCode={firstTerminal.electricalNode.GetHashCode()}), NodeB={secondTerminal.electricalNode.Id} (HashCode={secondTerminal.electricalNode.GetHashCode()})");
             }
         }
         
@@ -392,7 +411,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
     
     public void UpdateComponentsFromSolver(List<CircuitComponent> solvedComponents)
     {
-        Debug.Log($"=== UPDATING {solvedComponents.Count} COMPONENTS WITH SOLVED VALUES ===");
 
         foreach (var logicalComp in solvedComponents)
         {
@@ -404,7 +422,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
                 comp3D.current = logicalComp.Current;
                 comp3D.voltageDrop = logicalComp.VoltageDrop;
 
-                Debug.Log($"✅ Updated {comp3D.name}: Current={comp3D.current:F4}A, VoltageDrop={comp3D.voltageDrop:F4}V");
 
                 // Update visual feedback
                 comp3D.UpdateVisualFeedback();
@@ -428,7 +445,6 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
     /// </summary>
     void AssignWireFlowDirections()
     {
-        Debug.Log("=== ASSIGNING WIRE FLOW DIRECTIONS (Visual Graph) ===");
 
         // Step 1: Clear all existing flags
         foreach (var wireObj in circuitManager.Wires)
@@ -456,19 +472,86 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         visualFlowGraph.AssignFlowDirectionsFromBattery(battery, terminalManager);
     }
 
+    /// <summary>
+    /// Update wire component references from topology junctions
+    /// This allows junction wires to have startComponent/endComponent for labels and animations
+    /// </summary>
+    void UpdateWireComponentReferences(JunctionTopologyManager.CircuitTopology topology)
+    {
+        if (topology == null || topology.junctions == null || topology.junctions.Count == 0)
+        {
+            return;
+        }
+
+        if (debugSolver)
+        {
+            debugManager?.LogToFile("=== UPDATING WIRE COMPONENT REFERENCES FROM TOPOLOGY ===");
+        }
+
+        // Build endpoint→junction map for quick lookup
+        var endpointToJunction = new Dictionary<WireEndpoint, JunctionTopologyManager.Junction>();
+        foreach (var junction in topology.junctions)
+        {
+            foreach (var endpoint in junction.endpoints)
+            {
+                endpointToJunction[endpoint] = junction;
+            }
+        }
+
+        // For each wire, check if endpoints are in junctions
+        foreach (var wireObj in circuitManager.Wires)
+        {
+            var wire = wireObj.GetComponent<CircuitWire>();
+            if (wire == null) continue;
+
+            // Check start endpoint
+            if (wire.startEndpoint != null && endpointToJunction.ContainsKey(wire.startEndpoint))
+            {
+                var junction = endpointToJunction[wire.startEndpoint];
+                var connectedTerminal = junction.GetConnectedTerminal();
+                if (connectedTerminal != null && wire.startComponent == null)
+                {
+                    wire.startComponent = connectedTerminal.ParentComponent;
+                    if (debugSolver)
+                    {
+                        debugManager?.LogToFile($"Wire {wire.name} startComponent set to {wire.startComponent.name} via junction {junction.id}");
+                    }
+                }
+            }
+
+            // Check end endpoint
+            if (wire.endEndpoint != null && endpointToJunction.ContainsKey(wire.endEndpoint))
+            {
+                var junction = endpointToJunction[wire.endEndpoint];
+                var connectedTerminal = junction.GetConnectedTerminal();
+                if (connectedTerminal != null && wire.endComponent == null)
+                {
+                    wire.endComponent = connectedTerminal.ParentComponent;
+                    if (debugSolver)
+                    {
+                        debugManager?.LogToFile($"Wire {wire.name} endComponent set to {wire.endComponent.name} via junction {junction.id}");
+                    }
+                }
+            }
+        }
+
+        if (debugSolver)
+        {
+            debugManager?.LogToFile("Wire component references updated from topology");
+        }
+    }
+
     #region ICircuitSolver Implementation
 
     // Configuration Methods
     public void EnableAutoSolve(bool enabled)
     {
         manualSolveMode = !enabled;
-        Debug.Log($"Auto-solve {(enabled ? "enabled" : "disabled")}");
     }
 
     public void SetSolveInterval(float interval)
     {
         solveDelay = Mathf.Max(0.1f, interval); // Minimum 0.1 seconds
-        Debug.Log($"Solve interval set to {solveDelay:F1} seconds");
     }
 
     // Direct Interface Methods (delegating to existing methods)

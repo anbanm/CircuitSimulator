@@ -15,7 +15,6 @@ public class CircuitSolver
     {
         if (EnableDebugLog)
         {
-            Debug.Log($"=== CIRCUIT SOLVER START ({components.Count} components) ===");
         }
         
         var battery = components.OfType<Battery>().FirstOrDefault();
@@ -30,7 +29,6 @@ public class CircuitSolver
         
         if (EnableDebugLog)
         {
-            Debug.Log($"Found {nodes.Count} unique nodes, Battery: {battery.Voltage}V");
         }
         
         // Set ground reference (battery negative terminal)
@@ -44,7 +42,6 @@ public class CircuitSolver
         
         if (EnableDebugLog)
         {
-            Debug.Log("=== CIRCUIT SOLVER COMPLETE ===");
         }
     }
 
@@ -284,7 +281,6 @@ public class CircuitSolver
                 
                 if (EnableDebugLog)
                 {
-                    Debug.Log($"Wire {component.Id}: {component.Current:F3}A");
                 }
             }
         }

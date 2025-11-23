@@ -24,7 +24,6 @@ public class PaletteUIManager : MonoBehaviour
         EnsureConnectToolExists();
         
         CreatePaletteButtons();
-        Debug.Log("PaletteUIManager initialized");
     }
     
     private void EnsureConnectToolExists()
@@ -34,7 +33,6 @@ public class PaletteUIManager : MonoBehaviour
         {
             GameObject connectToolObj = new GameObject("ConnectTool");
             connectTool = connectToolObj.AddComponent<ConnectTool>();
-            Debug.Log("ConnectTool created for keyboard shortcuts");
         }
     }
     
@@ -57,7 +55,6 @@ public class PaletteUIManager : MonoBehaviour
         if (buttonPrefab == null || paletteContainer == null)
         {
             Debug.LogWarning("[PaletteUIManager] Cannot create UI buttons - falling back to keyboard shortcuts");
-            Debug.Log("Controls: B=Battery, R=Resistor, L=Bulb, S=Switch, C=Connect Mode, V=Select Mode");
             return;
         }
         
@@ -144,7 +141,6 @@ public class PaletteUIManager : MonoBehaviour
             newButton.name = $"Button_{label.Replace(" ", "_")}_{tooltip}";
         }
         
-        Debug.Log($"Created palette button: {label}");
     }
     
     private void DeleteSelectedComponent()
@@ -158,7 +154,6 @@ public class PaletteUIManager : MonoBehaviour
             return;
         }
         
-        Debug.Log($"Deleting selected component: {selected.gameObject.name}");
         
         // Get the CircuitComponent3D to properly unregister from CircuitManager
         CircuitComponent3D circuitComp = selected.GetComponent<CircuitComponent3D>();
@@ -184,7 +179,6 @@ public class PaletteUIManager : MonoBehaviour
         {
             if (wire.IsConnectedToComponent(selected.gameObject))
             {
-                Debug.Log($"Removing connected wire: {wire.gameObject.name}");
                 
                 // Unregister wire from CircuitManager
                 CircuitManager circuitManager = CircuitManager.Instance;
@@ -200,12 +194,10 @@ public class PaletteUIManager : MonoBehaviour
         // Finally destroy the component
         Destroy(selected.gameObject);
         
-        Debug.Log("Selected component deleted successfully");
     }
     
     private void ResetCircuit()
     {
-        Debug.Log("Resetting circuit - clearing all components");
         
         // First, tell CircuitManager to clear its internal lists
         CircuitManager circuitManager = CircuitManager.Instance;
@@ -241,7 +233,6 @@ public class PaletteUIManager : MonoBehaviour
             }
         }
         
-        Debug.Log("Circuit reset complete");
     }
 
     private Transform FindPaletteContainer()
@@ -250,7 +241,6 @@ public class PaletteUIManager : MonoBehaviour
         GameObject paletteObj = GameObject.Find("ComponentPalette");
         if (paletteObj != null)
         {
-            Debug.Log("[PaletteUIManager] Found existing ComponentPalette container");
             return paletteObj.transform;
         }
 
@@ -259,7 +249,6 @@ public class PaletteUIManager : MonoBehaviour
         if (mainCanvas != null)
         {
             GameObject palettePanel = CreatePalettePanel(mainCanvas.transform);
-            Debug.Log("[PaletteUIManager] Created ComponentPalette panel in Canvas");
             return palettePanel.transform;
         }
 
@@ -334,7 +323,6 @@ public class PaletteUIManager : MonoBehaviour
         buttonText.color = Color.white;
         buttonText.alignment = TextAnchor.MiddleCenter;
 
-        Debug.Log("[PaletteUIManager] Created button prefab programmatically");
         return button;
     }
 
@@ -361,10 +349,9 @@ public class PaletteUIManager : MonoBehaviour
     {
         factoryManager?.CreateSwitch();
     }
-    
+
     private void ActivateSelectMode()
     {
-        Debug.Log("👆 Select Mode Activated - Click components to select them");
         
         // Find ConnectTool (should always exist now)
         ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
@@ -380,7 +367,6 @@ public class PaletteUIManager : MonoBehaviour
     
     private void ActivateConnectMode()
     {
-        Debug.Log("🔌 Connect Mode Activated - Click on two components to connect them");
         
         // Find ConnectTool (should always exist now)
         ConnectTool connectTool = ComponentRegistry.Instance.GetManager<ConnectTool>();
@@ -416,7 +402,6 @@ public class PaletteUIManager : MonoBehaviour
             }
             else
             {
-                Debug.Log("[PaletteUIManager] Found ComponentFactoryManager, ready to create components");
             }
         }
 
@@ -448,49 +433,41 @@ public class PaletteUIManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.B))
         {
-            Debug.Log("Placing Battery (B key)");
             PlaceBattery();
         }
         if (Input.GetKeyDown(KeyCode.R))
         {
-            Debug.Log("Placing Resistor (R key)");
             PlaceResistor();
         }
         if (Input.GetKeyDown(KeyCode.L))
         {
-            Debug.Log("Placing Bulb (L key)");
             PlaceBulb();
         }
         if (Input.GetKeyDown(KeyCode.S))
         {
-            Debug.Log("Placing Switch (S key)");
             PlaceSwitch();
         }
         if (Input.GetKeyDown(KeyCode.J))
         {
-            Debug.Log("Placing Junction (J key)");
             factoryManager?.CreateJunction();
         }
+        // NOTE: W key for wire creation is handled by ConnectTool.cs (CreateDraggableWire)
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            Debug.Log("Solving Circuit (SPACE key)");
             controlManager?.SolveCircuit();
         }
         if (Input.GetKeyDown(KeyCode.T))
         {
-            Debug.Log("Testing Circuit (T key)");
             controlManager?.TestCircuit();
         }
         if (Input.GetKeyDown(KeyCode.X))
         {
-            Debug.Log("Deleting Selected Component (X key)");
             DeleteSelectedComponent();
         }
         
         // M key - Toggle Misconception Detection (educational assistance)
         if (Input.GetKeyDown(KeyCode.M))
         {
-            Debug.Log("Toggle Misconception Detection (M key)");
             MisconceptionAlert.Instance.ToggleMisconceptionDetection();
         }
     }

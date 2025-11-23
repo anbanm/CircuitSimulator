@@ -101,7 +101,6 @@ namespace CircuitSimulator.Components
                 // Use terminals created by ComponentTerminalManager
                 leftTerminal = existingLeftTerminal;
                 rightTerminal = existingRightTerminal;
-                Debug.Log($"[InteractionComponent] Using existing terminals for {gameObject.name}: {existingLeftTerminal.name}, {existingRightTerminal.name}");
                 return;
             }
 
@@ -144,7 +143,6 @@ namespace CircuitSimulator.Components
                 Destroy(sphere.GetComponent<Collider>());
             }
 
-            Debug.Log($"[InteractionComponent] Created fallback terminals for {gameObject.name}");
         }
 
         #region Mouse Interaction
@@ -260,7 +258,6 @@ namespace CircuitSimulator.Components
             else
                 OnDeselected?.Invoke();
 
-            Debug.Log($"[InteractionComponent] {gameObject.name} {(selected ? "selected" : "deselected")}");
         }
 
         public static void DeselectAll()
@@ -284,7 +281,6 @@ namespace CircuitSimulator.Components
             Vector3 mouseWorldPos = GetMouseWorldPosition();
             dragOffset = transform.position - mouseWorldPos;
 
-            Debug.Log($"[InteractionComponent] Started dragging {gameObject.name}");
         }
 
         private void StopDragging()
@@ -303,7 +299,6 @@ namespace CircuitSimulator.Components
                 originalPosition = transform.position;
             }
 
-            Debug.Log($"[InteractionComponent] Stopped dragging {gameObject.name}");
         }
 
         private Vector3 GetMouseWorldPosition()
@@ -347,7 +342,6 @@ namespace CircuitSimulator.Components
             if (!allowConnection) return;
 
             OnConnectionRequested?.Invoke(this);
-            Debug.Log($"[InteractionComponent] Connection requested for {gameObject.name}");
         }
 
         public Vector3 GetConnectionPoint(bool useLeftTerminal = true)
@@ -386,11 +380,9 @@ namespace CircuitSimulator.Components
         {
             if (!allowPropertyEditing)
             {
-                Debug.Log($"[InteractionComponent] Property editing not allowed for {gameObject.name}");
                 return;
             }
 
-            Debug.Log($"[InteractionComponent] Opening property editor for {gameObject.name}");
 
             // Find or create property editor
             var propertyPopup = FindFirstObjectByType<ComponentPropertyPopup>();
@@ -401,7 +393,6 @@ namespace CircuitSimulator.Components
 
                 if (circuitComponent != null)
                 {
-                    Debug.Log($"[InteractionComponent] Found CircuitComponent3D, showing popup");
                     propertyPopup.ShowForComponent(circuitComponent);
                 }
                 else if (circuitComponent3D_v2 != null)
@@ -452,7 +443,6 @@ namespace CircuitSimulator.Components
             // Delete the component
             Destroy(gameObject);
 
-            Debug.Log($"[InteractionComponent] Deleted component {gameObject.name} (wires preserved)");
         }
 
         #endregion
@@ -474,7 +464,6 @@ namespace CircuitSimulator.Components
                 // Could add a border or different material
             }
 
-            Debug.Log($"[InteractionComponent] {gameObject.name} set as {(isFixedComponent ? "FIXED" : "MOVABLE")}");
         }
 
         /// <summary>
@@ -527,14 +516,7 @@ namespace CircuitSimulator.Components
         [ContextMenu("Debug Interaction State")]
         public void DebugInteractionState()
         {
-            Debug.Log($"[InteractionComponent] {gameObject.name}:\n" +
-                     $"  Selected: {isSelected}\n" +
-                     $"  Dragging: {isDragging}\n" +
-                     $"  Fixed: {isFixed}\n" +
-                     $"  Allow Selection: {allowSelection}\n" +
-                     $"  Allow Movement: {allowMovement}\n" +
-                     $"  Allow Connection: {allowConnection}\n" +
-                     $"  Position: {transform.position}");
+            // Debug logging removed for performance
         }
     }
 }

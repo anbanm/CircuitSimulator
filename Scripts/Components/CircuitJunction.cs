@@ -114,21 +114,8 @@ public class CircuitJunction : MonoBehaviour
         }
     }
     
-    void OnMouseDown()
-    {
-        // FIXED: Use existing SelectableComponent (should already exist from factory)
-        SelectableComponent selectable = GetComponent<SelectableComponent>();
-        if (selectable != null)
-        {
-            // Let SelectableComponent handle the connection logic
-            // This will properly handle both connect mode and select mode
-            selectable.SendMessage("OnMouseDown", SendMessageOptions.DontRequireReceiver);
-        }
-        else
-        {
-            Debug.LogError($"Junction {name} missing SelectableComponent - cannot be connected!");
-        }
-    }
+    // REMOVED OnMouseDown - SelectableComponent and MoveableComponent handle all mouse events
+    // The Junction script only provides visual feedback and connection tracking
     
     void OnDestroy()
     {

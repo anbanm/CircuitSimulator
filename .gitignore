@@ -69,3 +69,5 @@ sysinfo.txt
 
 # Temporary files
 CircuitDebug.log
+# Unity crash dumps
+mono_crash.mem.*.blob

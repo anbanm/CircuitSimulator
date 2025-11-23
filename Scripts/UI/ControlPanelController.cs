@@ -85,7 +85,6 @@ public class ControlPanelController : MonoBehaviour
         if (reportBtn != null)
             reportBtn.clicked += GenerateReport;
         
-        Debug.Log("ControlPanelController: All buttons connected successfully!");
     }
     
     // Component Placement Methods
@@ -97,7 +96,6 @@ public class ControlPanelController : MonoBehaviour
             return;
         }
         
-        Debug.Log($"🔧 Placing {componentType}");
         
         switch (componentType)
         {
@@ -121,7 +119,6 @@ public class ControlPanelController : MonoBehaviour
     
     void ActivateWireTool()
     {
-        Debug.Log("🔌 Wire Tool Activated");
         
         if (connectTool == null)
         {
@@ -137,7 +134,6 @@ public class ControlPanelController : MonoBehaviour
     // Action Methods
     void SolveCircuit()
     {
-        Debug.Log("✅ Solving Circuit");
         var circuitManager = CircuitManager.Instance;
         if (circuitManager != null)
         {
@@ -152,7 +148,6 @@ public class ControlPanelController : MonoBehaviour
     
     void ValidateCircuit()
     {
-        Debug.Log("🔍 Validating Circuit");
         var circuitManager = CircuitManager.Instance;
         if (circuitManager != null)
         {
@@ -167,7 +162,6 @@ public class ControlPanelController : MonoBehaviour
     
     void TestCircuit()
     {
-        Debug.Log("🧪 Testing Circuit");
         var circuitManager = CircuitManager.Instance;
         if (circuitManager != null)
         {
@@ -182,7 +176,6 @@ public class ControlPanelController : MonoBehaviour
     
     void DebugCircuit()
     {
-        Debug.Log("🐛 Debug Circuit Registration");
         var circuitManager = CircuitManager.Instance;
         if (circuitManager != null)
         {
@@ -197,7 +190,6 @@ public class ControlPanelController : MonoBehaviour
     
     void GenerateReport()
     {
-        Debug.Log("📊 Generating Circuit Report");
         var circuitManager = CircuitManager.Instance;
         if (circuitManager != null)
         {

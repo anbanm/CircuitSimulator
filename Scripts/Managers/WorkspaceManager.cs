@@ -56,6 +56,7 @@ public class WorkspaceManager : MonoBehaviour
                 return;
             }
         }
+
         
         // Create or setup workspace plane
         if (workspacePlane == null)
@@ -69,9 +70,9 @@ public class WorkspaceManager : MonoBehaviour
             ConfigureForAR();
         }
         
-        Debug.Log($"WorkspaceManager initialized - AR Mode: {optimizeForAR}");
     }
-    
+
+
     private void InitializeManagers()
     {
         // Get or create sub-managers
@@ -110,7 +111,6 @@ public class WorkspaceManager : MonoBehaviour
             renderer.material.color = new Color(0.9f, 0.9f, 0.9f, 0.8f);
         }
         
-        Debug.Log("Created workspace plane");
     }
     
     private void ConfigureForAR()
@@ -125,7 +125,6 @@ public class WorkspaceManager : MonoBehaviour
             workspacePlane.position = new Vector3(0, 0, 2f); // 2 units in front of user
         }
         
-        Debug.Log("Workspace configured for AR");
     }
     
     #region Public API
@@ -169,7 +168,6 @@ public class WorkspaceManager : MonoBehaviour
         arAdapter?.SetEnabled(enabled);
         ConfigureForAR();
         
-        Debug.Log($"AR Mode: {(enabled ? "Enabled" : "Disabled")}");
     }
     
     public Camera GetPlayerCamera()
@@ -183,7 +181,6 @@ public class WorkspaceManager : MonoBehaviour
     
     public void ClearWorkspace()
     {
-        Debug.Log("Clearing workspace");
         
         var circuitManager = CircuitManager.Instance;
         if (circuitManager != null)

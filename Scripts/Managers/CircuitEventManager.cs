@@ -28,7 +28,6 @@ public class CircuitEventManager : MonoBehaviour
         if (ServiceLocator.Instance != null)
         {
             // Could implement IEventManager interface in the future
-            Debug.Log("[CircuitEventManager] Available for ServiceLocator integration");
         }
     }
     
@@ -45,7 +44,6 @@ public class CircuitEventManager : MonoBehaviour
         if (CanTriggerEvent())
         {
             ComponentRegistered?.Invoke(component);
-            Debug.Log($"[Event] Component registered: {component.name}");
         }
     }
     
@@ -54,7 +52,6 @@ public class CircuitEventManager : MonoBehaviour
         if (CanTriggerEvent())
         {
             ComponentUnregistered?.Invoke(component);
-            Debug.Log($"[Event] Component unregistered: {component.name}");
         }
     }
     
@@ -63,7 +60,6 @@ public class CircuitEventManager : MonoBehaviour
         if (CanTriggerEvent())
         {
             WireRegistered?.Invoke(wire);
-            Debug.Log($"[Event] Wire registered: {wire.name}");
         }
     }
     
@@ -72,7 +68,6 @@ public class CircuitEventManager : MonoBehaviour
         if (CanTriggerEvent())
         {
             WireUnregistered?.Invoke(wire);
-            Debug.Log($"[Event] Wire unregistered: {wire.name}");
         }
     }
     
@@ -81,14 +76,12 @@ public class CircuitEventManager : MonoBehaviour
         if (CanTriggerEvent())
         {
             CircuitChanged?.Invoke();
-            Debug.Log("[Event] Circuit changed");
         }
     }
     
     public void OnCircuitSolved()
     {
         CircuitSolved?.Invoke();
-        Debug.Log("[Event] Circuit solved");
     }
     
     #endregion
@@ -116,7 +109,6 @@ public class CircuitEventManager : MonoBehaviour
         CircuitChanged = null;
         CircuitSolved = null;
         
-        Debug.Log("[Event] All events cleared");
     }
     
     #endregion

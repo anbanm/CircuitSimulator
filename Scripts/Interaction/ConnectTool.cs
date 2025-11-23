@@ -27,6 +27,7 @@ public class ConnectTool : MonoBehaviour
     private GameObject _wirePreview = null;
     private LineRenderer _previewLineRenderer = null;
     private Camera _mainCamera;
+    private static int _wireCounter = 0; // Counter for unique wire names
     
     void Start()
     {
@@ -105,7 +106,6 @@ public class ConnectTool : MonoBehaviour
         
         UpdateButtonColors();
         UpdateCursor(false);
-        Debug.Log("[SELECT MODE] Click to select and move components");
     }
     
     public void SetConnectMode()
@@ -115,7 +115,6 @@ public class ConnectTool : MonoBehaviour
 
         UpdateButtonColors();
         UpdateCursor(true);
-        Debug.Log("[CONNECT MODE] Click terminals to connect components");
     }
     
     void UpdateCursor(bool isConnectMode)
@@ -205,7 +204,6 @@ public class ConnectTool : MonoBehaviour
             // Show wire preview from this terminal
             ShowWirePreview(terminal.GetConnectionPoint());
 
-            Debug.Log($"First terminal selected: {terminal.name} on {terminal.ParentComponent.name}");
         }
         else if (_firstTerminal == terminal)
         {
@@ -213,7 +211,6 @@ public class ConnectTool : MonoBehaviour
             _firstTerminal.SetHighlight(false);
             _firstTerminal = null;
             HideWirePreview();
-            Debug.Log("Deselected terminal");
         }
         else
         {
@@ -226,7 +223,6 @@ public class ConnectTool : MonoBehaviour
                 _firstTerminal.SetHighlight(false);
                 _firstTerminal = null;
                 HideWirePreview();
-                Debug.Log($"Connected {_firstTerminal.name} to {terminal.name}");
             }
             else
             {
@@ -299,7 +295,6 @@ public class ConnectTool : MonoBehaviour
                 _firstTerminal.SetHighlight(false);
                 _firstTerminal = null;
                 HideWirePreview();
-                Debug.Log("Cancelled terminal connection");
             }
         }
 
@@ -394,21 +389,18 @@ public class ConnectTool : MonoBehaviour
         Vector3 startPos = cursorPos + Vector3.left * 0.5f;
         Vector3 endPos = cursorPos + Vector3.right * 0.5f;
 
-        // Create wire GameObject
-        GameObject wireObj = new GameObject("Draggable_Wire");
+        // Create wire GameObject with unique name
+        _wireCounter++;
+        GameObject wireObj = new GameObject($"Draggable_Wire_{_wireCounter}");
         wireObj.transform.SetParent(transform);
 
-        // Add CircuitWire component
+        // Add CircuitWire component and initialize with draggable endpoints
         CircuitWire circuitWire = wireObj.AddComponent<CircuitWire>();
-
-        // Initialize with draggable endpoints
         circuitWire.InitializeWithEndpoints(startPos, endPos);
 
         // Store wire reference
         _wires.Add(wireObj);
 
-        Debug.Log($"[WIRE CREATED] Press W to create draggable wires. Drag endpoints to terminals to connect.");
-        Debug.Log($"Created draggable wire at {cursorPos} - drag endpoints to connect to component terminals");
     }
 }
 

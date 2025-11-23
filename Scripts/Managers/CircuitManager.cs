@@ -121,7 +121,6 @@ public class CircuitManager : MonoBehaviour, ICircuitManager
         components.Add(component);
         componentCount = components.Count;
 
-        Debug.Log($"Registered component: {component.name} (Total: {componentCount})");
 
         // Setup terminals for the component
         terminalManager?.OnComponentRegistered(component);
@@ -142,7 +141,6 @@ public class CircuitManager : MonoBehaviour, ICircuitManager
         components.Remove(component);
         componentCount = components.Count;
 
-        Debug.Log($"Unregistered component: {component.name} (Total: {componentCount})");
 
         // Remove terminals for the component
         terminalManager?.OnComponentUnregistered(component);
@@ -178,7 +176,6 @@ public class CircuitManager : MonoBehaviour, ICircuitManager
         wires.Add(wire);
         wireCount = wires.Count;
 
-        Debug.Log($"Registered wire: {wire.name} (Total: {wireCount})");
 
         // Notify managers
         eventManager?.OnWireRegistered(wire);
@@ -192,7 +189,6 @@ public class CircuitManager : MonoBehaviour, ICircuitManager
         wires.Remove(wire);
         wireCount = wires.Count;
         
-        Debug.Log($"Unregistered wire: {wire.name} (Total: {wireCount})");
         
         // Notify managers
         eventManager?.OnWireUnregistered(wire);
@@ -250,7 +246,6 @@ public class CircuitManager : MonoBehaviour, ICircuitManager
 
     public void ClearAllComponents()
     {
-        Debug.Log("Clearing all component and wire references");
         
         // Clear component list
         components.Clear();
@@ -272,7 +267,6 @@ public class CircuitManager : MonoBehaviour, ICircuitManager
             eventManager.OnCircuitChanged();
         }
         
-        Debug.Log("All references cleared");
     }
     
     #endregion
@@ -317,11 +311,9 @@ public class CircuitManager : MonoBehaviour, ICircuitManager
                     RegisterComponent(comp);
                 }
             }
-            Debug.Log($"Found and registered {existingComponents.Length} existing components");
         }
         else
         {
-            Debug.Log("No existing components found in scene");
         }
     }
     

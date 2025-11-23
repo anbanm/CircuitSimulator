@@ -53,7 +53,6 @@ public class ComponentRegistry : MonoBehaviour
         }
         
         managers[type] = manager;
-        Debug.Log($"Registered manager: {type.Name} ({manager.name})");
     }
 
     /// <summary>
@@ -65,7 +64,6 @@ public class ComponentRegistry : MonoBehaviour
         if (managers.ContainsKey(type))
         {
             managers.Remove(type);
-            Debug.Log($"Unregistered manager: {type.Name}");
         }
     }
 
@@ -105,7 +103,6 @@ public class ComponentRegistry : MonoBehaviour
     [ContextMenu("Auto-Register All Managers")]
     public void AutoRegisterAllManagers()
     {
-        Debug.Log("Auto-registering all managers...");
         
         // Register all common manager types
         RegisterIfFound<CircuitManager>();
@@ -122,7 +119,6 @@ public class ComponentRegistry : MonoBehaviour
         RegisterIfFound<MeasurementDisplayManager>();
         RegisterIfFound<PaletteUIManager>();
         
-        Debug.Log($"Auto-registration complete. {managers.Count} managers registered.");
     }
     
     private void RegisterIfFound<T>() where T : Component
@@ -152,7 +148,6 @@ public class ComponentRegistry : MonoBehaviour
         foreach (var type in toRemove)
         {
             managers.Remove(type);
-            Debug.Log($"Removed null reference for {type.Name}");
         }
     }
 
@@ -177,13 +172,11 @@ public class ComponentRegistry : MonoBehaviour
     void OnDestroy()
     {
         // Cleanup all manager references to prevent memory leaks
-        Debug.Log($"ComponentRegistry cleanup: Removing {managers.Count} manager references");
         
         foreach (var kvp in managers)
         {
             if (kvp.Value != null)
             {
-                Debug.Log($"Cleaning reference to {kvp.Key.Name}: {kvp.Value.name}");
             }
         }
         

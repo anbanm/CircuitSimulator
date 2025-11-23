@@ -40,16 +40,13 @@ public class SelectableComponent : MonoBehaviour
         // Right-click to edit properties
         if (Input.GetMouseButtonDown(1))
         {
-            Debug.Log($"Right-click detected on {gameObject.name}");
             CircuitComponent3D circuitComp = GetComponent<CircuitComponent3D>();
             if (circuitComp != null)
             {
-                Debug.Log($"CircuitComponent3D found: Type = {circuitComp.ComponentType}");
                 ComponentPropertyPopup popup = ComponentPropertyPopup.Instance;
                 if (popup != null)
                 {
                     popup.ShowForComponent(circuitComp);
-                    Debug.Log($"Opening property popup for {gameObject.name} ({circuitComp.ComponentType})");
                 }
                 else
                 {
@@ -96,7 +93,6 @@ public class SelectableComponent : MonoBehaviour
             componentRenderer.material.color = selectedColor;
         }
         
-        Debug.Log($"Selected: {gameObject.name}");
     }
     
     public void Deselect()
@@ -132,7 +128,6 @@ public class SelectableComponent : MonoBehaviour
     
     void DeleteThis()
     {
-        Debug.Log($"Deleting: {gameObject.name}");
         
         // Clear selection reference
         if (currentlySelected == this)

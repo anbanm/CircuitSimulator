@@ -46,7 +46,6 @@ public class MoveableComponent : MonoBehaviour
         if (workspace != null)
         {
             _workspacePlane = workspace.transform;
-            Debug.Log($"[MoveableComponent] Found CircuitWorkspace plane at {_workspacePlane.position}");
             return;
         }
 
@@ -55,7 +54,6 @@ public class MoveableComponent : MonoBehaviour
         if (components != null)
         {
             _workspacePlane = components.transform;
-            Debug.Log($"[MoveableComponent] Using Components GameObject as workspace plane at {_workspacePlane.position}");
             return;
         }
 
@@ -82,7 +80,6 @@ public class MoveableComponent : MonoBehaviour
         _dragOffset = transform.position - mouseWorldPos;
         _dragOffset.y = 0; // Ignore Y offset since we lock Y during dragging
 
-        Debug.Log($"Started dragging: {gameObject.name} at {transform.position}");
     }
     
     void Update()
@@ -124,7 +121,6 @@ public class MoveableComponent : MonoBehaviour
         // Snap to grid (optional)
         SnapToGrid();
         
-        Debug.Log($"Stopped dragging: {gameObject.name} at {transform.position}");
     }
     
     void SnapToGrid()
@@ -198,7 +194,6 @@ public class MoveableComponent : MonoBehaviour
                     
                     if (!IsPositionOccupied(testPos))
                     {
-                        Debug.Log($"Found free position at {testPos}");
                         return testPos;
                     }
                 }

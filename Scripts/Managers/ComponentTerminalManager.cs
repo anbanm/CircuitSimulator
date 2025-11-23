@@ -19,7 +19,6 @@ public class ComponentTerminalManager : MonoBehaviour
     public void Initialize()
     {
         circuitManager = CircuitManager.Instance;
-        Debug.Log("ComponentTerminalManager initialized");
     }
     
     public void SetupComponentTerminals(CircuitComponent3D component)
@@ -32,7 +31,6 @@ public class ComponentTerminalManager : MonoBehaviour
         if (componentTerminals.ContainsKey(component) && componentTerminals[component].Count > 0)
         {
             // Terminals already exist and are valid, skip recreation
-            Debug.Log($"Terminals already exist for {component.name}, skipping recreation");
             return;
         }
 
@@ -41,7 +39,6 @@ public class ComponentTerminalManager : MonoBehaviour
         var existingTerminals = component.GetComponentsInChildren<ComponentTerminal>();
         if (existingTerminals != null && existingTerminals.Length >= 2)
         {
-            Debug.Log($"Found {existingTerminals.Length} existing terminal GameObjects for {component.name}, registering them");
             componentTerminals[component] = new List<ComponentTerminal>(existingTerminals);
             return;
         }
@@ -84,7 +81,6 @@ public class ComponentTerminalManager : MonoBehaviour
         }
 
         componentTerminals[component] = terminals;
-        Debug.Log($"Created {terminals.Count} terminals for {component.name}");
     }
     
     ComponentTerminal CreateTerminal(CircuitComponent3D component, Vector3 localPosition, bool isInput, string terminalName)
@@ -107,7 +103,6 @@ public class ComponentTerminalManager : MonoBehaviour
         collider.radius = 0.5f;  // Match terminal visual size
 
         Vector3 worldPos = terminalObj.transform.position;
-        Debug.Log($"🔌 Created terminal: {terminalName}, Local: {localPosition}, World: {worldPos}, Color: {terminal.terminalColor}, Input: {isInput}");
 
         return terminal;
     }
@@ -247,7 +242,6 @@ public class ComponentTerminalManager : MonoBehaviour
             }
         }
 
-        Debug.Log("Updated logical connections for all components");
     }
 
     /// <summary>
@@ -298,6 +292,5 @@ public class ComponentTerminalManager : MonoBehaviour
             circuitManager.RegisterWire(wireObject);
         }
 
-        Debug.Log($"Created wire between {fromComponent.name} and {toComponent.name}");
     }
 }

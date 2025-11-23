@@ -49,7 +49,6 @@ public class LabelManager : MonoBehaviour
     private void OnSceneUnloaded(Scene scene)
     {
         // Clean up all labels when scene changes to prevent memory leaks
-        Debug.Log($"Scene {scene.name} unloaded, cleaning up {componentLabels.Count} component labels");
         
         foreach (var kvp in componentLabels)
         {
@@ -63,7 +62,6 @@ public class LabelManager : MonoBehaviour
         }
         
         componentLabels.Clear();
-        Debug.Log("All labels cleaned up for scene change");
     }
     
     void Start()
@@ -98,7 +96,6 @@ public class LabelManager : MonoBehaviour
         }
         
         componentLabels[component] = labels;
-        Debug.Log($"Registered labels for {component.name}");
     }
     
     // Called manually only when needed, not on timer
@@ -140,7 +137,6 @@ public class LabelManager : MonoBehaviour
                 }
             }
             componentLabels.Remove(component);
-            Debug.Log($"Unregistered labels for {component?.name}");
         }
     }
     

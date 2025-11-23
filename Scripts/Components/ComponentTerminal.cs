@@ -38,7 +38,6 @@ public class ComponentTerminal : MonoBehaviour
         // Create electrical node IMMEDIATELY
         CreateElectricalNode();
 
-        Debug.Log($"✅ Terminal initialized: {name} (Input: {isInput}), ElectricalNode: {electricalNode?.Id}");
     }
 
     void Start()
@@ -56,13 +55,11 @@ public class ComponentTerminal : MonoBehaviour
             SetupVisualAppearance();
             CreateElectricalNode();
 
-            Debug.Log($"⚠️ Terminal late-initialized in Start(): {name} (Input: {isInput})");
         }
     }
     
     void SetupVisualAppearance()
     {
-        Debug.Log($"🎨 Setting up terminal visual: {name}, Color: {terminalColor}, Size: {terminalSize}");
 
         // Create terminal geometry (small sphere)
         var meshFilter = gameObject.AddComponent<MeshFilter>();
@@ -93,7 +90,6 @@ public class ComponentTerminal : MonoBehaviour
         // Scale terminal
         transform.localScale = Vector3.one * terminalSize;
 
-        Debug.Log($"✅ Terminal visual complete: {name}, World Position: {transform.position}, Renderer enabled: {meshRenderer.enabled}");
     }
     
     Mesh CreateSphereMesh()
@@ -113,8 +109,6 @@ public class ComponentTerminal : MonoBehaviour
         string nodeId = $"{parentComponent.name}_{(isInput ? "Input" : "Output")}_{GetInstanceID()}";
         electricalNode = new CircuitNode(nodeId);
 
-        Debug.Log($"🔌 CREATED ELECTRICAL NODE: {nodeId} (HashCode: {electricalNode.GetHashCode()})");
-        Debug.Log($"   → Terminal: {name}, IsInput: {isInput}, Parent: {parentComponent?.name}");
     }
     
     public void SetHighlight(bool highlight)
@@ -130,11 +124,6 @@ public class ComponentTerminal : MonoBehaviour
     /// </summary>
     public void LogTerminalStatus(string context = "")
     {
-        Debug.Log($"🔍 TERMINAL STATUS ({context}): {name}");
-        Debug.Log($"   → Parent: {parentComponent?.name ?? "NULL"}");
-        Debug.Log($"   → IsInput: {isInput}");
-        Debug.Log($"   → ElectricalNode: {electricalNode?.Id ?? "NULL"} (HashCode: {(electricalNode != null ? electricalNode.GetHashCode().ToString() : "N/A")})");
-        Debug.Log($"   → Transform Position: {transform.position}");
     }
     
     /// <summary>
@@ -151,7 +140,6 @@ public class ComponentTerminal : MonoBehaviour
         wire.startTerminal = this;
         wire.endTerminal = otherTerminal;
         
-        Debug.Log($"Connected {name} to {otherTerminal.name} via wire");
     }
     
     void ConnectElectricalNodes(ComponentTerminal otherTerminal)
@@ -175,7 +163,6 @@ public class ComponentTerminal : MonoBehaviour
         electricalNode = sharedNode;
         otherTerminal.electricalNode = sharedNode;
 
-        Debug.Log($"🔗 NODE MERGE: {parentComponent.name}.{name} (was {myOriginalNodeId}) + {otherTerminal.parentComponent.name}.{otherTerminal.name} (was {otherOriginalNodeId}) → SHARED NODE: {sharedNode.Id}");
 
         // Add components to the shared node
         if (!sharedNode.ConnectedComponents.Contains(parentComponent.logicalComponent))

@@ -66,26 +66,20 @@ public class CircuitWire : MonoBehaviour
 
     void Awake()
     {
-        // Subscribe to circuit solved event for dynamic direction updates
-        CircuitEventManager.CircuitSolved += OnCircuitSolvedHandler;
+        // DON'T subscribe to circuit events yet - wait until wire is fully connected
+        // Subscription happens in OnEndpointConnected() when both endpoints are connected
     }
 
     void OnCircuitSolvedHandler()
     {
         // Force immediate update of current direction after circuit is solved
-        Debug.Log($"🔄 Wire {name}: CircuitSolved event received, updating direction...");
-
         // DISABLED: OrientWireTowardSource() conflicts with VisualFlowGraph BFS
         // VisualFlowGraph now handles flow direction assignment via isStart flags
         // OrientWireTowardSource() was physically swapping endpoints, fighting with BFS
         // OrientWireTowardSource();
 
-        UpdateCurrentFromComponents(debugDetails: true); // Enable detailed logging for circuit solve events only
+        UpdateCurrentFromComponents(debugDetails: false);
         MarkDirty(); // Ensure visual update happens immediately
-        Debug.Log($"   → Current after update: {current:F3}A");
-
-        // Log the complete flow path for this wire
-        LogFlowPath();
     }
 
     void LogFlowPath()
@@ -120,7 +114,6 @@ public class CircuitWire : MonoBehaviour
             flowEndTerminal = startInfo;
         }
 
-        Debug.Log($"⚡ FLOW PATH: {flowPath} | Current: {Mathf.Abs(current):F3}A");
     }
 
     public void Initialize(CircuitComponent3D comp1, CircuitComponent3D comp2)
@@ -138,7 +131,6 @@ public class CircuitWire : MonoBehaviour
         isRegisteredWithManager = true;
 
         name = $"Wire_{comp1.name}_to_{comp2.name}";
-        Debug.Log($"Created circuit wire: {name}");
     }
     
     public void InitializeWithTerminals(ComponentTerminal terminal1, ComponentTerminal terminal2)
@@ -158,7 +150,6 @@ public class CircuitWire : MonoBehaviour
         isRegisteredWithManager = true;
 
         name = $"Wire_{terminal1.name}_to_{terminal2.name}";
-        Debug.Log($"Created terminal-based circuit wire: {name}");
     }
 
     // NEW: Initialize wire with draggable endpoints
@@ -191,15 +182,25 @@ public class CircuitWire : MonoBehaviour
             wireCollider = gameObject.AddComponent<CapsuleCollider>();
             wireCollider.isTrigger = false;
             wireCollider.direction = 2; // Z-axis
-            wireCollider.radius = 0.2f; // Generous click area
-            Debug.Log($"✅ Added CapsuleCollider to draggable wire: {name}");
+            wireCollider.radius = 0.15f; // Smaller radius to reduce overlap with endpoints
+        }
+
+        // Collider will be enabled in UpdateWireCollider() with proper gaps
+
+        // Add selection and movement components for draggable wires
+        if (GetComponent<SelectableComponent>() == null)
+        {
+            gameObject.AddComponent<SelectableComponent>();
+        }
+        if (GetComponent<MoveableComponent>() == null)
+        {
+            gameObject.AddComponent<MoveableComponent>();
         }
 
         // Update collider position
         UpdateWireCollider();
 
         name = "Draggable_Wire";
-        Debug.Log($"Created draggable wire with endpoints at {startPosition} and {endPosition}");
     }
 
     // Track if wire is already registered to prevent duplicates
@@ -209,22 +210,49 @@ public class CircuitWire : MonoBehaviour
     // Called when an endpoint connects to a terminal
     public void OnEndpointConnected(WireEndpoint endpoint)
     {
+        Debug.Log($"[WIRE] {name} OnEndpointConnected: endpoint={endpoint.name}");
+
         // Update component references based on connected terminals
         if (startEndpoint != null && startEndpoint.IsConnected)
         {
             startTerminal = startEndpoint.ConnectedTerminal;
-            component1 = startTerminal.ParentComponent;
+            if (startTerminal != null)  // FIX: Check for terminal (could be wire-to-wire junction)
+            {
+                component1 = startTerminal.ParentComponent;
+                Debug.Log($"[WIRE] {name} START connected: terminal={startTerminal.name}, component={component1.name}");
+            }
+            else
+            {
+                Debug.Log($"[WIRE] {name} START connected to wire endpoint (junction)");
+            }
         }
 
         if (endEndpoint != null && endEndpoint.IsConnected)
         {
             endTerminal = endEndpoint.ConnectedTerminal;
-            component2 = endTerminal.ParentComponent;
+            if (endTerminal != null)  // FIX: Check for terminal (could be wire-to-wire junction)
+            {
+                component2 = endTerminal.ParentComponent;
+                Debug.Log($"[WIRE] {name} END connected: terminal={endTerminal.name}, component={component2.name}");
+            }
+            else
+            {
+                Debug.Log($"[WIRE] {name} END connected to wire endpoint (junction)");
+            }
         }
 
+        bool fullyConnected = IsFullyConnected();
+        bool startConnected = startEndpoint != null && startEndpoint.IsConnected;
+        bool endConnected = endEndpoint != null && endEndpoint.IsConnected;
+        Debug.Log($"[WIRE] {name} IsFullyConnected={fullyConnected} (startConnected:{startConnected}, endConnected:{endConnected})");
+
         // If both endpoints connected, register with circuit system
-        if (IsFullyConnected())
+        if (fullyConnected)
         {
+            Debug.Log($"[WIRE] {name} is fully connected - proceeding with registration");
+
+            // Subscribe to circuit solved events NOW that wire is fully connected
+            CircuitEventManager.CircuitSolved += OnCircuitSolvedHandler;
 
             // CRITICAL FIX: Double-check component wire lists to prevent duplicate registration
             bool alreadyInComponent1 = (component1 != null && component1.connectedWires.Contains(this));
@@ -246,6 +274,8 @@ public class CircuitWire : MonoBehaviour
             var manager = FindFirstObjectByType<CircuitManager>();
             bool actuallyRegisteredWithManager = (manager != null && manager.IsWireRegistered(gameObject));
 
+            Debug.Log($"[WIRE] {name} registration check: isRegistered={isRegisteredWithManager}, actuallyRegistered={actuallyRegisteredWithManager}");
+
             if (!isRegisteredWithManager && !actuallyRegisteredWithManager)
             {
                 isRegisteredWithManager = true;
@@ -254,6 +284,11 @@ public class CircuitWire : MonoBehaviour
             else if (!isRegisteredWithManager && actuallyRegisteredWithManager)
             {
                 isRegisteredWithManager = true;
+                Debug.Log($"[WIRE] {name} already in manager list, syncing flag");
+            }
+            else
+            {
+                Debug.Log($"[WIRE] {name} SKIPPED registration (already registered)");
             }
 
             // Connect terminals electrically (only once)
@@ -269,38 +304,32 @@ public class CircuitWire : MonoBehaviour
                 circuitManager.MarkCircuitChanged();
             }
 
-            name = $"Wire_{component1.name}_to_{component2.name}";
-            Debug.Log($"✅ Wire fully connected: {name}");
+            // Update wire name (handle junction wires where component might be null)
+            string comp1Name = component1 != null ? component1.name : "Junction";
+            string comp2Name = component2 != null ? component2.name : "Junction";
+            name = $"Wire_{comp1Name}_to_{comp2Name}";
 
             // Mark dirty to update immediately
             MarkDirty();
-        }
-        else
-        {
-            Debug.Log($"  → Not fully connected yet (waiting for other endpoint)");
         }
     }
 
     // Called when an endpoint disconnects from a terminal
     public void OnEndpointDisconnected(WireEndpoint endpoint)
     {
-        Debug.Log($"🔓 Endpoint {endpoint.name} disconnected, Current registration state: Components={isRegisteredWithComponents}, Manager={isRegisteredWithManager}");
 
         // Check if wire WAS fully connected by checking if BOTH components are set
         // (The endpoint has already cleared its connectedTerminal by the time this is called)
         bool wasFullyConnected = (component1 != null && component2 != null);
-        Debug.Log($"  → Was fully connected: {wasFullyConnected} (component1={component1?.name}, component2={component2?.name})");
 
         // Clear the disconnected terminal reference
         if (endpoint == startEndpoint)
         {
             if (component1 != null)
             {
-                Debug.Log($"  → Removing wire from {component1.name} (had {component1.connectedWires.Count} wires)");
                 if (isRegisteredWithComponents)
                 {
                     component1.RemoveConnectedWire(gameObject);
-                    Debug.Log($"  → {component1.name} now has {component1.connectedWires.Count} wires");
                 }
             }
             startTerminal = null;
@@ -310,11 +339,9 @@ public class CircuitWire : MonoBehaviour
         {
             if (component2 != null)
             {
-                Debug.Log($"  → Removing wire from {component2.name} (had {component2.connectedWires.Count} wires)");
                 if (isRegisteredWithComponents)
                 {
                     component2.RemoveConnectedWire(gameObject);
-                    Debug.Log($"  → {component2.name} now has {component2.connectedWires.Count} wires");
                 }
             }
             endTerminal = null;
@@ -324,7 +351,6 @@ public class CircuitWire : MonoBehaviour
         // Unregister from manager if no longer fully connected
         if (wasFullyConnected && isRegisteredWithManager)
         {
-            Debug.Log($"  → UNREGISTERING from CircuitManager");
             CircuitManager manager = CircuitManager.Instance;
             if (manager == null && ComponentRegistry.Instance != null)
             {
@@ -334,18 +360,18 @@ public class CircuitWire : MonoBehaviour
             {
                 manager.UnregisterWire(gameObject);
                 isRegisteredWithManager = false;
-                Debug.Log($"  → Unregistered from CircuitManager");
             }
         }
 
         // Clear component registration flag
         if (!IsFullyConnected())
         {
-            Debug.Log($"  → Clearing component registration flag (no longer fully connected)");
             isRegisteredWithComponents = false;
+
+            // Unsubscribe from circuit events when wire is no longer fully connected
+            CircuitEventManager.CircuitSolved -= OnCircuitSolvedHandler;
         }
 
-        Debug.Log($"🔓 Disconnect complete. New state: Components={isRegisteredWithComponents}, Manager={isRegisteredWithManager}");
 
         // Clear current values when disconnected
         current = 0f;
@@ -356,7 +382,6 @@ public class CircuitWire : MonoBehaviour
         if (circuitManager != null)
         {
             circuitManager.MarkCircuitChanged();
-            Debug.Log("  → Triggered circuit re-solve after disconnection");
         }
 
         MarkDirty();
@@ -439,7 +464,6 @@ public class CircuitWire : MonoBehaviour
         if (currentFlowVisualizer == null)
         {
             currentFlowVisualizer = gameObject.AddComponent<CurrentFlowVisualizer>();
-            Debug.Log($"Added current flow visualization to wire: {name}");
         }
     }
     
@@ -457,14 +481,15 @@ public class CircuitWire : MonoBehaviour
         {
             manager = ComponentRegistry.Instance.GetManager<CircuitManager>();
         }
-        
+
         if (manager != null)
         {
+            Debug.Log($"[WIRE] {name} registered with CircuitManager (startTerminal: {(startTerminal != null ? startTerminal.name : "NULL")}, endTerminal: {(endTerminal != null ? endTerminal.name : "NULL")})");
             manager.RegisterWire(gameObject);
         }
         else
         {
-            Debug.LogWarning($"CircuitManager not found! Wire {name} will not be registered.");
+            Debug.LogWarning($"[WIRE] {name} could not register - CircuitManager not found!");
         }
     }
     
@@ -536,11 +561,7 @@ public class CircuitWire : MonoBehaviour
                     float current1 = component1.current;
                     float current2 = component2.current;
 
-                    if (debugDetails)
                     {
-                        Debug.Log($"🔍 === WIRE DIRECTION DEBUG: {name} ===");
-                        Debug.Log($"  Component1: {component1.name}, Current: {current1:F3}A");
-                        Debug.Log($"  Component2: {component2.name}, Current: {current2:F3}A");
                     }
 
                     // BATTERY-BASED DIRECTION: Use battery as directional reference for conventional current flow
@@ -555,10 +576,7 @@ public class CircuitWire : MonoBehaviour
                     bool comp1IsJunction = component1.ComponentType == ComponentType.Junction;
                     bool comp2IsJunction = component2.ComponentType == ComponentType.Junction;
 
-                    if (debugDetails)
                     {
-                        Debug.Log($"  Component1: {component1.ComponentType}, Component2: {component2.ComponentType}");
-                        Debug.Log($"  StartTerminal: {startTerminal?.name} (on {startTerminal?.ParentComponent?.name}), EndTerminal: {endTerminal?.name} (on {endTerminal?.ParentComponent?.name})");
                     }
 
                     // CASE 0: Wire connects to a Junction - junctions just pass current through
@@ -572,15 +590,11 @@ public class CircuitWire : MonoBehaviour
                         {
                             // Connected to component's OUTPUT → current exits component, flows toward junction
                             wireCurrent = -current2; // Flows toward start (negative)
-                            if (debugDetails)
-                                Debug.Log($"  ✓ Junction at START, component OUTPUT at END → current flows toward junction (negative) = {wireCurrent:F3}A");
                         }
                         else
                         {
                             // Connected to component's INPUT → current enters component, flows from junction
                             wireCurrent = current2; // Flows away from start (positive)
-                            if (debugDetails)
-                                Debug.Log($"  ✓ Junction at START, component INPUT at END → current flows from junction (positive) = {wireCurrent:F3}A");
                         }
                         directionDetermined = true;
                     }
@@ -593,15 +607,11 @@ public class CircuitWire : MonoBehaviour
                         {
                             // Connected to component's OUTPUT → current exits component toward junction
                             wireCurrent = current1; // Flows away from start (positive)
-                            if (debugDetails)
-                                Debug.Log($"  ✓ Component OUTPUT at START, junction at END → current flows toward junction (positive) = {wireCurrent:F3}A");
                         }
                         else
                         {
                             // Connected to component's INPUT → current enters component from junction
                             wireCurrent = -current1; // Flows toward start (negative)
-                            if (debugDetails)
-                                Debug.Log($"  ✓ Component INPUT at START, junction at END → current flows from junction (negative) = {wireCurrent:F3}A");
                         }
                         directionDetermined = true;
                     }
@@ -609,8 +619,6 @@ public class CircuitWire : MonoBehaviour
                     {
                         // Junction-to-junction wire - just use magnitude
                         wireCurrent = Mathf.Abs(current1);
-                        if (debugDetails)
-                            Debug.Log($"  ✓ Junction-to-junction wire → use current magnitude = {wireCurrent:F3}A");
                         directionDetermined = true;
                     }
 
@@ -631,8 +639,6 @@ public class CircuitWire : MonoBehaviour
                             wireCurrent = -current1;  // Negative = end→start
                         }
 
-                        if (debugDetails)
-                            Debug.Log($"  ✓ Battery at START, terminal={startTerminal?.name}, wireCurrent={wireCurrent:F3}A");
 
                         directionDetermined = true;
                     }
@@ -652,8 +658,6 @@ public class CircuitWire : MonoBehaviour
                             wireCurrent = current2;  // Positive = start→end
                         }
 
-                        if (debugDetails)
-                            Debug.Log($"  ✓ Battery at END, terminal={endTerminal?.name}, wireCurrent={wireCurrent:F3}A");
 
                         directionDetermined = true;
                     }
@@ -665,23 +669,18 @@ public class CircuitWire : MonoBehaviour
                         // Simple! Wire is oriented correctly, current flows component1→component2
                         wireCurrent = Mathf.Abs(current1); // Always positive (flows start→end)
 
-                        if (debugDetails)
-                            Debug.Log($"  ✓ Symmetric component (oriented) → wireCurrent = {wireCurrent:F3}A (always positive)");
 
                         directionDetermined = true;
                     }
 
                     if (debugDetails && directionDetermined)
                     {
-                        Debug.Log($"✅ Wire {name}: Direction determined, INITIAL wireCurrent = {wireCurrent:F3}A");
                     }
 
                     // No swapping! CurrentDot handles positive/negative current naturally
                     // Positive current: dots flow start→end (position 0→1)
                     // Negative current: dots flow end→start (position 1→0)
-                    if (debugDetails)
                     {
-                        Debug.Log($"✅ Wire {name}: FINAL wireCurrent = {wireCurrent:F3}A (direction={(wireCurrent >= 0 ? "forward" : "reverse")})");
                     }
 
                     // EDUCATIONAL CHECK: Verify Kirchhoff's Current Law
@@ -781,7 +780,6 @@ public class CircuitWire : MonoBehaviour
     
     void OnMouseDown()
     {
-        Debug.Log($"🖱️ Wire OnMouseDown triggered: {name}");
 
         SelectWire();
 
@@ -795,11 +793,9 @@ public class CircuitWire : MonoBehaviour
             Vector3 mouseWorldPos = GetMouseWorldPosition();
             dragOffset = wireCenterPos - mouseWorldPos;
 
-            Debug.Log($"✅ Started dragging wire body: {name}");
         }
         else
         {
-            Debug.Log($"⚠️ Wire has no endpoints, cannot drag: {name}");
         }
     }
 
@@ -840,7 +836,6 @@ public class CircuitWire : MonoBehaviour
         if (isDraggingWire)
         {
             isDraggingWire = false;
-            Debug.Log($"Stopped dragging wire: {name}");
 
             // Try to snap endpoints to nearby terminals
             if (startEndpoint != null)
@@ -905,7 +900,7 @@ public class CircuitWire : MonoBehaviour
         CapsuleCollider wireCollider = GetComponent<CapsuleCollider>();
         if (wireCollider == null)
         {
-            Debug.LogWarning($"⚠️ Wire {name} has no CapsuleCollider!");
+
             return;
         }
 
@@ -925,20 +920,19 @@ public class CircuitWire : MonoBehaviour
         }
 
         // Update capsule collider
-        // CRITICAL FIX: Shorten collider to leave gaps for endpoints to be clickable!
-        // Each endpoint has size 0.4f, so we leave 0.5f gap on each end
-        float endpointGap = 0.5f; // Leave room for endpoints
+        // CRITICAL FIX: Shorten collider to leave LARGE gaps for endpoints to be clickable!
+        // Each endpoint has size 0.4f, so we leave 1.0f gap on each end (0.4 endpoint + 0.6 safety margin)
+        float endpointGap = 1.0f; // Large gap to ensure endpoints are fully clickable
         float colliderHeight = Mathf.Max(0.1f, length - (endpointGap * 2)); // Min 0.1f to avoid zero height
 
         wireCollider.center = Vector3.zero; // Centered on GameObject
         wireCollider.height = colliderHeight;
         wireCollider.direction = 2; // Z-axis
-        wireCollider.enabled = true;
+        wireCollider.enabled = true; // Enable so wire body can be selected/moved
 
         // Debug: Log collider info periodically
         if (Time.frameCount % 300 == 0) // Log every 5 seconds at 60fps
         {
-            Debug.Log($"🔧 Wire collider: {name} - Length: {length:F2}, Center: {center}, Radius: {wireCollider.radius}");
         }
     }
     
@@ -963,7 +957,6 @@ public class CircuitWire : MonoBehaviour
         isSelected = true;
         currentlySelectedWire = this;
 
-        Debug.Log($"Selected wire: {name} (R={resistance}Ω, I={current:F2}A)");
     }
     
     public void DeselectWire()
@@ -977,7 +970,6 @@ public class CircuitWire : MonoBehaviour
     
     public void DeleteWire()
     {
-        Debug.Log($"Deleting wire: {name}");
 
         // Destroy endpoint GameObjects first (before wire is destroyed)
         if (startEndpoint != null && startEndpoint.gameObject != null)
@@ -1017,7 +1009,6 @@ public class CircuitWire : MonoBehaviour
             {
                 manager.UnregisterWire(gameObject);
                 isRegisteredWithManager = false;
-                Debug.Log($"🔴 Wire deleted and unregistered: {name}");
             }
         }
 
@@ -1083,13 +1074,13 @@ public class CircuitWire : MonoBehaviour
         if (startTerminal == null || endTerminal == null ||
             startTerminal.electricalNode == null || endTerminal.electricalNode == null)
         {
-            Debug.LogWarning($"⚠️ {name}: Missing terminal or node data, cannot orient");
+
             return;
         }
 
         if (component1.logicalComponent == null || component2.logicalComponent == null)
         {
-            Debug.LogWarning($"⚠️ {name}: Missing logical components, cannot orient");
+
             return;
         }
 
@@ -1101,11 +1092,6 @@ public class CircuitWire : MonoBehaviour
         CircuitNode comp2NodeA = component2.logicalComponent.NodeA;
         CircuitNode comp2NodeB = component2.logicalComponent.NodeB;
 
-        Debug.Log($"🔍 NODE-BASED Orient check: {name}");
-        Debug.Log($"  START terminal → Node {startNode.Id} (HashCode={startNode.GetHashCode()})");
-        Debug.Log($"  END terminal → Node {endNode.Id} (HashCode={endNode.GetHashCode()})");
-        Debug.Log($"  {component1.name}: NodeA={comp1NodeA.Id} (Hash={comp1NodeA.GetHashCode()}), NodeB={comp1NodeB.Id} (Hash={comp1NodeB.GetHashCode()})");
-        Debug.Log($"  {component2.name}: NodeA={comp2NodeA.Id} (Hash={comp2NodeA.GetHashCode()}), NodeB={comp2NodeB.Id} (Hash={comp2NodeB.GetHashCode()})");
 
         // Determine correct orientation based on node connections
         // IDEAL: startTerminal connects to comp1's OUTPUT (NodeB), endTerminal connects to comp2's INPUT (NodeA)
@@ -1150,25 +1136,22 @@ public class CircuitWire : MonoBehaviour
             else
             {
                 // Cannot determine orientation - nodes don't match expected pattern
-                Debug.LogWarning($"  ⚠️ Cannot determine orientation for {name}: Node connections don't match expected patterns");
-                Debug.LogWarning($"    startAtComp1Out={startAtComp1Output}, startAtComp1In={startAtComp1Input}");
-                Debug.LogWarning($"    endAtComp2In={endAtComp2Input}, endAtComp2Out={endAtComp2Output}");
-                Debug.LogWarning($"    endAtComp1Out={endAtComp1Output}, endAtComp1In={endAtComp1Input}");
-                Debug.LogWarning($"    startAtComp2In={startAtComp2Input}, startAtComp2Out={startAtComp2Output}");
+
+
+
+
+
                 return; // Cannot orient, skip swap
             }
         }
 
-        Debug.Log($"  {reason}");
 
         if (!needsSwap)
         {
-            Debug.Log($"  ✅ Wire orientation is CORRECT, no changes needed");
             return; // Already correct, no swap needed
         }
 
         // If we get here, needsSwap is true, so perform the swap
-        Debug.Log($"  🔄 Performing wire endpoint swap...");
 
         // Swap components
         var tempComp = component1;
@@ -1199,7 +1182,6 @@ public class CircuitWire : MonoBehaviour
             lineRenderer.SetPosition(1, pos0);
         }
 
-        Debug.Log($"  ✅ Wire endpoints swapped successfully!");
     }
 
     /// <summary>
@@ -1210,7 +1192,6 @@ public class CircuitWire : MonoBehaviour
     {
         if (component == null) return 999; // Infinite distance
 
-        Debug.Log($"🔍 BFS START from {component.name} (looking for battery)");
 
         // BFS to find shortest path to battery
         var visited = new System.Collections.Generic.HashSet<CircuitComponent3D>();
@@ -1222,41 +1203,34 @@ public class CircuitWire : MonoBehaviour
         while (queue.Count > 0)
         {
             var (current, distance) = queue.Dequeue();
-            Debug.Log($"  📍 Visiting {current.name} at distance {distance}, Type={current.ComponentType}");
 
             // Found a battery!
             if (current.ComponentType == ComponentType.Battery)
             {
-                Debug.Log($"  ✅ Found battery {current.name} at distance {distance}!");
                 return distance;
             }
 
             // Explore connected components through wires
             if (current.connectedWires != null)
             {
-                Debug.Log($"  🔌 {current.name} has {current.connectedWires.Count} connected wires");
                 foreach (var wireObj in current.connectedWires)
                 {
                     // Check if wire GameObject still exists before accessing it
                     if (wireObj == null)
                     {
-                        Debug.Log($"    ⚠️ Skipping null wire GameObject");
                         continue; // Skip destroyed wires
                     }
 
                     var wire = wireObj.GetComponent<CircuitWire>();
                     if (wire == null)
                     {
-                        Debug.Log($"    ⚠️ Wire GameObject has no CircuitWire component");
                         continue;
                     }
                     if (wire == this)
                     {
-                        Debug.Log($"    ⚠️ Skipping self-wire {wire.name}");
                         continue; // Skip this wire
                     }
 
-                    Debug.Log($"    🔗 Checking wire {wire.name} (comp1={wire.component1?.name}, comp2={wire.component2?.name})");
 
                     // Get the other component on this wire
                     CircuitComponent3D nextComp = null;
@@ -1265,27 +1239,22 @@ public class CircuitWire : MonoBehaviour
 
                     if (nextComp != null && !visited.Contains(nextComp))
                     {
-                        Debug.Log($"    ➡️ Found next component: {nextComp.name} (distance will be {distance + 1})");
                         visited.Add(nextComp);
                         queue.Enqueue((nextComp, distance + 1));
                     }
                     else if (nextComp == null)
                     {
-                        Debug.Log($"    ⚠️ Could not find next component (current={current.name} not in wire's components)");
                     }
                     else if (visited.Contains(nextComp))
                     {
-                        Debug.Log($"    ⏭️ Already visited {nextComp.name}");
                     }
                 }
             }
             else
             {
-                Debug.Log($"  ⚠️ {current.name} has NULL connectedWires list!");
             }
         }
 
-        Debug.Log($"❌ BFS FAILED: No battery found from {component.name} (returning 999)");
         return 999; // No battery found
     }
 

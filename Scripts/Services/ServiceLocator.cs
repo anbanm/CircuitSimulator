@@ -53,7 +53,6 @@ namespace CircuitSimulator.Services
         void Initialize()
         {
             if (enableDebugLogging)
-                Debug.Log("[ServiceLocator] Initializing service container");
 
             // Register core services - will be called by individual managers
             RegisterCoreServices();
@@ -84,7 +83,6 @@ namespace CircuitSimulator.Services
             }
 
             if (enableDebugLogging)
-                Debug.Log($"[ServiceLocator] Registered service: {serviceType.Name}");
 
             if (validateOnRegister)
                 ValidateService(service);
@@ -122,7 +120,6 @@ namespace CircuitSimulator.Services
                 {
                     Register(foundService);
                     if (enableDebugLogging)
-                        Debug.Log($"[ServiceLocator] Auto-registered service: {serviceType.Name}");
                     return foundService;
                 }
             }
@@ -164,11 +161,7 @@ namespace CircuitSimulator.Services
             var serviceType = typeof(T);
             lock (lockObject)
             {
-                if (services.Remove(serviceType))
-                {
-                    if (enableDebugLogging)
-                        Debug.Log($"[ServiceLocator] Unregistered service: {serviceType.Name}");
-                }
+                services.Remove(serviceType);
             }
         }
 
@@ -217,7 +210,6 @@ namespace CircuitSimulator.Services
             if (_instance == this)
             {
                 if (enableDebugLogging)
-                    Debug.Log("[ServiceLocator] Shutting down service container");
 
                 foreach (var service in services.Values)
                 {
@@ -243,10 +235,8 @@ namespace CircuitSimulator.Services
         {
             lock (lockObject)
             {
-                Debug.Log($"[ServiceLocator] Registered services ({services.Count}):");
                 foreach (var kvp in services)
                 {
-                    Debug.Log($"  - {kvp.Key.Name}: {kvp.Value?.GetType().Name ?? "null"}");
                 }
             }
         }

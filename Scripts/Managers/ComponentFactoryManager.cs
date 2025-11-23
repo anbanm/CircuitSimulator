@@ -46,14 +46,12 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
             if (componentsObj != null)
             {
                 canvasPlane = componentsObj.transform;
-                Debug.Log("[ComponentFactoryManager] Auto-assigned Components GameObject as canvasPlane");
             }
             else
             {
                 // Create it if it doesn't exist
                 componentsObj = new GameObject("Components");
                 canvasPlane = componentsObj.transform;
-                Debug.Log("[ComponentFactoryManager] Created and assigned Components GameObject");
             }
         }
 
@@ -61,7 +59,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         ComponentSpacing = spacing;
         ComponentParent = canvasPlane;
 
-        Debug.Log("[ComponentFactoryManager] Registered with ServiceLocator");
     }
 
     void Start()
@@ -72,7 +69,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         if (arAdapter != null)
         {
             arAdapter.DisableARMode();
-            Debug.Log("[ComponentFactoryManager] Disabled AR Mode to prevent LOD from hiding components");
         }
         else
         {
@@ -92,7 +88,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         {
             placedComponents = new List<GameObject>();
         }
-        Debug.Log("ComponentFactoryManager initialized");
     }
     
     public void ResetComponentTracking()
@@ -100,7 +95,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         // Clear the placed components list and reset counter
         placedComponents.Clear();
         componentCount = 0;
-        Debug.Log("ComponentFactoryManager tracking reset");
     }
     
     #region Component Creation
@@ -127,50 +121,63 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
     
     public GameObject CreateJunction()
     {
-        Debug.Log("Creating Junction for parallel circuits");
-        
+
         if (canvasPlane == null)
         {
             Debug.LogError("canvasPlane is not assigned! Cannot place junction.");
             return null;
         }
-        
+
         // Use the current count of placed components for positioning
         int currentIndex = placedComponents.Count;
         Vector3 position = canvasPlane.position + new Vector3(currentIndex * spacing, 0.5f, 0);
-        
+
         // Create junction object
         GameObject junction = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         junction.name = $"Junction_{currentIndex}";
         junction.transform.position = position;
         junction.transform.localScale = Vector3.one * 0.7f;
-        
+
         // Set visual appearance
         Renderer renderer = junction.GetComponent<Renderer>();
         if (renderer != null)
         {
             renderer.material.color = new Color(0.5f, 0.5f, 0.7f, 1f);
         }
-        
-        // FIXED: Junctions are VISUAL-ONLY connection aids, not electrical components
-        // They help the spatial node system by providing clear connection points
-        
+
+        // FIXED: Make junctions CONNECTABLE by adding electrical component support
+        // Junctions act as 0-resistance wires electrically
+        CircuitComponent3D circuitComp = junction.AddComponent<CircuitComponent3D>();
+        circuitComp.ComponentType = ComponentType.Wire;
+        circuitComp.resistance = 0f; // Zero resistance
+        circuitComp.voltage = 0f;
+
+        // Add connection points so wires can attach
+        ComponentConnectionPoints connectionPoints = junction.AddComponent<ComponentConnectionPoints>();
+        // Set up 4 connection points around the junction (N, S, E, W)
+        connectionPoints.connectionPoints = new List<ComponentConnectionPoints.ConnectionPoint>
+        {
+            new ComponentConnectionPoints.ConnectionPoint { localPosition = new Vector3(0, 0.5f, 0), label = "Top" },
+            new ComponentConnectionPoints.ConnectionPoint { localPosition = new Vector3(0, -0.5f, 0), label = "Bottom" },
+            new ComponentConnectionPoints.ConnectionPoint { localPosition = new Vector3(0.5f, 0, 0), label = "Right" },
+            new ComponentConnectionPoints.ConnectionPoint { localPosition = new Vector3(-0.5f, 0, 0), label = "Left" }
+        };
+
+        // Setup terminals for wire connections
+        SetupConnectionTerminals(junction);
+
         // Add selection capability for wire connections
         SelectableComponent selectable = junction.AddComponent<SelectableComponent>();
-        
+
         // Add movement capability
         MoveableComponent moveable = junction.AddComponent<MoveableComponent>();
-        
+
         // Add junction script for visual behavior and connection logic
         CircuitJunction junctionScript = junction.AddComponent<CircuitJunction>();
-        
-        // DISABLED - Using PersistentLabel system instead
-        // ComponentValueDisplay valueDisplay = junction.AddComponent<ComponentValueDisplay>();
-        
+
         // Track junction
         placedComponents.Add(junction);
-        
-        Debug.Log($"Junction created at {position}");
+
         return junction;
     }
     
@@ -180,7 +187,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
     
     private GameObject CreateComponent(string name, ComponentType type, Color color, float voltage, float resistance)
     {
-        Debug.Log($"Creating {name}");
         
         if (canvasPlane == null)
         {
@@ -232,7 +238,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
                 OnComponentCreated?.Invoke(circuitComponent);
             }
 
-            Debug.Log($"Successfully created {name} at position {position}. Total components: {componentCount}");
             return componentObject;
         }
         catch (System.Exception e)
@@ -248,12 +253,10 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         
         if (prefab != null)
         {
-            Debug.Log($"Using custom prefab for {componentName}");
             return Instantiate(prefab, position, Quaternion.identity);
         }
         else
         {
-            Debug.Log($"Using default primitive for {componentName}");
             return CreatePrimitiveForComponent(componentName, position);
         }
     }
@@ -396,7 +399,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
                 break;
         }
 
-        Debug.Log($"Added ComponentConnectionPoints to {componentName} with {connectionPoints.connectionPoints.Count} terminals");
     }
     
     private GameObject GetPrefabForComponent(string componentName)
@@ -444,7 +446,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         if (renderer.material != null)
         {
             renderer.material.color = color;
-            Debug.Log($"✅ Set material color for {componentObject.name} to {color} (Renderer enabled: {renderer.enabled})");
         }
         else
         {
@@ -471,7 +472,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         circuitComp.voltage = voltage;
         circuitComp.resistance = resistance;
         
-        Debug.Log($"Set as {type}: {voltage}V, {resistance}Ω");
     }
     
     private void SetupComponentInteraction(GameObject componentObject)
@@ -495,7 +495,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         if (interactionComp == null)
         {
             interactionComp = componentObject.AddComponent<CircuitSimulator.Components.InteractionComponent>();
-            Debug.Log($"Added InteractionComponent to {componentObject.name} for terminal-based connections");
         }
 
         // Add connection terminals for electrical connections
@@ -518,7 +517,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         ComponentConnectionPoints connectionPoints = componentObject.GetComponent<ComponentConnectionPoints>();
         if (connectionPoints != null)
         {
-            Debug.Log($"Using gizmo-based connection points for {componentObject.name}");
             connectionPoints.CreateRuntimeTerminals();
             return;
         }
@@ -528,7 +526,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         if (definitionApplier != null && definitionApplier.definition != null)
         {
             // Custom connection points will be handled by the ThemedComponentDefinitionApplier
-            Debug.Log($"Using ComponentDefinition connection points for {componentObject.name}");
             return;
         }
 
@@ -556,7 +553,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
 
         // Create terminals for this component
         terminalManager.SetupComponentTerminals(circuitComp);
-        Debug.Log($"✅ Created terminals for {componentObject.name}");
     }
 
     #endregion
@@ -576,7 +572,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
 
         Vector3 createPosition = position ?? GetNextPlacementPosition();
 
-        Debug.Log($"Creating component from definition: {definition.displayName}");
 
         GameObject componentObject;
 
@@ -614,7 +609,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         placedComponents.Add(componentObject);
         componentCount = placedComponents.Count;
 
-        Debug.Log($"Successfully created {definition.displayName} at position {createPosition}");
         return componentObject;
     }
 
@@ -666,7 +660,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         circuitComp.resistance = definition.electricalProperties.defaultResistance;
         circuitComp.current = definition.electricalProperties.defaultCurrent;
 
-        Debug.Log($"Set component as {componentType}: {circuitComp.voltage}V, {circuitComp.resistance}Ω");
     }
 
     /// <summary>
@@ -716,7 +709,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         if (placedComponents.Contains(component))
         {
             placedComponents.Remove(component);
-            Debug.Log($"Removed {component.name} from component list");
         }
     }
     
@@ -734,7 +726,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         }
         placedComponents.Clear();
         componentCount = 0;
-        Debug.Log("All components cleared");
     }
     
     public List<GameObject> GetPlacedComponents()
@@ -993,7 +984,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         component.name = definition.displayName;
         component.gameObject.name = definition.displayName;
 
-        Debug.Log($"Applied ComponentDefinition '{definition.displayName}' to component");
     }
 
     #endregion
@@ -1003,7 +993,6 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
     [ContextMenu("Test Simple Placement")]
     public void TestSimplePlacement()
     {
-        Debug.Log("Test placement disabled to prevent white blocks in scene");
         // Test cube creation disabled - was creating unwanted white blocks
     }
 
