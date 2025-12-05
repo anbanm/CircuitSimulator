@@ -25,6 +25,7 @@ public class WireEndpoint : MonoBehaviour
     private WireEndpoint snappedToEndpoint = null;       // Another endpoint this is snapped to (visual junction)
     private CircuitWire parentWire;
     private Camera mainCamera;
+    private Transform workspacePlane;
 
     // Public accessor for parent wire (needed by JunctionTopologyManager)
     public CircuitWire ParentWire => parentWire;
@@ -59,8 +60,29 @@ public class WireEndpoint : MonoBehaviour
             mainCamera = FindFirstObjectByType<Camera>();
         }
 
+        // Find workspace plane for AR-compatible raycasting
+        FindWorkspacePlane();
+
         // Setup visual appearance immediately in Awake() so endpoints are visible when created
         SetupVisualAppearance();
+    }
+
+    void FindWorkspacePlane()
+    {
+        // Try to find WorkspaceManager first (handles both AR and desktop)
+        var workspaceManager = FindFirstObjectByType<WorkspaceManager>();
+        if (workspaceManager != null && workspaceManager.WorkspacePlane != null)
+        {
+            workspacePlane = workspaceManager.WorkspacePlane;
+            return;
+        }
+
+        // Fallback: Try to find CircuitWorkspace
+        GameObject workspace = GameObject.Find("CircuitWorkspace");
+        if (workspace != null)
+        {
+            workspacePlane = workspace.transform;
+        }
     }
 
     void Start()
@@ -643,13 +665,43 @@ public class WireEndpoint : MonoBehaviour
     {
         if (mainCamera == null) return transform.position;
 
-        // Raycast to workspace plane (Y = 0.5)
+        // Ensure workspace plane is available
+        if (workspacePlane == null)
+        {
+            FindWorkspacePlane();
+        }
+
+        // Cast ray from camera through mouse position
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        Plane plane = new Plane(Vector3.up, new Vector3(0, 0.5f, 0));
+
+        // Use the actual workspace plane if available (works for AR with tilted markers)
+        Plane plane;
+        if (workspacePlane != null)
+        {
+            // Create plane using workspace transform's up direction
+            // The plane is at Y=0.5 in local space (where components sit)
+            Vector3 planePoint = workspacePlane.TransformPoint(new Vector3(0, 0.5f, 0));
+            plane = new Plane(workspacePlane.up, planePoint);
+        }
+        else
+        {
+            // Fallback: Create a plane at Y = 0.5 (default behavior)
+            plane = new Plane(Vector3.up, new Vector3(0, 0.5f, 0));
+        }
 
         if (plane.Raycast(ray, out float distance))
         {
-            return ray.GetPoint(distance);
+            Vector3 hitPoint = ray.GetPoint(distance);
+
+            // For AR: Ensure the hit point is on the workspace plane at correct height
+            if (workspacePlane != null)
+            {
+                // Convert to local, enforce Y=0.5, convert back to world
+                Vector3 localHit = workspacePlane.InverseTransformPoint(hitPoint);
+                localHit.y = 0.5f; // Clamp to component height
+                return workspacePlane.TransformPoint(localHit);
+            }
+            return hitPoint;
         }
 
         return transform.position;

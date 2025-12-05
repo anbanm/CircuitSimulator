@@ -36,6 +36,7 @@ public class CircuitWire : MonoBehaviour
     private bool isDraggingWire = false;
     private Vector3 dragOffset;
     private Camera mainCamera;
+    private Transform workspacePlane;
 
     // Terminal-based connections (new architecture)
     public ComponentTerminal startTerminal;
@@ -430,6 +431,9 @@ public class CircuitWire : MonoBehaviour
         {
             mainCamera = FindFirstObjectByType<Camera>();
         }
+
+        // Find workspace plane for AR-compatible raycasting
+        FindWorkspacePlane();
 
         // Add collider for wire body interaction (if using endpoints)
         // Using CapsuleCollider for simple cylinder-shaped click area
@@ -877,17 +881,65 @@ public class CircuitWire : MonoBehaviour
         return nearest;
     }
 
+    void FindWorkspacePlane()
+    {
+        // Try to find WorkspaceManager first (handles both AR and desktop)
+        var workspaceManager = FindFirstObjectByType<WorkspaceManager>();
+        if (workspaceManager != null && workspaceManager.WorkspacePlane != null)
+        {
+            workspacePlane = workspaceManager.WorkspacePlane;
+            return;
+        }
+
+        // Fallback: Try to find CircuitWorkspace
+        GameObject workspace = GameObject.Find("CircuitWorkspace");
+        if (workspace != null)
+        {
+            workspacePlane = workspace.transform;
+        }
+    }
+
     Vector3 GetMouseWorldPosition()
     {
         if (mainCamera == null) return Vector3.zero;
 
-        // Raycast to workspace plane (Y = 0.5)
+        // Ensure workspace plane is available
+        if (workspacePlane == null)
+        {
+            FindWorkspacePlane();
+        }
+
+        // Cast ray from camera through mouse position
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        Plane plane = new Plane(Vector3.up, new Vector3(0, 0.5f, 0));
+
+        // Use the actual workspace plane if available (works for AR with tilted markers)
+        Plane plane;
+        if (workspacePlane != null)
+        {
+            // Create plane using workspace transform's up direction
+            // The plane is at Y=0.5 in local space (where components sit)
+            Vector3 planePoint = workspacePlane.TransformPoint(new Vector3(0, 0.5f, 0));
+            plane = new Plane(workspacePlane.up, planePoint);
+        }
+        else
+        {
+            // Fallback: Create a plane at Y = 0.5 (default behavior)
+            plane = new Plane(Vector3.up, new Vector3(0, 0.5f, 0));
+        }
 
         if (plane.Raycast(ray, out float distance))
         {
-            return ray.GetPoint(distance);
+            Vector3 hitPoint = ray.GetPoint(distance);
+
+            // For AR: Ensure the hit point is on the workspace plane at correct height
+            if (workspacePlane != null)
+            {
+                // Convert to local, enforce Y=0.5, convert back to world
+                Vector3 localHit = workspacePlane.InverseTransformPoint(hitPoint);
+                localHit.y = 0.5f; // Clamp to component height
+                return workspacePlane.TransformPoint(localHit);
+            }
+            return hitPoint;
         }
 
         return Vector3.zero;
@@ -1263,29 +1315,34 @@ public class CircuitWire : MonoBehaviour
         // Unsubscribe from events to prevent memory leaks
         CircuitEventManager.CircuitSolved -= OnCircuitSolvedHandler;
 
-        // Destroy endpoint GameObjects (they're not children, so need manual cleanup)
+        // During scene destruction, skip complex cleanup to avoid null reference errors
+        // Unity destroys objects in unpredictable order, so components may already be gone
+
+        // Just destroy endpoint GameObjects without calling DetachFromTerminal
+        // (DetachFromTerminal triggers callbacks that may reference destroyed objects)
         if (startEndpoint != null && startEndpoint.gameObject != null)
         {
-            if (startEndpoint.IsConnected)
-            {
-                startEndpoint.DetachFromTerminal();
-            }
             Destroy(startEndpoint.gameObject);
         }
         if (endEndpoint != null && endEndpoint.gameObject != null)
         {
-            if (endEndpoint.IsConnected)
-            {
-                endEndpoint.DetachFromTerminal();
-            }
             Destroy(endEndpoint.gameObject);
         }
 
-        // Clean up any remaining references (only if registered)
+        // Clean up any remaining references (only if registered and components still exist)
         if (isRegisteredWithComponents)
         {
-            if (component1 != null) component1.RemoveConnectedWire(gameObject);
-            if (component2 != null) component2.RemoveConnectedWire(gameObject);
+            try
+            {
+                if (component1 != null && component1.gameObject != null)
+                    component1.RemoveConnectedWire(gameObject);
+                if (component2 != null && component2.gameObject != null)
+                    component2.RemoveConnectedWire(gameObject);
+            }
+            catch (System.Exception)
+            {
+                // Ignore errors during scene cleanup
+            }
             isRegisteredWithComponents = false;
         }
 

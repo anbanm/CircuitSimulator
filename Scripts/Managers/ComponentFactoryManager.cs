@@ -39,9 +39,36 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         // Register with ServiceLocator
         ServiceLocator.Instance.Register<IComponentFactory>(this);
 
-        // Auto-find Components GameObject if canvasPlane not set or incorrectly assigned
-        if (canvasPlane == null || canvasPlane.name == "Main Canvas")
+        // Initialize properties (canvasPlane will be set in Start after WorkspaceManager initializes)
+        ComponentSpacing = spacing;
+    }
+
+    void FindOrCreateComponentsContainer()
+    {
+        // First try to find WorkspaceManager's plane (best for AR)
+        var workspaceManager = FindFirstObjectByType<WorkspaceManager>();
+        if (workspaceManager != null && workspaceManager.WorkspacePlane != null)
         {
+            // Create/find Components container as child of workspace
+            Transform workspace = workspaceManager.WorkspacePlane;
+            Transform existingComponents = workspace.Find("Components");
+            if (existingComponents != null)
+            {
+                canvasPlane = existingComponents;
+            }
+            else
+            {
+                GameObject componentsObj = new GameObject("Components");
+                componentsObj.transform.SetParent(workspace);
+                componentsObj.transform.localPosition = Vector3.zero;
+                componentsObj.transform.localRotation = Quaternion.identity;
+                canvasPlane = componentsObj.transform;
+            }
+            Debug.Log($"[ComponentFactoryManager] Using workspace-parented Components container");
+        }
+        else
+        {
+            // Fallback: Find or create root-level Components
             GameObject componentsObj = GameObject.Find("Components");
             if (componentsObj != null)
             {
@@ -49,20 +76,20 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
             }
             else
             {
-                // Create it if it doesn't exist
                 componentsObj = new GameObject("Components");
                 canvasPlane = componentsObj.transform;
             }
+            Debug.Log($"[ComponentFactoryManager] Using root-level Components container (no WorkspaceManager found)");
         }
 
-        // Initialize properties
-        ComponentSpacing = spacing;
         ComponentParent = canvasPlane;
-
     }
 
     void Start()
     {
+        // Find or create Components container AFTER WorkspaceManager has initialized
+        FindOrCreateComponentsContainer();
+
         // CRITICAL FIX: Disable AR LOD system that's hiding components
         // This must run in Start() AFTER ARWorkspaceAdapter is initialized
         var arAdapter = FindFirstObjectByType<ARWorkspaceAdapter>();
@@ -887,48 +914,40 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
     // Helper Methods
     private Vector3 GetNextPlacementPosition()
     {
-        // Place components in front of camera at workspace level (Y=0.5)
-        Camera mainCamera = Camera.main;
-        if (mainCamera == null)
-        {
-            mainCamera = FindFirstObjectByType<Camera>();
-        }
-
+        // Place components relative to workspace plane (works for both AR and desktop)
         Vector3 spawnPosition;
 
-        if (mainCamera != null)
+        // Get workspace reference
+        Transform workspace = canvasPlane;
+        if (workspace == null)
         {
-            // Get camera forward direction (projected onto XZ plane)
-            Vector3 cameraForward = mainCamera.transform.forward;
-            cameraForward.y = 0;
-            cameraForward.Normalize();
+            // Try to find WorkspaceManager's plane
+            var workspaceManager = FindFirstObjectByType<WorkspaceManager>();
+            if (workspaceManager != null && workspaceManager.WorkspacePlane != null)
+            {
+                workspace = workspaceManager.WorkspacePlane;
+            }
+        }
 
-            // Get camera position
-            Vector3 cameraPos = mainCamera.transform.position;
-
-            // Calculate spawn point: In front of camera, on workspace plane
-            float distanceFromCamera = 8f; // Spawn 8 units in front of camera
-            Vector3 centerPoint = cameraPos + (cameraForward * distanceFromCamera);
-            centerPoint.y = 0.5f; // Always at workspace height
-
-            // Spread components in a grid pattern
+        if (workspace != null)
+        {
+            // Spawn relative to workspace plane
             int componentsPlaced = placedComponents.Count;
             int row = componentsPlaced / 3; // 3 components per row
             int col = componentsPlaced % 3;
 
-            // Calculate offset from center
-            Vector3 cameraRight = mainCamera.transform.right;
-            cameraRight.y = 0;
-            cameraRight.Normalize();
+            // Calculate local offset on workspace (centered grid)
+            float xOffset = (col - 1) * ComponentSpacing; // -1, 0, +1 for centering
+            float zOffset = row * ComponentSpacing;
+            float yOffset = 0.5f; // Slightly above workspace surface
 
-            Vector3 rowOffset = -cameraForward * (row * ComponentSpacing);
-            Vector3 colOffset = cameraRight * ((col - 1) * ComponentSpacing); // -1, 0, +1 for centering
-
-            spawnPosition = centerPoint + rowOffset + colOffset;
+            // Convert to world position using workspace transform
+            Vector3 localPos = new Vector3(xOffset, yOffset, zOffset);
+            spawnPosition = workspace.TransformPoint(localPos);
         }
         else
         {
-            // Fallback: Use old grid system
+            // Fallback: Use simple grid at origin
             var basePosition = ComponentParent != null ? ComponentParent.position : Vector3.zero;
             spawnPosition = basePosition + new Vector3(placedComponents.Count * ComponentSpacing, 0.5f, 0);
         }

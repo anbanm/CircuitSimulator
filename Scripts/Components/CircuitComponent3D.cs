@@ -115,6 +115,9 @@ public class CircuitComponent3D : MonoBehaviour
 
     public void RemoveConnectedWire(CircuitWire wire)
     {
+        // Guard against null during scene cleanup
+        if (connectedWires == null) return;
+
         if (wire != null && connectedWires.Contains(wire))
         {
             connectedWires.Remove(wire);
@@ -124,7 +127,10 @@ public class CircuitComponent3D : MonoBehaviour
 
     public void RemoveConnectedWire(GameObject wireGO)
     {
-        var wire = wireGO?.GetComponent<CircuitWire>();
+        // Guard against null during scene cleanup
+        if (wireGO == null || connectedWires == null) return;
+
+        var wire = wireGO.GetComponent<CircuitWire>();
         if (wire != null)
         {
             RemoveConnectedWire(wire);

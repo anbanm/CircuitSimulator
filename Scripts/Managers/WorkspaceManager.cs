@@ -14,6 +14,12 @@ public class WorkspaceManager : MonoBehaviour
     public bool optimizeForAR = true;
     public float arUIScale = 0.7f;
     public float maxViewDistance = 5f;
+
+    [Header("AR Marker Tracking")]
+    [Tooltip("If true, workspace will auto-parent to Vuforia ImageTarget")]
+    public bool useMarkerTracking = false;
+    [Tooltip("Optional: Assign ImageTarget manually. If empty, will search for one.")]
+    public Transform imageTarget;
     
     // Component references
     private Camera playerCamera;
@@ -116,15 +122,48 @@ public class WorkspaceManager : MonoBehaviour
     private void ConfigureForAR()
     {
         // AR-specific workspace configuration
-        if (workspacePlane != null)
+        if (workspacePlane == null) return;
+
+        // If marker tracking enabled, parent workspace to Image Target
+        if (useMarkerTracking)
         {
-            // Set scale for AR viewing (not multiplicative to avoid compounding)
-            workspacePlane.localScale = Vector3.one * arUIScale;
-            
-            // Position appropriately for AR
-            workspacePlane.position = new Vector3(0, 0, 2f); // 2 units in front of user
+            ParentToImageTarget();
         }
-        
+        else
+        {
+            // Position appropriately for AR (floating in front of user)
+            workspacePlane.position = new Vector3(0, 0, 2f);
+        }
+
+        // Set scale for AR viewing
+        workspacePlane.localScale = Vector3.one * arUIScale;
+    }
+
+    private void ParentToImageTarget()
+    {
+        // Find Image Target if not assigned
+        if (imageTarget == null)
+        {
+            // Try to find Vuforia ImageTarget by component
+            var vuforiaTarget = FindFirstObjectByType<Vuforia.ImageTargetBehaviour>();
+            if (vuforiaTarget != null)
+            {
+                imageTarget = vuforiaTarget.transform;
+                Debug.Log($"[WorkspaceManager] Found ImageTarget: {imageTarget.name}");
+            }
+            else
+            {
+                Debug.LogWarning("[WorkspaceManager] useMarkerTracking enabled but no ImageTarget found!");
+                return;
+            }
+        }
+
+        // Parent workspace to Image Target
+        workspacePlane.SetParent(imageTarget);
+        workspacePlane.localPosition = new Vector3(0, 0.01f, 0); // Slightly above marker
+        workspacePlane.localRotation = Quaternion.identity;
+
+        Debug.Log($"[WorkspaceManager] Workspace parented to ImageTarget: {imageTarget.name}");
     }
     
     #region Public API
