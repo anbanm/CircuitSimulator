@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using CircuitSimulator.Effects;
 
 // Component types supported by the circuit simulator
 public enum ComponentType
@@ -36,21 +37,34 @@ public class CircuitComponent3D : MonoBehaviour
     {
         // Set up visual connection terminals for educational clarity
         SetupConnectionTerminals();
-        
+
         // Register with CircuitManager when component starts
-        if (CircuitManager.Instance != null)
+        // Try singleton first, then fallback to FindFirstObjectByType
+        CircuitManager circuitManager = CircuitManager.Instance;
+        if (circuitManager == null)
         {
-            CircuitManager.Instance.RegisterComponent(this);
+            circuitManager = FindFirstObjectByType<CircuitManager>();
+        }
+
+        if (circuitManager != null)
+        {
+            circuitManager.RegisterComponent(this);
         }
         else
         {
             Debug.LogWarning($"CircuitManager not found! {name} will not be included in circuit solving.");
         }
-        
+
         // Register with label manager for persistent labels
-        if (LabelManager.Instance != null)
+        LabelManager labelManager = LabelManager.Instance;
+        if (labelManager == null)
         {
-            LabelManager.Instance.RegisterComponent(this);
+            labelManager = FindFirstObjectByType<LabelManager>();
+        }
+
+        if (labelManager != null)
+        {
+            labelManager.RegisterComponent(this);
         }
         else
         {
@@ -155,10 +169,39 @@ public class CircuitComponent3D : MonoBehaviour
         // - Bulb brightness based on current
         // - Wire glow based on current
         // - Battery charge indicators
-        
+
         // Trigger event-driven label updates (Performance: no more polling)
         LabelManager.Instance?.UpdateLabelsForComponent(this);
-        
+
+        // Update glow effects based on current flow
+        UpdateGlowEffects();
+
         // For AR future: could control holographic effects, particle systems, etc.
+    }
+
+    /// <summary>
+    /// Controls glow/pulse effects based on whether current is flowing through the component.
+    /// Only activates effects when the circuit is complete and current > 0.
+    /// </summary>
+    private void UpdateGlowEffects()
+    {
+        // Check if this component has a glow effect
+        var glowEffect = GetComponent<GlowPulseEffect>();
+        if (glowEffect == null) return;
+
+        // Only glow when current is actually flowing (circuit is closed)
+        bool shouldGlow = Mathf.Abs(current) > 0.001f;
+        glowEffect.SetActive(shouldGlow);
+    }
+
+    /// <summary>
+    /// Called by circuit solver when results are updated.
+    /// Updates current/voltage values and triggers visual feedback.
+    /// </summary>
+    public void SetCircuitValues(float newCurrent, float newVoltageDrop)
+    {
+        current = newCurrent;
+        voltageDrop = newVoltageDrop;
+        UpdateVisualFeedback();
     }
 }

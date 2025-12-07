@@ -185,13 +185,19 @@ SelectableComponent.DeleteComponent()
             → CircuitSolverManager.MarkCircuitChanged()
 ```
 
-### **Circuit Solving Chain**
+### **Circuit Solving Chain (Path-Centric)**
+
+> See **[TOPOLOGY_PATH_TRAVERSAL.md](../TOPOLOGY_PATH_TRAVERSAL.md)** for topology design details.
+
 ```
 User Input (Space/Button)
     → CircuitManager.SolveCircuit()
         → CircuitSolverManager.SolveCircuit()
-            → CircuitNodeManager.BuildNodes()
-                → Returns List<CircuitNode>
+            → JunctionTopologyManager.BuildTopology()
+                → DiscoverJunctions()         // Visual debugging
+                → TraceTerminalPaths()        // Path-centric traversal (NEW)
+                    → For each terminal: BFS through wire chains
+                    → Connected terminals share same CircuitNode
             → CircuitSolverManager.BuildLogicalCircuit()
                 → Creates List<CircuitComponent>
             → CircuitSolver.Solve(components)

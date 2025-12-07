@@ -203,10 +203,22 @@ This creates a Unity project with proper folder structure and copies scripts to 
 - **Auto-initialization**: All 13 managers auto-create dependencies and initialize on Start()
 - **Event-driven architecture**: Changes propagate through CircuitEventManager to relevant systems
 
-### Spatial Node System ✅ IMPLEMENTED
-- **Connection tolerance**: 0.5f Unity units for node sharing
-- **Wire endpoints**: Proper terminal positioning (left/right of components)
-- **Spatial mapping**: Components at similar positions share electrical nodes automatically
+### Topology System (Path-Centric Traversal) ✅ IMPLEMENTED
+
+> **Design Doc**: See [TOPOLOGY_PATH_TRAVERSAL.md](TOPOLOGY_PATH_TRAVERSAL.md) for full algorithm details.
+
+The topology layer uses **path-centric traversal** to discover electrical connectivity:
+
+1. **Junction Discovery** (visual debugging): Finds where wire endpoints meet
+2. **Terminal Path Tracing** (electrical): BFS from each terminal through wire chains
+3. **Node Merging**: Terminals reachable via wire paths share the same `CircuitNode`
+
+**Why Path-Centric**: Wires can chain through multiple wire-to-wire junctions (e.g., `Battery → Wire1 → Junction → Wire2 → Junction → Wire3 → Bulb`). The path-centric approach correctly traces through these chains.
+
+**Files**:
+- `JunctionTopologyManager.cs` - Topology discovery and terminal path tracing
+- `ComponentTerminalManager.cs` - Terminal creation and management
+- `WireEndpoint.cs` - Wire endpoint snapping logic
 
 ### Real-Time Circuit Solving ✅ OPTIMIZED
 - **Event-based solving**: Immediate resolution when circuit changes

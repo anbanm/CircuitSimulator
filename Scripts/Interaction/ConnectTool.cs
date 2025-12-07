@@ -406,11 +406,7 @@ public class ConnectTool : MonoBehaviour
             SetSelectMode();
         }
 
-        // W key to create draggable wire
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            CreateDraggableWire();
-        }
+        // W key handling REMOVED - now handled by PaletteUIManager to avoid duplicate wire creation
 
         // ESC to cancel connection mode
         if (Input.GetKeyDown(KeyCode.Escape) && _currentMode == Mode.Connect)

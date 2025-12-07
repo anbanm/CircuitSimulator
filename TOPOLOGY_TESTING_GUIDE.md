@@ -1,8 +1,11 @@
 # Wire-to-Wire Junction System - Testing Guide
 
+> **NOTE**: This guide describes the junction discovery and debug visualization system.
+> For the topology algorithm that merges terminals, see **[TOPOLOGY_PATH_TRAVERSAL.md](TOPOLOGY_PATH_TRAVERSAL.md)**.
+
 ## Overview
 
-The wire-to-wire junction system has been refactored with a **3-layer architecture** that separates visual behavior from electrical topology. This guide explains how to test the new system using the **GameObject-based debug visualization**.
+The wire-to-wire junction system uses a **3-layer architecture** that separates visual behavior from electrical topology. This guide explains how to test the system using the **GameObject-based debug visualization**.
 
 ## Architecture Summary
 
@@ -10,10 +13,13 @@ The wire-to-wire junction system has been refactored with a **3-layer architectu
 Visual Layer (WireEndpoint)
     ↓ stores snappedToEndpoint references
 Topology Layer (JunctionTopologyManager)
-    ↓ discovers junctions and builds connectivity graph
-Solver Layer (CircuitNodeManager)
-    ↓ creates circuit solver nodes from topology
+    ↓ discovers junctions (visual debugging)
+    ↓ traces terminal paths (electrical connectivity) ← PATH-CENTRIC
+Solver Layer (CircuitSolver)
+    ↓ nodal analysis with correctly merged nodes
 ```
+
+**Key Insight**: Junction discovery is for **visual debugging**. Terminal merging uses **path-centric traversal** (BFS from each terminal through wire chains) to handle wire-to-wire junction chains correctly.
 
 ---
 

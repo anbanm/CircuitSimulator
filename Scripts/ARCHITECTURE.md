@@ -41,6 +41,24 @@ Assets/Scripts/
 ## 🔗 **Dependencies**
 See [DEPENDENCY.md](./DEPENDENCY.md) for detailed dependency maps and analysis.
 
+## 🔌 **Topology Layer (Path-Centric Traversal)**
+
+> See **[TOPOLOGY_PATH_TRAVERSAL.md](../TOPOLOGY_PATH_TRAVERSAL.md)** for the authoritative topology design.
+
+The topology layer bridges visual wires and the circuit solver using **path-centric traversal**:
+
+```
+Visual Layer (wires, endpoints, snapping)
+    ↓
+Topology Layer (JunctionTopologyManager.TraceTerminalPaths())
+    ↓
+Solver Layer (CircuitSolver nodal analysis)
+```
+
+**Key Algorithm**: BFS from each terminal through wire chains to find connected terminals. Terminals reachable via wire paths share the same `CircuitNode`.
+
+**Why Path-Centric**: Wires can chain through multiple wire-to-wire junctions before reaching a component terminal. The old junction-centric approach failed on these chains.
+
 ## 🎯 **Key Paths**
 
 **Component Registration:**

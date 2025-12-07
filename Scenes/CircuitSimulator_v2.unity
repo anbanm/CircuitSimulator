@@ -306,6 +306,60 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enableMisconceptionDetection: 1
   enableDetailedLogging: 0
+--- !u!1 &728692862
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 728692864}
+  - component: {fileID: 728692863}
+  m_Layer: 0
+  m_Name: CircuitDebugDisplay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &728692863
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 728692862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18e0f397b8cb84718a901f4466a0b529, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  updateInterval: 0.5
+  topologyConnectivity: Waiting for solve...
+  solverState: Waiting for solve...
+  totalEndpoints: 0
+  totalNodes: 0
+  totalComponents: 0
+  batteryCurrent: 0
+  totalPower: 0
+  components: []
+  nodes: []
+--- !u!4 &728692864
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 728692862}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &762248371
 GameObject:
   m_ObjectHideFlags: 0
@@ -1426,6 +1480,8 @@ MonoBehaviour:
   optimizeForAR: 1
   arUIScale: 0.7
   maxViewDistance: 5
+  useMarkerTracking: 0
+  imageTarget: {fileID: 0}
 --- !u!1 &1728087487
 GameObject:
   m_ObjectHideFlags: 0
@@ -1517,7 +1573,7 @@ RectTransform:
   m_GameObject: {fileID: 1728087487}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1128291623}
@@ -1526,10 +1582,10 @@ RectTransform:
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0, y: 0}
 --- !u!1 &1959537321
 GameObject:
   m_ObjectHideFlags: 0
@@ -1683,7 +1739,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efa60f2eb84d44222a50359ae80c0c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  batteryPrefab: {fileID: 0}
+  batteryPrefab: {fileID: 1951417785067322, guid: 7967a8711a4e12f4f8eca9321da4f8e5,
+    type: 3}
   resistorPrefab: {fileID: 0}
   bulbPrefab: {fileID: 0}
   switchPrefab: {fileID: 0}
@@ -1748,3 +1805,4 @@ SceneRoots:
   - {fileID: 1189168133}
   - {fileID: 1316050667}
   - {fileID: 762248373}
+  - {fileID: 728692864}

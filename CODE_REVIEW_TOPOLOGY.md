@@ -1,3 +1,7 @@
+> **NOTE**: This code review was the analysis that led to the path-centric redesign.
+> For the current design, see **[TOPOLOGY_PATH_TRAVERSAL.md](TOPOLOGY_PATH_TRAVERSAL.md)**.
+> The scenario traces below are still useful for understanding the 3-layer architecture.
+
 # Wire-to-Wire Junction System - Comprehensive Code Review
 
 ## Overview

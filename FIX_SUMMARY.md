@@ -1,3 +1,6 @@
+> **NOTE**: This document describes fixes to the junction-centric merging approach.
+> For the current path-centric design, see **[TOPOLOGY_PATH_TRAVERSAL.md](TOPOLOGY_PATH_TRAVERSAL.md)**.
+
 # Wire-to-Wire Junction Fix - Complete Implementation Summary
 
 ## Status: ✅ ALL FIXES IMPLEMENTED & COMPILED

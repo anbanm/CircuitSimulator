@@ -1,3 +1,6 @@
+> **NOTE**: This trace illustrates wire-to-wire junction handling.
+> For the current path-centric traversal design, see **[TOPOLOGY_PATH_TRAVERSAL.md](TOPOLOGY_PATH_TRAVERSAL.md)**.
+
 # Test Trace: Series Circuit with Wire-to-Wire Junction
 
 ## Circuit Setup

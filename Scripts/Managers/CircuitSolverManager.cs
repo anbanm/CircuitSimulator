@@ -163,11 +163,11 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
     
     public bool SolveCircuit()
     {
-        Debug.Log($"[SOLVER] SolveCircuit() called. CircuitManager: {(circuitManager != null ? "Found" : "NULL")}, Components: {(circuitManager != null ? circuitManager.Components.Count : 0)}");
+        if (debugSolver) Debug.Log($"[SOLVER] SolveCircuit() called. CircuitManager: {(circuitManager != null ? "Found" : "NULL")}, Components: {(circuitManager != null ? circuitManager.Components.Count : 0)}");
 
         if (circuitManager == null || circuitManager.Components.Count == 0)
         {
-            Debug.LogWarning("No components to solve");
+            // Only log warning once per empty state, not every frame
             LastSolveResult = "No components to solve";
             ClearAllComponentValues();  // Clear old values when no circuit
             OnSolveError?.Invoke(LastSolveResult);
@@ -175,18 +175,18 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         }
 
         OnSolveStarted?.Invoke();
-        Debug.Log($"[SOLVER] Building logical circuit with {circuitManager.ComponentCount} components and {circuitManager.WireCount} wires");
+        if (debugSolver) Debug.Log($"[SOLVER] Building logical circuit with {circuitManager.ComponentCount} components and {circuitManager.WireCount} wires");
         debugManager?.LogToFile($"=== SOLVING CIRCUIT (Components: {circuitManager.ComponentCount}, Wires: {circuitManager.WireCount}) ===");
 
         try
         {
             // Build logical circuit from 3D components
             var logicalComponents = BuildLogicalCircuit();
-            Debug.Log($"[SOLVER] BuildLogicalCircuit() returned {logicalComponents.Count} logical components");
+            if (debugSolver) Debug.Log($"[SOLVER] BuildLogicalCircuit() returned {logicalComponents.Count} logical components");
 
             if (logicalComponents.Count == 0)
             {
-                Debug.LogWarning("No valid circuit components found");
+                // Only warn once - not every solve attempt
                 LastSolveResult = "No valid circuit components found";
                 ClearAllComponentValues();  // Clear old values when circuit is invalid
                 OnSolveError?.Invoke(LastSolveResult);
@@ -194,9 +194,9 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
             }
 
             // Solve the circuit components directly
-            Debug.Log($"[SOLVER] Calling circuitSolver.Solve() with {logicalComponents.Count} components");
+            if (debugSolver) Debug.Log($"[SOLVER] Calling circuitSolver.Solve() with {logicalComponents.Count} components");
             circuitSolver.Solve(logicalComponents.ToList());
-            Debug.Log("[SOLVER] circuitSolver.Solve() completed successfully");
+            if (debugSolver) Debug.Log("[SOLVER] circuitSolver.Solve() completed successfully");
 
             // Update 3D components with solved values
             UpdateComponentsFromSolver(logicalComponents.ToList());
@@ -274,11 +274,22 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
             debugManager?.LogToFile($"Components: {circuitManager.Components.Count}, Wires: {circuitManager.Wires.Count}");
         }
 
-        // CRITICAL FIX: Clear all CircuitNode.ConnectedComponents lists before rebuilding
-        // This prevents duplicate component references when logical components are recreated
-        ClearAllNodeComponentLists();
+        // CRITICAL FIX #1: Clear ALL terminal electrical nodes first
+        // This ensures we start completely fresh with no stale node references
+        ClearAllTerminalNodes();
+
+        // Clear logical component references from 3D components
+        // This ensures we don't have stale logical component references
+        foreach (var comp3D in circuitManager.Components)
+        {
+            if (comp3D != null)
+            {
+                comp3D.logicalComponent = null;
+            }
+        }
 
         // Build topology to discover junctions and merge terminal nodes
+        // This assigns fresh CircuitNode objects to terminals via TraceTerminalPaths()
         JunctionTopologyManager.CircuitTopology topology = null;
         if (topologyManager != null)
         {
@@ -294,6 +305,10 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
                 UpdateWireComponentReferences(topology);
             }
         }
+
+        // CRITICAL FIX #2: Clear all CircuitNode.ConnectedComponents lists AFTER topology
+        // Now that nodes exist, we can clear their component lists before rebuilding
+        ClearAllNodeComponentLists();
 
         // Use terminal manager to update logical connections
         terminalManager?.UpdateLogicalConnections();
@@ -336,10 +351,25 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
                     debugManager?.LogToFile($"  → First Terminal: {firstTerminal.name}, Node: {firstTerminal.electricalNode.Id}");
                     debugManager?.LogToFile($"  → Second Terminal: {secondTerminal.name}, Node: {secondTerminal.electricalNode.Id}");
                 }
-
             }
         }
-        
+
+        // SINGLE SUMMARY LOG: Show final node connectivity
+        var allNodes = new HashSet<CircuitNode>();
+        foreach (var comp in logicalComponents)
+        {
+            allNodes.Add(comp.NodeA);
+            allNodes.Add(comp.NodeB);
+        }
+        var nodeSummary = new System.Text.StringBuilder();
+        nodeSummary.Append($"[SOLVER SUMMARY] {logicalComponents.Count} components, {allNodes.Count} nodes: ");
+        foreach (var node in allNodes)
+        {
+            var compNames = string.Join("+", node.ConnectedComponents.ConvertAll(c => c.GetType().Name.Substring(0, 3)));
+            nodeSummary.Append($"[{node.Id.Substring(0, Mathf.Min(15, node.Id.Length))}→{compNames}] ");
+        }
+        Debug.Log(nodeSummary.ToString());
+
         if (debugSolver)
         {
             debugManager?.LogToFile($"Final circuit: {logicalComponents.Count} components");
@@ -347,6 +377,31 @@ public class CircuitSolverManager : MonoBehaviour, ICircuitSolver
         }
         
         return logicalComponents.AsReadOnly();
+    }
+
+    /// <summary>
+    /// CRITICAL: Clear ALL terminal electrical node references before rebuilding.
+    /// This ensures we start with a completely clean slate each solve.
+    /// </summary>
+    private void ClearAllTerminalNodes()
+    {
+        int clearedCount = 0;
+
+        // Find ALL terminals in the scene and null their electrical nodes
+        var allTerminals = FindObjectsByType<ComponentTerminal>(FindObjectsSortMode.None);
+        foreach (var terminal in allTerminals)
+        {
+            if (terminal != null && terminal.electricalNode != null)
+            {
+                terminal.electricalNode = null;
+                clearedCount++;
+            }
+        }
+
+        if (debugSolver)
+        {
+            debugManager?.LogToFile($"Cleared {clearedCount} terminal electrical nodes");
+        }
     }
 
     /// <summary>

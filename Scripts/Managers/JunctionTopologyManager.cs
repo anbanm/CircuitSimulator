@@ -14,6 +14,9 @@ public class JunctionTopologyManager : MonoBehaviour
     public Color junctionDebugColor = Color.green;
     public float junctionDebugSphereSize = 0.3f;
 
+    [Header("Debug Logging")]
+    public bool debugTopology = false; // Enable verbose console logging
+
     [Header("Junction Discovery")]
     public float positionTolerance = 0.2f; // For grouping endpoints at similar positions
 
@@ -190,8 +193,7 @@ public class JunctionTopologyManager : MonoBehaviour
             var wire = endpoint.ParentWire;
             if (wire != null) return wire;
 
-            // Log warning if wire not found (helps debugging)
-            Debug.LogWarning($"[TOPOLOGY] Cannot find CircuitWire for endpoint {endpoint.name}");
+            // Wire not found - this is expected for some edge cases, no need to log
             return null;
         }
 
@@ -199,9 +201,12 @@ public class JunctionTopologyManager : MonoBehaviour
         /// Build complete electrical graph including wire connections
         /// Logs junction-to-junction connectivity for debugging
         /// Call this after BuildTopology() to verify electrical paths
+        /// NOTE: This method is verbose - only call when actively debugging
         /// </summary>
-        public void BuildElectricalGraph()
+        public void BuildElectricalGraph(bool enableLogging = false)
         {
+            if (!enableLogging) return;
+
             Debug.Log("[TOPOLOGY] === Building Electrical Graph ===");
 
             foreach (var junction in junctions)
@@ -236,7 +241,7 @@ public class JunctionTopologyManager : MonoBehaviour
         if (wire != null) return wire;
 
         // Log warning if wire not found (helps debugging)
-        Debug.LogWarning($"[TOPOLOGY] Cannot find CircuitWire for endpoint {endpoint.name}");
+        if (debugTopology) Debug.LogWarning($"[TOPOLOGY] Cannot find CircuitWire for endpoint {endpoint.name}");
         return null;
     }
 
@@ -281,19 +286,308 @@ public class JunctionTopologyManager : MonoBehaviour
         return null;  // Wire is floating or disconnected
     }
 
+    #region Path-Centric Traversal (NEW)
+
     /// <summary>
-    /// CRITICAL FIX: Merge terminal electrical nodes for each junction
-    /// This connects the topology layer to the solver layer!
-    ///
-    /// Problem: When wire endpoints snap together, they create visual junctions but
-    /// the terminal.electricalNode references remain separate, breaking circuit solving.
-    ///
-    /// Solution: After discovering junctions, merge all terminal.electricalNode references
-    /// at each junction so the solver can traverse through wire-to-wire connections.
+    /// Find all component terminals in the scene
     /// </summary>
+    List<ComponentTerminal> FindAllComponentTerminals()
+    {
+        var terminals = new List<ComponentTerminal>();
+        var allTerminals = FindObjectsByType<ComponentTerminal>(FindObjectsSortMode.None);
+        terminals.AddRange(allTerminals);
+        return terminals;
+    }
+
+    /// <summary>
+    /// Find all wire endpoints connected to a terminal
+    /// Checks endpoint.ConnectedTerminal and position proximity
+    /// Note: Wire's startTerminal/endTerminal are NOT reliable for wire-to-wire junctions
+    /// because they're only set when endpoint has ConnectedTerminal (not SnappedToEndpoint)
+    /// </summary>
+    List<WireEndpoint> FindEndpointsAtTerminal(ComponentTerminal terminal)
+    {
+        var result = new List<WireEndpoint>();
+        if (terminal == null) return result;
+
+        var allEndpoints = FindObjectsByType<WireEndpoint>(FindObjectsSortMode.None);
+        foreach (var endpoint in allEndpoints)
+        {
+            if (endpoint == null) continue;
+
+            // Check 1: Endpoint is directly connected to this terminal (primary check)
+            if (endpoint.ConnectedTerminal == terminal)
+            {
+                if (!result.Contains(endpoint))
+                    result.Add(endpoint);
+                continue;
+            }
+
+            // Check 2: Position proximity (for endpoints that may be at terminal but not formally connected)
+            // This handles edge cases where snapping didn't set ConnectedTerminal properly
+            float distance = Vector3.Distance(endpoint.GetPosition(), terminal.transform.position);
+            if (distance < positionTolerance)
+            {
+                if (!result.Contains(endpoint))
+                    result.Add(endpoint);
+            }
+        }
+
+        Debug.Log($"[TRACE] FindEndpointsAtTerminal({terminal.name}): found {result.Count} endpoints");
+        return result;
+    }
+
+    /// <summary>
+    /// Find all wire endpoints at a given position (within tolerance)
+    /// Uses consistent tolerance for all endpoints at junctions
+    /// </summary>
+    List<WireEndpoint> FindEndpointsAtPosition(Vector3 position)
+    {
+        var result = new List<WireEndpoint>();
+        var allEndpoints = FindObjectsByType<WireEndpoint>(FindObjectsSortMode.None);
+
+        foreach (var endpoint in allEndpoints)
+        {
+            if (endpoint == null) continue;
+
+            // Use consistent tolerance for position-based matching
+            // When endpoints are snapped together, they're at exactly the same position
+            float distance = Vector3.Distance(endpoint.GetPosition(), position);
+
+            // Use positionTolerance (0.2f) for all endpoints at junction positions
+            // This allows finding endpoints that are snapped together
+            if (distance < positionTolerance)
+            {
+                result.Add(endpoint);
+                Debug.Log($"[TRACE]     FindEndpointsAtPosition: {endpoint.name} at distance {distance:F4}");
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// BFS traversal from a terminal through all connected wire paths.
+    /// Returns all terminals reachable via wire connections.
+    /// Handles wire chains through multiple wire-to-wire junctions.
+    /// </summary>
+    List<ComponentTerminal> TraceFromTerminal(ComponentTerminal startTerminal)
+    {
+        var result = new List<ComponentTerminal> { startTerminal };
+        var visitedEndpoints = new HashSet<WireEndpoint>();
+        var queue = new Queue<WireEndpoint>();
+
+        Debug.Log($"[TRACE] === Starting BFS from terminal: {startTerminal.name} ===");
+
+        // Seed BFS with endpoints at this terminal
+        var startEndpoints = FindEndpointsAtTerminal(startTerminal);
+        Debug.Log($"[TRACE] Found {startEndpoints.Count} endpoints at start terminal");
+        foreach (var ep in startEndpoints)
+        {
+            if (ep != null)
+            {
+                Debug.Log($"[TRACE]   Seeding queue with: {ep.name} (wire: {ep.ParentWire?.name})");
+                queue.Enqueue(ep);
+                visitedEndpoints.Add(ep);
+            }
+        }
+
+        while (queue.Count > 0)
+        {
+            var currentEndpoint = queue.Dequeue();
+            if (currentEndpoint == null) continue;
+
+            Debug.Log($"[TRACE] Processing: {currentEndpoint.name}");
+
+            // Get the wire this endpoint belongs to
+            var wire = currentEndpoint.ParentWire;
+            if (wire == null)
+            {
+                if (debugTopology) Debug.LogWarning($"[TOPOLOGY] Endpoint {currentEndpoint.name} has null ParentWire!");
+                continue;
+            }
+
+            // Get the OTHER endpoint of the same wire
+            WireEndpoint otherEndpoint = null;
+            if (wire.startEndpoint == currentEndpoint)
+                otherEndpoint = wire.endEndpoint;
+            else if (wire.endEndpoint == currentEndpoint)
+                otherEndpoint = wire.startEndpoint;
+            else
+            {
+                if (debugTopology) Debug.LogWarning($"[TOPOLOGY] Endpoint {currentEndpoint.name} not found in wire {wire.name}!");
+                continue;
+            }
+
+            Debug.Log($"[TRACE]   Other endpoint of wire {wire.name}: {otherEndpoint?.name ?? "NULL"}");
+            Debug.Log($"[TRACE]   Other endpoint position: {otherEndpoint?.GetPosition()}");
+            Debug.Log($"[TRACE]   Other endpoint ConnectedTerminal: {otherEndpoint?.ConnectedTerminal?.name ?? "NULL"}");
+            Debug.Log($"[TRACE]   Other endpoint SnappedToEndpoint: {otherEndpoint?.SnappedToEndpoint?.name ?? "NULL"}");
+
+            if (otherEndpoint == null || visitedEndpoints.Contains(otherEndpoint))
+            {
+                Debug.Log($"[TRACE]   Skipping (null or already visited)");
+                continue;
+            }
+
+            visitedEndpoints.Add(otherEndpoint);
+
+            // Case 1: Other endpoint is at a component terminal
+            if (otherEndpoint.ConnectedTerminal != null)
+            {
+                Debug.Log($"[TRACE]   Case 1: Connected to terminal {otherEndpoint.ConnectedTerminal.name}");
+                if (!result.Contains(otherEndpoint.ConnectedTerminal))
+                {
+                    result.Add(otherEndpoint.ConnectedTerminal);
+                    Debug.Log($"[TRACE]   Added terminal to result: {otherEndpoint.ConnectedTerminal.name}");
+                }
+                // Continue searching from this terminal (there may be more wires)
+                var moreEndpoints = FindEndpointsAtTerminal(otherEndpoint.ConnectedTerminal);
+                Debug.Log($"[TRACE]   Found {moreEndpoints.Count} more endpoints at terminal");
+                foreach (var ep in moreEndpoints)
+                {
+                    if (!visitedEndpoints.Contains(ep))
+                    {
+                        Debug.Log($"[TRACE]   Queuing: {ep.name}");
+                        queue.Enqueue(ep);
+                        visitedEndpoints.Add(ep);
+                    }
+                }
+            }
+            // Case 2: Other endpoint is snapped to another wire endpoint (junction)
+            else if (otherEndpoint.SnappedToEndpoint != null)
+            {
+                Debug.Log($"[TRACE]   Case 2: Snapped to endpoint {otherEndpoint.SnappedToEndpoint.name}");
+                if (!visitedEndpoints.Contains(otherEndpoint.SnappedToEndpoint))
+                {
+                    Debug.Log($"[TRACE]   Queuing snapped endpoint: {otherEndpoint.SnappedToEndpoint.name}");
+                    queue.Enqueue(otherEndpoint.SnappedToEndpoint);
+                    visitedEndpoints.Add(otherEndpoint.SnappedToEndpoint);
+                }
+
+                // Also check for other endpoints at this junction position
+                var junctionEndpoints = FindEndpointsAtPosition(otherEndpoint.GetPosition());
+                Debug.Log($"[TRACE]   Found {junctionEndpoints.Count} endpoints at junction position {otherEndpoint.GetPosition()}");
+                foreach (var ep in junctionEndpoints)
+                {
+                    if (!visitedEndpoints.Contains(ep))
+                    {
+                        Debug.Log($"[TRACE]   Queuing nearby: {ep.name}");
+                        queue.Enqueue(ep);
+                        visitedEndpoints.Add(ep);
+                    }
+                }
+            }
+            // Case 3: Other endpoint is near another endpoint (position-based junction)
+            else
+            {
+                Debug.Log($"[TRACE]   Case 3: Position-based junction check at {otherEndpoint.GetPosition()}");
+                var nearbyEndpoints = FindEndpointsAtPosition(otherEndpoint.GetPosition());
+                Debug.Log($"[TRACE]   Found {nearbyEndpoints.Count} nearby endpoints");
+                foreach (var ep in nearbyEndpoints)
+                {
+                    if (!visitedEndpoints.Contains(ep))
+                    {
+                        Debug.Log($"[TRACE]   Queuing nearby: {ep.name}");
+                        queue.Enqueue(ep);
+                        visitedEndpoints.Add(ep);
+                    }
+                    else
+                    {
+                        Debug.Log($"[TRACE]   Already visited: {ep.name}");
+                    }
+                }
+            }
+        }
+
+        Debug.Log($"[TRACE] === BFS complete. Found {result.Count} terminals ===");
+        return result;
+    }
+
+    /// <summary>
+    /// Traces all wire paths from each component terminal using BFS.
+    /// Terminals connected via wire paths (regardless of junction count) share the same electrical node.
+    /// This is the NEW path-centric approach that handles wire chains correctly.
+    /// </summary>
+    void TraceTerminalPaths()
+    {
+        var allTerminals = FindAllComponentTerminals();
+        var terminalGroups = new Dictionary<ComponentTerminal, CircuitNode>();
+
+        if (debugTopology) Debug.Log($"[TOPOLOGY] === TraceTerminalPaths: Processing {allTerminals.Count} terminals ===");
+
+        // NOTE: Node component list clearing is now handled in CircuitSolverManager.BuildLogicalCircuit()
+        // AFTER this method runs (so nodes exist when we clear them)
+
+        foreach (var startTerminal in allTerminals)
+        {
+            if (startTerminal == null) continue;
+
+            // Skip if already assigned to a group
+            if (terminalGroups.ContainsKey(startTerminal))
+                continue;
+
+            // Create new electrical node for this group (or reuse existing if valid)
+            var sharedNode = new CircuitNode($"PathNode_{startTerminal.name}_{startTerminal.GetInstanceID()}");
+
+            // BFS to find all terminals connected via wire paths
+            var connectedTerminals = TraceFromTerminal(startTerminal);
+
+            // Log the group
+            var terminalNames = string.Join(", ", connectedTerminals.ConvertAll(t => t?.name ?? "NULL"));
+            if (debugTopology) Debug.Log($"[TOPOLOGY] Terminal group: [{terminalNames}] ({connectedTerminals.Count} terminals share node {sharedNode.Id})");
+
+            // Merge all connected terminals to share the same node
+            foreach (var terminal in connectedTerminals)
+            {
+                if (terminal == null) continue;
+
+                terminal.electricalNode = sharedNode;
+                terminalGroups[terminal] = sharedNode;
+
+                // Register component with the shared node
+                if (terminal.ParentComponent?.logicalComponent != null)
+                {
+                    if (!sharedNode.ConnectedComponents.Contains(terminal.ParentComponent.logicalComponent))
+                    {
+                        sharedNode.ConnectedComponents.Add(terminal.ParentComponent.logicalComponent);
+                    }
+                }
+                else
+                {
+                    if (debugTopology) Debug.LogWarning($"[TOPOLOGY] Terminal {terminal.name} has no parent component or logical component!");
+                }
+            }
+        }
+
+        // SINGLE SUMMARY LOG: Show all terminal groups with their shared nodes
+        var nodeGroups = new Dictionary<CircuitNode, List<string>>();
+        foreach (var kvp in terminalGroups)
+        {
+            if (!nodeGroups.ContainsKey(kvp.Value))
+                nodeGroups[kvp.Value] = new List<string>();
+            nodeGroups[kvp.Value].Add($"{kvp.Key.ParentComponent?.name}.{kvp.Key.name}");
+        }
+        var summary = new System.Text.StringBuilder();
+        summary.Append($"[TOPOLOGY SUMMARY] {nodeGroups.Count} electrical nodes: ");
+        foreach (var group in nodeGroups)
+        {
+            summary.Append($"[{string.Join(" + ", group.Value)}] ");
+        }
+        Debug.Log(summary.ToString());
+    }
+
+    #endregion
+
+    /// <summary>
+    /// DEPRECATED: Use TraceTerminalPaths() instead.
+    /// This method fails on wire-to-wire junction chains because it only looks
+    /// at terminals directly at junctions, not terminals reachable via wire paths.
+    /// Kept for reference only.
+    /// </summary>
+    [System.Obsolete("Use TraceTerminalPaths() instead - this fails on wire chains")]
     void MergeJunctionTerminalNodes(List<Junction> junctions)
     {
-        Debug.Log("[TOPOLOGY] === Merging Terminal Electrical Nodes ===");
+        if (debugTopology) Debug.Log("[TOPOLOGY] === Merging Terminal Electrical Nodes ===");
 
         foreach (var junction in junctions)
         {
@@ -303,7 +597,7 @@ public class JunctionTopologyManager : MonoBehaviour
             foreach (var endpoint in junction.endpoints)
             {
                 // DEBUG: Show what this endpoint is connected to
-                Debug.Log($"[TOPOLOGY] {junction.id} endpoint: {endpoint.name}");
+                if (debugTopology) Debug.Log($"[TOPOLOGY] {junction.id} endpoint: {endpoint.name}");
                 Debug.Log($"  - endpoint.ConnectedTerminal = {endpoint.ConnectedTerminal?.name ?? "NULL"}");
                 Debug.Log($"  - endpoint.SnappedToEndpoint = {endpoint.SnappedToEndpoint?.name ?? "NULL"}");
 
@@ -347,20 +641,20 @@ public class JunctionTopologyManager : MonoBehaviour
                 }
 
                 var terminalNames = string.Join(", ", terminals.Select(t => t.name));
-                Debug.Log($"[TOPOLOGY] ✅ Merged {terminals.Count} terminal nodes at {junction.id}: {terminalNames}");
+                if (debugTopology) Debug.Log($"[TOPOLOGY] ✅ Merged {terminals.Count} terminal nodes at {junction.id}: {terminalNames}");
                 Debug.Log($"  Shared node ID: {sharedNode.Id} with {sharedNode.ConnectedComponents.Count} components");
             }
             else if (terminals.Count == 1)
             {
-                Debug.Log($"[TOPOLOGY] {junction.id} has only 1 terminal: {terminals[0].name} (no merge needed)");
+                if (debugTopology) Debug.Log($"[TOPOLOGY] {junction.id} has only 1 terminal: {terminals[0].name} (no merge needed)");
             }
             else
             {
-                Debug.LogWarning($"[TOPOLOGY] {junction.id} has no terminals! (floating junction with no component connections)");
+                if (debugTopology) Debug.LogWarning($"[TOPOLOGY] {junction.id} has no terminals! (floating junction with no component connections)");
             }
         }
 
-        Debug.Log("[TOPOLOGY] === Terminal Node Merging Complete ===");
+        if (debugTopology) Debug.Log("[TOPOLOGY] === Terminal Node Merging Complete ===");
     }
 
     void Awake()
@@ -399,12 +693,12 @@ public class JunctionTopologyManager : MonoBehaviour
 
         if (allEndpoints.Length == 0)
         {
-            Debug.Log("[TOPOLOGY] No wire endpoints found - empty circuit");
+            if (debugTopology) Debug.Log("[TOPOLOGY] No wire endpoints found - empty circuit");
             ClearDebugVisualization();
             return topology;
         }
 
-        Debug.Log($"[TOPOLOGY] Discovering junctions from {allEndpoints.Length} endpoints");
+        if (debugTopology) Debug.Log($"[TOPOLOGY] Discovering junctions from {allEndpoints.Length} endpoints");
 
         // 2. Group endpoints into junctions
         var processedEndpoints = new HashSet<WireEndpoint>();
@@ -437,7 +731,7 @@ public class JunctionTopologyManager : MonoBehaviour
                     processedEndpoints.Add(ep);
                 }
 
-                Debug.Log($"[TOPOLOGY] Created {junction.id} with {junction.endpoints.Count} endpoints at {junction.position}");
+                if (debugTopology) Debug.Log($"[TOPOLOGY] Created {junction.id} with {junction.endpoints.Count} endpoints at {junction.position}");
             }
         }
 
@@ -457,14 +751,15 @@ public class JunctionTopologyManager : MonoBehaviour
         // Store current topology
         currentTopology = topology;
 
-        // 5. Build electrical graph (wire-based connectivity)
+        // 5. Build electrical graph (wire-based connectivity) - for debugging
         topology.BuildElectricalGraph();
 
-        // 6. CRITICAL FIX: Merge terminal electrical nodes for each junction
-        // This connects topology discovery to the solver's terminal-based node system
-        MergeJunctionTerminalNodes(topology.junctions);
+        // 6. NEW: Path-centric terminal merging
+        // Uses BFS from each terminal through wire chains to find connected terminals
+        // This replaces MergeJunctionTerminalNodes() which failed on wire-to-wire chains
+        TraceTerminalPaths();
 
-        Debug.Log($"[TOPOLOGY] ✅ Discovered {topology.junctions.Count} junctions");
+        if (debugTopology) Debug.Log($"[TOPOLOGY] ✅ Discovered {topology.junctions.Count} junctions (path-centric traversal complete)");
 
         return topology;
     }

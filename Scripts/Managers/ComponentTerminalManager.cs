@@ -43,9 +43,18 @@ public class ComponentTerminalManager : MonoBehaviour
             return;
         }
 
+        // CHECK FOR PRE-PLACED TERMINAL GAMEOBJECTS (empty GameObjects with terminal names)
+        // This allows prefabs to define custom terminal positions without ComponentTerminal scripts
+        var prePlacedTerminals = TrySetupPrePlacedTerminals(component);
+        if (prePlacedTerminals != null && prePlacedTerminals.Count >= 2)
+        {
+            componentTerminals[component] = prePlacedTerminals;
+            return;
+        }
+
         RemoveComponentTerminals(component);
         var terminals = new List<ComponentTerminal>();
-        
+
         switch (component.ComponentType)
         {
             case ComponentType.Battery:
@@ -106,7 +115,81 @@ public class ComponentTerminalManager : MonoBehaviour
 
         return terminal;
     }
-    
+
+    /// <summary>
+    /// Looks for pre-placed terminal GameObjects in the prefab (by name) and converts them to ComponentTerminals.
+    /// This allows prefabs to define custom terminal positions using empty GameObjects.
+    /// Supported names: NegativeTerminal, PositiveTerminal, TerminalA, TerminalB
+    /// </summary>
+    List<ComponentTerminal> TrySetupPrePlacedTerminals(CircuitComponent3D component)
+    {
+        var terminals = new List<ComponentTerminal>();
+
+        // Define terminal names to look for based on component type
+        string[] terminalNames;
+        bool[] isInputFlags;
+
+        switch (component.ComponentType)
+        {
+            case ComponentType.Battery:
+                terminalNames = new[] { "NegativeTerminal", "PositiveTerminal" };
+                isInputFlags = new[] { true, false }; // Negative is input (ground), Positive is output
+                break;
+            case ComponentType.Resistor:
+            case ComponentType.Bulb:
+            case ComponentType.Switch:
+                terminalNames = new[] { "TerminalA", "TerminalB", "NegativeTerminal", "PositiveTerminal" };
+                isInputFlags = new[] { false, false, false, false }; // Non-polarized
+                break;
+            default:
+                return null; // Junction and other types use dynamic creation
+        }
+
+        // Look for pre-placed GameObjects by name
+        foreach (Transform child in component.transform)
+        {
+            for (int i = 0; i < terminalNames.Length; i++)
+            {
+                if (child.name == terminalNames[i])
+                {
+                    // Found a pre-placed terminal - add ComponentTerminal script if not already present
+                    var terminal = child.GetComponent<ComponentTerminal>();
+                    if (terminal == null)
+                    {
+                        terminal = child.gameObject.AddComponent<ComponentTerminal>();
+                        terminal.isInput = isInputFlags[i];
+                        terminal.terminalColor = isInputFlags[i] ? inputColor : outputColor;
+                        terminal.highlightColor = terminalHighlightColor;
+                        terminal.terminalSize = 0.5f;
+
+                        // Initialize the terminal
+                        terminal.InitializeTerminal(component);
+
+                        // Add collider if not present
+                        if (child.GetComponent<SphereCollider>() == null)
+                        {
+                            var collider = child.gameObject.AddComponent<SphereCollider>();
+                            collider.radius = 0.5f;
+                        }
+
+                        Debug.Log($"Setup pre-placed terminal '{child.name}' on {component.name}");
+                    }
+
+                    terminals.Add(terminal);
+                    break;
+                }
+            }
+        }
+
+        // Need at least 2 terminals
+        if (terminals.Count >= 2)
+        {
+            return terminals;
+        }
+
+        return null;
+    }
+
     public void RemoveComponentTerminals(CircuitComponent3D component)
     {
         if (componentTerminals.ContainsKey(component))

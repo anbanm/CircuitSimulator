@@ -47,12 +47,25 @@ public class ComponentPropertyPopup : MonoBehaviour
         if (instance == null)
         {
             instance = this;
+            EnsureEventSystem();
             CreatePopupUI();
             Debug.Log("✅ ComponentPropertyPopup initialized successfully");
         }
         else if (instance != this)
         {
             Destroy(gameObject);
+        }
+    }
+
+    void EnsureEventSystem()
+    {
+        // Check if EventSystem exists, create one if not (required for UI input)
+        if (UnityEngine.EventSystems.EventSystem.current == null)
+        {
+            GameObject eventSystemObj = new GameObject("EventSystem");
+            eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
+            eventSystemObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            Debug.Log("✅ Created EventSystem for UI input");
         }
     }
     
@@ -64,10 +77,11 @@ public class ComponentPropertyPopup : MonoBehaviour
         
         Canvas canvas = popupCanvas.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
-        
+        canvas.sortingOrder = 100; // Ensure popup appears in front of other UI
+
         RectTransform canvasRect = popupCanvas.GetComponent<RectTransform>();
         canvasRect.sizeDelta = new Vector2(400, 250); // Larger canvas size
-        
+
         // Add canvas scaler for world space
         popupCanvas.AddComponent<CanvasScaler>();
         popupCanvas.AddComponent<GraphicRaycaster>();

@@ -19,6 +19,9 @@ public class CircuitWire : MonoBehaviour
     public string flowStartTerminal = "Not set";
     [Tooltip("Terminal where current flow ENDS (destination end)")]
     public string flowEndTerminal = "Not set";
+
+    [Header("Debug")]
+    public bool debugWire = false; // Enable verbose logging for this wire
     
     private LineRenderer lineRenderer;
     private CircuitComponent3D component1;
@@ -211,7 +214,7 @@ public class CircuitWire : MonoBehaviour
     // Called when an endpoint connects to a terminal
     public void OnEndpointConnected(WireEndpoint endpoint)
     {
-        Debug.Log($"[WIRE] {name} OnEndpointConnected: endpoint={endpoint.name}");
+        if (debugWire) Debug.Log($"[WIRE] {name} OnEndpointConnected: endpoint={endpoint.name}");
 
         // Update component references based on connected terminals
         if (startEndpoint != null && startEndpoint.IsConnected)
@@ -220,11 +223,11 @@ public class CircuitWire : MonoBehaviour
             if (startTerminal != null)  // FIX: Check for terminal (could be wire-to-wire junction)
             {
                 component1 = startTerminal.ParentComponent;
-                Debug.Log($"[WIRE] {name} START connected: terminal={startTerminal.name}, component={component1.name}");
+                if (debugWire) Debug.Log($"[WIRE] {name} START connected: terminal={startTerminal.name}, component={component1.name}");
             }
             else
             {
-                Debug.Log($"[WIRE] {name} START connected to wire endpoint (junction)");
+                if (debugWire) Debug.Log($"[WIRE] {name} START connected to wire endpoint (junction)");
             }
         }
 
@@ -234,26 +237,35 @@ public class CircuitWire : MonoBehaviour
             if (endTerminal != null)  // FIX: Check for terminal (could be wire-to-wire junction)
             {
                 component2 = endTerminal.ParentComponent;
-                Debug.Log($"[WIRE] {name} END connected: terminal={endTerminal.name}, component={component2.name}");
+                if (debugWire) Debug.Log($"[WIRE] {name} END connected: terminal={endTerminal.name}, component={component2.name}");
             }
             else
             {
-                Debug.Log($"[WIRE] {name} END connected to wire endpoint (junction)");
+                if (debugWire) Debug.Log($"[WIRE] {name} END connected to wire endpoint (junction)");
             }
         }
 
         bool fullyConnected = IsFullyConnected();
         bool startConnected = startEndpoint != null && startEndpoint.IsConnected;
         bool endConnected = endEndpoint != null && endEndpoint.IsConnected;
-        Debug.Log($"[WIRE] {name} IsFullyConnected={fullyConnected} (startConnected:{startConnected}, endConnected:{endConnected})");
+        if (debugWire) Debug.Log($"[WIRE] {name} IsFullyConnected={fullyConnected} (startConnected:{startConnected}, endConnected:{endConnected})");
 
         // If both endpoints connected, register with circuit system
         if (fullyConnected)
         {
-            Debug.Log($"[WIRE] {name} is fully connected - proceeding with registration");
+            if (debugWire) Debug.Log($"[WIRE] {name} is fully connected - proceeding with registration");
 
             // Subscribe to circuit solved events NOW that wire is fully connected
             CircuitEventManager.CircuitSolved += OnCircuitSolvedHandler;
+
+            // TIMING FIX: If circuit was already solved before we subscribed, update immediately
+            // This handles the case where wire connects after initial solve
+            var solverManager = FindFirstObjectByType<CircuitSolverManager>();
+            if (solverManager != null && solverManager.IsCircuitSolved)
+            {
+                if (debugWire) Debug.Log($"[WIRE] {name} connected after circuit solved - triggering immediate update");
+                OnCircuitSolvedHandler();
+            }
 
             // CRITICAL FIX: Double-check component wire lists to prevent duplicate registration
             bool alreadyInComponent1 = (component1 != null && component1.connectedWires.Contains(this));
@@ -275,7 +287,7 @@ public class CircuitWire : MonoBehaviour
             var manager = FindFirstObjectByType<CircuitManager>();
             bool actuallyRegisteredWithManager = (manager != null && manager.IsWireRegistered(gameObject));
 
-            Debug.Log($"[WIRE] {name} registration check: isRegistered={isRegisteredWithManager}, actuallyRegistered={actuallyRegisteredWithManager}");
+            if (debugWire) Debug.Log($"[WIRE] {name} registration check: isRegistered={isRegisteredWithManager}, actuallyRegistered={actuallyRegisteredWithManager}");
 
             if (!isRegisteredWithManager && !actuallyRegisteredWithManager)
             {
@@ -285,11 +297,11 @@ public class CircuitWire : MonoBehaviour
             else if (!isRegisteredWithManager && actuallyRegisteredWithManager)
             {
                 isRegisteredWithManager = true;
-                Debug.Log($"[WIRE] {name} already in manager list, syncing flag");
+                if (debugWire) Debug.Log($"[WIRE] {name} already in manager list, syncing flag");
             }
             else
             {
-                Debug.Log($"[WIRE] {name} SKIPPED registration (already registered)");
+                if (debugWire) Debug.Log($"[WIRE] {name} SKIPPED registration (already registered)");
             }
 
             // Connect terminals electrically (only once)
@@ -488,12 +500,12 @@ public class CircuitWire : MonoBehaviour
 
         if (manager != null)
         {
-            Debug.Log($"[WIRE] {name} registered with CircuitManager (startTerminal: {(startTerminal != null ? startTerminal.name : "NULL")}, endTerminal: {(endTerminal != null ? endTerminal.name : "NULL")})");
+            if (debugWire) Debug.Log($"[WIRE] {name} registered with CircuitManager (startTerminal: {(startTerminal != null ? startTerminal.name : "NULL")}, endTerminal: {(endTerminal != null ? endTerminal.name : "NULL")})");
             manager.RegisterWire(gameObject);
         }
         else
         {
-            Debug.LogWarning($"[WIRE] {name} could not register - CircuitManager not found!");
+            if (debugWire) Debug.LogWarning($"[WIRE] {name} could not register - CircuitManager not found!");
         }
     }
     
@@ -536,6 +548,67 @@ public class CircuitWire : MonoBehaviour
             return;
         }
 
+        // Check if this is a junction wire (connected to other wires, not components)
+        bool isJunctionWire = (component1 == null || component2 == null);
+
+        // For junction wires, try to get current from any connected component through the electrical node
+        if (isJunctionWire)
+        {
+            // Try to get current from electrical nodes (set by topology)
+            float junctionCurrent = 0f;
+
+            // Check start endpoint's connected terminal
+            if (startEndpoint != null && startEndpoint.ConnectedTerminal != null)
+            {
+                var terminal = startEndpoint.ConnectedTerminal;
+                if (terminal.ParentComponent != null)
+                {
+                    junctionCurrent = Mathf.Abs(terminal.ParentComponent.current);
+                }
+            }
+
+            // If not found, check end endpoint
+            if (junctionCurrent < 0.001f && endEndpoint != null && endEndpoint.ConnectedTerminal != null)
+            {
+                var terminal = endEndpoint.ConnectedTerminal;
+                if (terminal.ParentComponent != null)
+                {
+                    junctionCurrent = Mathf.Abs(terminal.ParentComponent.current);
+                }
+            }
+
+            // If still not found, try to get from snapped wire endpoints
+            if (junctionCurrent < 0.001f)
+            {
+                if (startEndpoint != null && startEndpoint.SnappedToEndpoint != null)
+                {
+                    var snappedWire = startEndpoint.SnappedToEndpoint.ParentWire;
+                    if (snappedWire != null)
+                    {
+                        junctionCurrent = Mathf.Abs(snappedWire.current);
+                    }
+                }
+                if (junctionCurrent < 0.001f && endEndpoint != null && endEndpoint.SnappedToEndpoint != null)
+                {
+                    var snappedWire = endEndpoint.SnappedToEndpoint.ParentWire;
+                    if (snappedWire != null)
+                    {
+                        junctionCurrent = Mathf.Abs(snappedWire.current);
+                    }
+                }
+            }
+
+            current = junctionCurrent;
+            return;
+        }
+
+        // For non-junction wires, verify we have valid terminals
+        if (startTerminal == null || endTerminal == null)
+        {
+            current = 0f;
+            return;
+        }
+
         // Priority 1: Get current from circuit solver through CircuitManager
         CircuitManager manager = CircuitManager.Instance;
         if (manager == null && ComponentRegistry.Instance != null)
@@ -550,20 +623,19 @@ public class CircuitWire : MonoBehaviour
             var solverManager = FindFirstObjectByType<CircuitSolverManager>();
             if (solverManager != null)
             {
-                // Check if this wire has solved current data
                 // Wire current flows between the two connected components
-                if (component1 != null && component2 != null)
-                {
-                    // OrientWireTowardSource() is now called ONLY on circuit solve (not every frame)
-                    // This prevents expensive BFS pathfinding from running constantly
+                // (Null checks for component1/component2 already done at method start)
 
-                    // EDUCATIONAL PHYSICS: Kirchhoff's Current Law (KCL)
-                    // Current through a wire MUST equal current through connected components
-                    // Any difference indicates a solver error that we should detect
+                // OrientWireTowardSource() is now called ONLY on circuit solve (not every frame)
+                // This prevents expensive BFS pathfinding from running constantly
 
-                    // Now that wire is properly oriented, use component1's current
-                    float current1 = component1.current;
-                    float current2 = component2.current;
+                // EDUCATIONAL PHYSICS: Kirchhoff's Current Law (KCL)
+                // Current through a wire MUST equal current through connected components
+                // Any difference indicates a solver error that we should detect
+
+                // Now that wire is properly oriented, use component1's current
+                float current1 = component1.current;
+                float current2 = component2.current;
 
                     {
                     }
@@ -697,17 +769,16 @@ public class CircuitWire : MonoBehaviour
                         wireCurrent = (wireCurrent >= 0) ? avgMagnitude : -avgMagnitude;
                     }
 
-                    // Only update if there's a significant change
-                    if (Mathf.Abs(wireCurrent - current) > 0.001f)
-                    {
-                        current = wireCurrent;
-                    }
+                // Only update if there's a significant change
+                if (Mathf.Abs(wireCurrent - current) > 0.001f)
+                {
+                    current = wireCurrent;
                 }
             }
         }
 
-        // Fallback: Use component current directly
-        if (component1 != null && Mathf.Abs(current) < 0.001f)
+        // Fallback: Use component current directly (with null check)
+        if (Mathf.Abs(current) < 0.001f && component1 != null)
         {
             current = Mathf.Abs(component1.current);
         }

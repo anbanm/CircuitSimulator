@@ -140,6 +140,7 @@ public class VisualFlowGraph
     /// <summary>
     /// Get terminal for wire endpoint (junction-aware)
     /// For junction endpoints, traverses across the junction to find the component on the other side
+    /// Uses BFS to handle multi-level junction chains
     /// </summary>
     private ComponentTerminal GetTerminalForEndpoint(CircuitWire wire, WireEndpoint endpoint)
     {
@@ -151,26 +152,57 @@ public class VisualFlowGraph
             return endpoint.ConnectedTerminal;
         }
 
-        // If at junction, traverse ACROSS the junction to find the component on the other side
+        // If at junction, use BFS to traverse through junction chain until we find a component terminal
         if (endpoint.SnappedToEndpoint != null)
         {
-            // Get the other wire at this junction
-            WireEndpoint junctionEndpoint = endpoint.SnappedToEndpoint;
-            CircuitWire otherWire = junctionEndpoint.ParentWire;
+            var visitedEndpoints = new HashSet<WireEndpoint> { endpoint };
+            var queue = new Queue<WireEndpoint>();
+            queue.Enqueue(endpoint.SnappedToEndpoint);
 
-            if (otherWire != null)
+            while (queue.Count > 0)
             {
-                // Get the OPPOSITE endpoint of the other wire (the one NOT at the junction)
-                WireEndpoint acrossJunction = null;
-                if (otherWire.startEndpoint == junctionEndpoint)
-                    acrossJunction = otherWire.endEndpoint;
-                else if (otherWire.endEndpoint == junctionEndpoint)
-                    acrossJunction = otherWire.startEndpoint;
+                var currentEndpoint = queue.Dequeue();
+                if (currentEndpoint == null || visitedEndpoints.Contains(currentEndpoint))
+                    continue;
 
-                // Return the terminal on the other side of the junction
-                if (acrossJunction != null && acrossJunction.ConnectedTerminal != null)
+                visitedEndpoints.Add(currentEndpoint);
+
+                // Check if this endpoint is connected to a component terminal
+                if (currentEndpoint.ConnectedTerminal != null)
                 {
-                    return acrossJunction.ConnectedTerminal;
+                    return currentEndpoint.ConnectedTerminal;
+                }
+
+                // Get the wire this endpoint belongs to
+                CircuitWire currentWire = currentEndpoint.ParentWire;
+                if (currentWire == null) continue;
+
+                // Get the OPPOSITE endpoint of this wire
+                WireEndpoint oppositeEndpoint = null;
+                if (currentWire.startEndpoint == currentEndpoint)
+                    oppositeEndpoint = currentWire.endEndpoint;
+                else if (currentWire.endEndpoint == currentEndpoint)
+                    oppositeEndpoint = currentWire.startEndpoint;
+
+                if (oppositeEndpoint != null && !visitedEndpoints.Contains(oppositeEndpoint))
+                {
+                    // Check if opposite endpoint has a terminal
+                    if (oppositeEndpoint.ConnectedTerminal != null)
+                    {
+                        return oppositeEndpoint.ConnectedTerminal;
+                    }
+
+                    // If opposite endpoint is snapped to another junction, continue BFS
+                    if (oppositeEndpoint.SnappedToEndpoint != null)
+                    {
+                        queue.Enqueue(oppositeEndpoint.SnappedToEndpoint);
+                    }
+                }
+
+                // Also check if current endpoint is snapped to another endpoint (multi-wire junction)
+                if (currentEndpoint.SnappedToEndpoint != null && !visitedEndpoints.Contains(currentEndpoint.SnappedToEndpoint))
+                {
+                    queue.Enqueue(currentEndpoint.SnappedToEndpoint);
                 }
             }
         }
@@ -179,8 +211,8 @@ public class VisualFlowGraph
     }
 
     /// <summary>
-    /// Assign flow directions starting from Battery+ using BFS on the visual graph
-    /// This is INDEPENDENT of the electrical solver's merged nodes
+    /// Assign flow directions starting from Battery+ using BFS on wire endpoints
+    /// This traverses through ALL wires including junction-to-junction wires
     /// </summary>
     public void AssignFlowDirectionsFromBattery(CircuitComponent3D battery, ComponentTerminalManager terminalManager)
     {
@@ -200,78 +232,132 @@ public class VisualFlowGraph
             return;
         }
 
+        Debug.Log($"[FLOW] Starting flow assignment from {battery.name}.{batteryPositive.name}");
 
-        // BFS state
-        var visitedComponents = new HashSet<CircuitComponent3D>();
+        // Find all wire endpoints connected to battery positive terminal
+        var allEndpoints = Object.FindObjectsByType<WireEndpoint>(FindObjectsSortMode.None);
+        var startEndpoints = new List<WireEndpoint>();
+
+        foreach (var endpoint in allEndpoints)
+        {
+            if (endpoint.ConnectedTerminal == batteryPositive)
+            {
+                startEndpoints.Add(endpoint);
+            }
+        }
+
+        if (startEndpoints.Count == 0)
+        {
+            Debug.LogWarning("⚠️ No wire endpoints connected to Battery+");
+            return;
+        }
+
+        Debug.Log($"[FLOW] Found {startEndpoints.Count} endpoints at Battery+");
+
+        // BFS through wire endpoints
+        var visitedEndpoints = new HashSet<WireEndpoint>();
         var visitedWires = new HashSet<CircuitWire>();
-        var queue = new Queue<(CircuitComponent3D component, ComponentTerminal exitTerminal)>();
+        var queue = new Queue<WireEndpoint>();
 
-        // Start BFS from battery - will exit FROM PositiveTerminal
-        queue.Enqueue((battery, batteryPositive));
-        visitedComponents.Add(battery);
+        // Seed BFS with endpoints at Battery+
+        foreach (var ep in startEndpoints)
+        {
+            ep.isStart = true; // This endpoint is the START of current flow on its wire
+            visitedEndpoints.Add(ep);
+            queue.Enqueue(ep);
+        }
 
         int wiresProcessed = 0;
 
         while (queue.Count > 0)
         {
-            var (currentComponent, exitFromTerminal) = queue.Dequeue();
+            var currentEndpoint = queue.Dequeue();
+            if (currentEndpoint == null) continue;
 
-            // Find all outgoing connections from this component
-            var connections = GetOutgoingConnections(currentComponent);
+            var wire = currentEndpoint.ParentWire;
+            if (wire == null) continue;
 
-            foreach (var connection in connections)
+            // Mark this wire as processed
+            if (!visitedWires.Contains(wire))
             {
-                // Only process connections that leave FROM the exit terminal
-                if (connection.fromTerminal != exitFromTerminal)
-                    continue;
-
-                // Skip if we already processed this wire
-                if (visitedWires.Contains(connection.wire))
-                    continue;
-
-                visitedWires.Add(connection.wire);
-
-                // Assign flow direction: current flows FROM this component TO the other
-                // Use junction-aware terminal lookup to find which endpoint connects to fromTerminal
-                var startTerminal = GetTerminalForEndpoint(connection.wire, connection.wire.startEndpoint);
-                var endTerminal = GetTerminalForEndpoint(connection.wire, connection.wire.endEndpoint);
-
-                if (startTerminal == connection.fromTerminal)
-                {
-                    connection.wire.startEndpoint.isStart = true;
-                    connection.wire.endEndpoint.isStart = false;
-                }
-                else if (endTerminal == connection.fromTerminal)
-                {
-                    connection.wire.endEndpoint.isStart = true;
-                    connection.wire.startEndpoint.isStart = false;
-                }
-
+                visitedWires.Add(wire);
                 wiresProcessed++;
 
-                // Queue the destination component if not visited
-                if (!visitedComponents.Contains(connection.toComponent))
+                // The endpoint we came FROM is the start, the other endpoint is the end
+                WireEndpoint otherEndpoint = null;
+                if (wire.startEndpoint == currentEndpoint)
                 {
-                    visitedComponents.Add(connection.toComponent);
+                    otherEndpoint = wire.endEndpoint;
+                    currentEndpoint.isStart = true;
+                    if (otherEndpoint != null) otherEndpoint.isStart = false;
+                }
+                else if (wire.endEndpoint == currentEndpoint)
+                {
+                    otherEndpoint = wire.startEndpoint;
+                    currentEndpoint.isStart = true;
+                    if (otherEndpoint != null) otherEndpoint.isStart = false;
+                }
 
-                    // Current enters via toTerminal, so find the OTHER terminal to exit from
-                    var destTerminals = terminalManager.GetComponentTerminals(connection.toComponent);
+                Debug.Log($"[FLOW] Wire {wire.name}: flow from {currentEndpoint.name} to {otherEndpoint?.name}");
 
-                    // For 2-terminal components, pick the terminal that isn't the entry point
-                    // Sort by name for deterministic selection if multiple exit terminals exist
-                    var exitTerminal = destTerminals
-                        .Where(t => t != connection.toTerminal)
-                        .OrderBy(t => t.name)
-                        .FirstOrDefault();
+                // Continue BFS from the other endpoint
+                if (otherEndpoint != null && !visitedEndpoints.Contains(otherEndpoint))
+                {
+                    visitedEndpoints.Add(otherEndpoint);
 
-                    if (exitTerminal != null)
+                    // If other endpoint is at a component terminal, find wires leaving that terminal
+                    if (otherEndpoint.ConnectedTerminal != null)
                     {
-                        queue.Enqueue((connection.toComponent, exitTerminal));
+                        var terminal = otherEndpoint.ConnectedTerminal;
+                        var component = terminal.ParentComponent;
+
+                        if (component != null)
+                        {
+                            // Find the OTHER terminal of this component (current exits from there)
+                            var compTerminals = terminalManager.GetComponentTerminals(component);
+                            var exitTerminal = compTerminals.FirstOrDefault(t => t != terminal);
+
+                            if (exitTerminal != null)
+                            {
+                                // Find all wire endpoints at the exit terminal
+                                foreach (var ep in allEndpoints)
+                                {
+                                    if (ep.ConnectedTerminal == exitTerminal && !visitedEndpoints.Contains(ep))
+                                    {
+                                        visitedEndpoints.Add(ep);
+                                        queue.Enqueue(ep);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // If other endpoint is at a junction (snapped to another endpoint)
+                    else if (otherEndpoint.SnappedToEndpoint != null)
+                    {
+                        // Find ALL endpoints at this junction position
+                        var junctionPos = otherEndpoint.GetPosition();
+                        foreach (var ep in allEndpoints)
+                        {
+                            if (ep == otherEndpoint) continue;
+                            if (visitedEndpoints.Contains(ep)) continue;
+
+                            // Check if this endpoint is at the junction (either snapped or position-based)
+                            bool atJunction = (ep.SnappedToEndpoint == otherEndpoint) ||
+                                            (otherEndpoint.SnappedToEndpoint == ep) ||
+                                            (Vector3.Distance(ep.GetPosition(), junctionPos) < 0.2f);
+
+                            if (atJunction)
+                            {
+                                visitedEndpoints.Add(ep);
+                                queue.Enqueue(ep);
+                            }
+                        }
                     }
                 }
             }
         }
 
+        Debug.Log($"[FLOW] Processed {wiresProcessed} wires, visited {visitedEndpoints.Count} endpoints");
     }
 
     /// <summary>

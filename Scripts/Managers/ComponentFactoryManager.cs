@@ -541,12 +541,41 @@ public class ComponentFactoryManager : MonoBehaviour, IComponentFactory
         // Add connection terminals for electrical connections
         SetupConnectionTerminals(componentObject);
 
+        // Add ChildClickForwarder to all child renderers so clicking any part selects the whole component
+        SetupChildClickForwarders(componentObject);
+
         // DISABLED - Using PersistentLabel system instead
         // ComponentValueDisplay valueDisplay = componentObject.GetComponent<ComponentValueDisplay>();
         // if (valueDisplay == null)
         // {
         //     valueDisplay = componentObject.AddComponent<ComponentValueDisplay>();
         // }
+    }
+
+    /// <summary>
+    /// Adds ChildClickForwarder to all child objects with renderers.
+    /// This allows clicking on any part of a prefab to select/move the whole component.
+    /// </summary>
+    private void SetupChildClickForwarders(GameObject componentObject)
+    {
+        // Get all renderers in children (excluding the root object itself)
+        Renderer[] childRenderers = componentObject.GetComponentsInChildren<Renderer>();
+
+        foreach (Renderer renderer in childRenderers)
+        {
+            // Skip the root object - it already has SelectableComponent/MoveableComponent
+            if (renderer.gameObject == componentObject) continue;
+
+            // Skip terminal objects - they need their own click handling
+            if (renderer.GetComponent<ComponentTerminal>() != null) continue;
+
+            // Add ChildClickForwarder if not already present
+            ChildClickForwarder forwarder = renderer.GetComponent<ChildClickForwarder>();
+            if (forwarder == null)
+            {
+                forwarder = renderer.gameObject.AddComponent<ChildClickForwarder>();
+            }
+        }
     }
 
     private void SetupConnectionTerminals(GameObject componentObject)

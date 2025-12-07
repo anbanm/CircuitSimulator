@@ -1,3 +1,9 @@
+> **DEPRECATED** - This document describes the old `MergeJunctionTerminalNodes()` implementation.
+> See **[TOPOLOGY_PATH_TRAVERSAL.md](TOPOLOGY_PATH_TRAVERSAL.md)** for the current path-centric design.
+> This document is retained for historical reference only.
+
+---
+
 # Wire-to-Wire Junction Solving Fix - Implementation Complete
 
 ## Problem Summary

@@ -1,3 +1,6 @@
+> **NOTE**: This document describes the junction-centric node merging fix.
+> The system has been redesigned with path-centric traversal - see **[TOPOLOGY_PATH_TRAVERSAL.md](TOPOLOGY_PATH_TRAVERSAL.md)**.
+
 # Wire-to-Wire Junction Fix - COMPLETE ✅
 
 ## Status: **CIRCUIT SOLVING SUCCESSFULLY**

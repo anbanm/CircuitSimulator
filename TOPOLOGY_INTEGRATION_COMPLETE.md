@@ -1,3 +1,6 @@
+> **NOTE**: This document describes topology integration with junction-centric merging.
+> For the current path-centric design, see **[TOPOLOGY_PATH_TRAVERSAL.md](TOPOLOGY_PATH_TRAVERSAL.md)**.
+
 # Topology Integration & Wire Visualization - COMPLETE ✅
 
 ## Status: **FULLY INTEGRATED**

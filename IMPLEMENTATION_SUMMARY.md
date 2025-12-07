@@ -1,3 +1,9 @@
+> **DEPRECATED** - This document describes fixes to the old junction-centric merging approach.
+> See **[TOPOLOGY_PATH_TRAVERSAL.md](TOPOLOGY_PATH_TRAVERSAL.md)** for the current path-centric design.
+> This document is retained for historical reference only.
+
+---
+
 # Implementation Summary - All Code Review Fixes Applied
 
 ## Overview
