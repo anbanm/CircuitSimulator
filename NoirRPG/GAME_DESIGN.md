@@ -64,6 +64,33 @@ Coverage in recent years describes a town that rose with coal and does not know 
 | **eMbalenhle** | One neighbourhood: Joseph's house, a tavern, a taxi stop, Mokoena's truck yard on the edge |
 | **The Brandt farm** | The original farmhouse among bluegums, older than the town, with the maize and the colliery's new block beyond it |
 
+### The town in detail: business and residential
+
+This is the first area to be designed and drawn. Street-level facts here are thin: published sources describe Secunda's centre and suburbs only in general terms, so every location below needs checking against the real town.
+
+**Business area.** A low-rise centre of face-brick shopping centres and offices set among large parking lots, serving the town and the smaller towns around it.
+
+| Location | Use in the story |
+|---|---|
+| Community radio station (fictional), a unit in a shop row | Daniel's station. Murder scene on Monday; night entry is the stealth tutorial; the broadcast desk is one of Friday's choices |
+| Shop row and parking lot | The crowd on Monday. Car guards and shop staff are the first witnesses |
+| Police station | Captain Khoza, the docket, the cells. Ruth is brought here on Thursday if caught |
+| Bank and ATM row | Where Grace Tau's borrowers draw their wages with cards she holds. ATM slips tie Sam Nel to her |
+| Municipal offices | Prospecting and land records for the new coal block: *written* clues, some of them altered |
+| 24-hour fuel station | Open when nothing else is. Night meetings, a camera that saw a car on Monday |
+| The lake | Where Anneline will talk, after dark, away from the mine |
+
+**Residential area.** Suburbs of single-storey houses on generous plots behind walls, with lawns, carports and street trees, and walled townhouse complexes among them.
+
+| Location | Use in the story |
+|---|---|
+| Grace Tau's guesthouse (fictional), a converted house with rooms built on behind | Ruth's room, the board, the save point. Contractors' vehicles in the yard, and Grace always at the kitchen door |
+| Daniel Brandt's house | Searched on Tuesday. He lived in town, not on the farm, and the house says why |
+| Sam Nel's flat, in a block of walk-ups | Entered on Tuesday. The debt, the pawn slips, and what he was selling |
+| Anneline Petersen's townhouse, in a complex with a boom gate | Wednesday's meeting. Thursday's reason for running |
+| Marius Steyn's house, the highest wall on the street | Optional entry on Wednesday night. What Steyn believes about the box |
+| Green strips and footpaths between the suburbs and the centre | On Thursday the roads are watched. These are how Ruth crosses town on foot |
+
 **Driving** is the travel interlude: the road, the plant on the skyline, and the car radio. After Monday, Daniel's station plays his old programmes on repeat, and what is on the radio changes with what Ruth has done.
 
 The town runs on a clock. Shifts change at the mine and the plant, the roads fill and empty, and named people have places to be at each block.
