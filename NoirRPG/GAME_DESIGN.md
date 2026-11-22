@@ -183,6 +183,10 @@ Whether the police can fund an informer this way, and what a private person may 
 
 There are five favours and more than five uses for them. Between the money and the favours, the player feels exactly how little the law can do, and that the people in it are trying.
 
+Khoza's own moves are small and real: sending an exhibit to a second laboratory when the first report leaves something out, holding someone on an unrelated charge so the others are not warned, and trying to get the docket to an outside unit before it is taken from him.
+
+**The deaths nobody investigates.** In the same two weeks the station also gets a stabbing outside a tavern, a woman killed by her partner, and a man beaten to death by a crowd as a suspected thief. They are folders on Khoza's desk and items on the radio. Nobody is sent. The game should let the player notice which deaths get a detective.
+
 **What it costs them.** The epilogue shows it. Khoza loses the case. Nkuna is still driving the same car.
 
 **What is invented and what is borrowed.** Steyn's firm is drawn from the real pattern here of armed-response companies and policing forums working together, including joining vehicle chases. Mokoena's forum is a provincial and national pattern; no such incident was found at Secunda itself. Lenders who hold borrowers' bank cards are documented elsewhere in Mpumalanga, not here. All three are plausible inventions and should be written as that.
@@ -195,7 +199,7 @@ There are five favours and more than five uses for them. Between the money and t
 
 The game has two murders and each looks like the other kind.
 
-- **Daniel Brandt, day 1.** A broadcaster exposing a mine is shot outside his station. The town assumes a hit. The police call it a robbery. It is neither: it is personal, done by someone one step from him, which is what most murders here are.
+- **Daniel Brandt, day 1.** A broadcaster exposing a mine is shot outside his station. The town assumes a hit. The police call it a robbery, because his phone and laptop are missing and a robbery can be closed. Both readings suit someone: the station is spared an unsolvable hit, and the people behind the fraud are content to be suspected of a killing they did not commit so long as nobody looks at the books. It is neither: it is personal, done by someone one step from him, which is what most murders here are.
 - **Anneline Petersen, day 11.** A lab manager is shot in her car at the gate of her complex and her laptop and bag are taken. It looks like a hijacking gone wrong. It is a paid killing, the rare kind that is rising and that almost never reaches the person who paid.
 
 ### The storylines
@@ -249,10 +253,10 @@ Nobody Ruth meets describes the crate the same way.
 
 Taken from how real staged scenes were undone.
 
-- **Day 1 is not a robbery:** nothing was taken from Daniel or his car. **And not a hit:** one shot, close, from a pistol kept in the station desk; no car waiting; the emergency call came twenty minutes late and from Sam's phone.
+- **Day 1 is not a robbery:** Daniel's phone and laptop bag are gone, which is why the docket says robbery, but his wallet, watch and car are not. **And not a hit:** one shot, close, from a pistol kept in the station desk; no car waiting; the emergency call came twenty minutes late and from Sam's phone.
 - **Sam:** his phone was switched off for the hour that matters. A loan settlement at Grace's is dated that same morning, before Daniel died. He had already listed the station's mixing desk for sale.
 - **The frame:** the cartridge case Steyn's men "found" the next day is the wrong calibre for the wound the forensic officer at the Evander mortuary describes.
-- **Day 11 is not a hijacking:** her car was left; only the laptop and bag went. The gate motor had been disabled the night before. The guesthouse register has a guest who paid cash, gave a contractor's name that no contractor recognises, and left at four in the morning.
+- **Day 11 is not a hijacking:** her car was left; only the work laptop and bag went. The gunman's bakkie was stolen in another province four months earlier. It happened an hour before she was due to make a statement. The gate motor had been disabled the night before. The guesthouse register has a guest who paid cash, gave a contractor's name that no contractor recognises, and left at four in the morning.
 
 ### Act by act
 
@@ -267,7 +271,7 @@ Ruth gets out. That is the only thing the player can be sure of.
 
 - The sale collapsing closes the mine now. The sale going through closes it within the year with the money gone. Neither saves a job.
 - Sam Nel can be convicted, if Ruth named him. It is the one clean result available and it is the least important.
-- The gunman may be caught. He will plead, and say truthfully that he does not know who paid.
+- The gunman may be caught, through the pistol or the bakkie. He will plead, take fifteen to twenty years, and say truthfully that he does not know who paid. The driver who hired him, the one person who met both sides, is gone by Saturday.
 - Brandt is seventy-eight and will not live to stand trial. Steyn is never charged. Without Anneline the tins are disputed for years.
 - The day book can win the dismissed men their case. The judgment comes after the mine has closed.
 - Khoza is taken off the docket, which goes to a provincial unit and stops moving. The ballistics match on the strike shooting comes back the following winter.
@@ -283,6 +287,8 @@ The case board is the wall of Ruth's room and a full-screen view anywhere else. 
 - **Insight:** two or three clues the player links on the board. A valid link produces a new card at once.
 - **Question:** each act poses two or three. Each takes one answer.
 - **Confrontation:** naming an answer to someone with power. Only then does the game respond to whether it was right.
+
+**What Ruth can lawfully reach.** She has a citizen's powers and no more. She cannot get phone or bank records herself; those come only through Khoza's records request. What she can work is what solved the real cases: security-company control-room logs, private cameras, vehicle-tracker reports held by owners and insurers, policy and loan paperwork, copies the victim left elsewhere (a message to a friend, a draft sent to a private address, a recording on the station computer), and people. Which language a person will talk in, and to whom, decides what she learns.
 
 Rules:
 
@@ -341,7 +347,11 @@ Day 1 only: arrival, the crowd at the station, three conversations, the room and
 
 Engine is still open. With co-op gone, a browser build (Three.js) remains the fastest route to something playable and testable here; Unity or Godot are equally reasonable for the full game.
 
-## 14. Open decisions
+## 14. What the research says to leave out
+
+No serial killer. No occult angle for colour. No murdered woman's body as spectacle. No hostel or informal settlement as scenery. No foreign crime boss. No single corrupt official who explains everything. No quick forensic breakthrough. Ruth is not a drinker with a past in the police; she is a file-builder.
+
+## 15. Open decisions
 
 - Confirm the ground rules at the top, above all the line between the real town and the invented story.
 - Whether Ruth is the right protagonist: an outsider, as in the source, or someone who grew up in Secunda or eMbalenhle.
