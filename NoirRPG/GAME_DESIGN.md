@@ -1,256 +1,178 @@
-# AFTERIMAGE (working title) — Game Design
+# DOORNRAND (working title) — Game Design, v3
 
-A cyberpunk detective-noir action RPG. Isometric, rotatable camera. Solo or 2–4 player online co-op.
+A detective story set in a mining town over five days. Isometric, rotatable camera. Single player, one fixed main character, three to four hours.
 
-Status: design draft, no code yet. Names, plot and numbers are proposals to be changed.
+Status: design draft, no code. This version replaces the earlier five-city, co-op, cyberpunk design. All names are placeholders.
+
+Assumptions made in this version, to confirm:
+
+- **Grounded, not cyberpunk.** "Keep realistic" is read as present day or a few years ahead: phones, cameras, drones, radios. No implants, no abilities, no hacking minigames.
+- **Single player.** One main character means co-op is parked.
+- **A fictional town.** Doornrand is invented and stands on a gold reef in South Africa. Its detail comes from how a mining town works, not from national landmarks.
 
 ---
 
 ## 1. The game in one paragraph
 
-You are a licensed finder (private investigator) in Egoli Central, the old heart of Johannesburg, in a future South Africa run by corporations and policed by armed-response companies on their payroll. You live there: you have an office with a bed and a wall you pin evidence to, rent due on Fridays, a kota stand that knows your order. Cases come in, and they take you down the rail line to Tshwane, eThekwini and the Cape. You walk the districts, search scenes, talk to people face to face, fight when talking fails, and assemble what you learned into a theory. The game never tells you whether the theory is right until you act on it.
+Ruth Mahlangu, a private investigator, drives into Doornrand on a Monday evening to meet a client. He is shot before she finds him. The town belongs to one old man who, three years ago, brought in hard people to break a strike and never got rid of them. Four of them now run the place between them. Over five days Ruth finds out who killed her client, learns what he was hiding, and decides what to tell whom. The town does the rest. On Friday the mine is to be sold, and what the town looks like that morning is the ending.
 
-## 2. Design pillars
+## 2. Source
 
-1. **One world, one item system.** There are no "quest items". Every story object is a normal game object with a use, and every useful object can be evidence. (Section 5.)
-2. **The player solves the case, not the character.** The game hands out facts. Conclusions are the player's, and wrong ones are playable.
-3. **Violence is a choice with investigative cost.** Combat is fast and can get heavy, but dead people do not testify and shot-up rooms lose evidence.
-4. **A city you live in.** Time passes, people keep schedules, places remember what you did there.
-5. **Simple rules, few numbers.** Four attributes, small inventory, no loot showers.
-6. **Co-op is the same game.** No separate mode, no separate content. Partners split up, share one case board, and argue about the theory.
+The structure is taken from two Dashiell Hammett novels that are in the US public domain.
 
-## 3. Camera, controls, feel
+- *Red Harvest* (1929): an investigator arrives in a mining town, the man who sent for him is already dead, and he breaks the town's gangs by turning them on each other. The cost of doing that is the point of the book.
+- *The Maltese Falcon* (1930): one object, and everyone who wants it tells a different story about what it is.
 
-- 3D world, fixed-pitch isometric camera (about 50°), free 360° rotation with Q/E or right stick, three zoom steps. Walls and roofs between camera and players fade out. Interiors are entered without a loading screen where possible.
-- Movement: WASD or click-to-move (both supported). Gamepad twin-stick.
-- One interact key. Hold it to open a radial with the verbs available on that object (Look, Take, Use, Hack, Talk).
-- **Focus mode** (hold Tab): time slows slightly in solo, the world desaturates, and everything examinable within range gets an outline. Range and detail scale with the Read attribute. This is the investigation equivalent of holding Alt in Diablo to see loot.
+Only the structure is used. No text, names, scenes or dialogue are carried over. Hammett remains in copyright in the UK and EU until 2032, which is another reason to keep it to structure. Get a rights opinion before release.
 
-## 4. Simplified RPG rules
+## 3. Pillars
 
-**Attributes** (1–5 each, start with 7 points):
+1. **What you tell people is the main verb.** The town changes because of who you informed, not who you shot.
+2. **The player solves it.** The game hands out facts. Conclusions are the player's, and wrong ones play out.
+3. **Violence is short, final and remembered.** Nobody is a bullet sponge, including Ruth. Everyone who dies stays dead and is counted.
+4. **Five days, one town.** A small map known thoroughly, with a clock that does not wait.
+5. **The basics only.** No levels, no stats, no upgrades, no loot.
 
-| Attribute | Combat | Investigation |
+## 4. Structure
+
+Four acts across five days. Each day has three blocks: morning, afternoon, night. A block ends when the player moves time on (sleeping, waiting, travelling out to the mine) or when a scripted event closes it.
+
+| Act | Days | Length | What happens |
+|---|---|---|---|
+| I. Arrival | Monday | 40 min | The client is dead. Ruth meets the town, takes a room, and is summoned to the big house, where the old man hires her to find his son's killer. |
+| II. The town | Tuesday, Wednesday | 90 min | The murder is solved, rightly or wrongly. The old man tries to pay Ruth to leave. She learns about the core box and starts feeding the four powers what they want to hear. |
+| III. Harvest | Thursday | 60 min | It comes apart. Ruth's best source is killed and Ruth is blamed. The town is locked down. She finds the box and reaches the old man. The heaviest stealth and action. |
+| IV. Epilogue | Friday | 20 min | The morning of the sale. Ruth decides what happens to the box, then walks through what is left. No combat. |
+
+**Leaving.** Ruth's car is parked outside the lodging house. From Tuesday onward the player can drive out at any time, and the epilogue plays for the town as it stands. Taking the old man's money on Wednesday is a complete, short, bad ending.
+
+## 5. The town
+
+One continuous map, about twelve places, walkable end to end in three minutes.
+
+- **Main street:** Grace Tau's tavern and lodging house (Ruth's room, the case board, the save point), the police station, the community radio station, the general dealer, the clinic, the church.
+- **The mine:** No. 4 shaft and headgear (still working), the mine office, the assay lab, the core yard (thousands of identical core boxes on racks), the security gate.
+- **Where people live:** the hostel, the company houses, the informal settlement past the rail siding, the big house on the ridge.
+- **The edges:** the closed No. 2 shaft, the scrap yard, the tailings dump.
+
+The town runs on a schedule. Shifts change at 06:00, 14:00 and 22:00, and the streets, the tavern and the gate behave differently around them. Named people have places to be at each block. Power cuts happen but are not a mechanic.
+
+## 6. People
+
+**Ruth Mahlangu**, 44. Ten years in police commercial crime, now at a two-person firm in Johannesburg. Careful, tired, good at paperwork. Carries a licensed pistol she has drawn twice in her life.
+
+**Daniel Brandt**, 36. The client. The owner's son, who ran the community radio station and had started broadcasting about the mine. Shot outside the station on Monday evening.
+
+**Hendrik Brandt**, 78. Owns the mine and most of the town. Brought in Steyn to end the strike. Wants the sale to go through on Friday and wants to know who killed his son, in that order.
+
+The four powers:
+
+| Who | Holds | Wants |
 |---|---|---|
-| Grit | Health, melee damage, knockdown resistance | Force doors, intimidate, endure hazards |
-| Reflex | Gun handling, dodge recharge | Sleight of hand, tailing, chases |
-| Wire | Implant charge, hacking in combat | Hack terminals, cameras, locks, read implants |
-| Read | Crit on staggered enemies | Focus mode detail, spot lies, extra dialogue topics |
+| **Marius Steyn**, security contractor | The gate, the hostel, forty armed men | To own Brandt after the sale as he does now |
+| **Abel Mokoena**, scrap dealer and gold buyer | The closed shafts and the crews who work them, many of them retrenched Doornrand miners | The untouched rock he believes the deep borehole found |
+| **Grace Tau**, tavern owner and lender | Half the town's bank cards, the lodging house, every rumour | Her loans repaid before the mine changes hands |
+| **Captain Sizwe Khoza**, station commander | The docket, the cells, the official version | To reach his pension without anything being written down |
 
-No attribute gates a case solution. A low attribute means a longer or louder route, never a dead end.
+Others: **Anneline Petersen**, assayer at the mine lab, who sells information to all four and knows what the core says. **Joseph Sithole**, former shaft steward, sacked after the strike, Ruth's first honest source. **Sam Nel**, technician at the radio station.
 
-**Backgrounds** (pick one, sets starting attributes, one talent, and how some people greet you): Ex-Bastion (armed response), Fixer, Street Medic, Runner.
+## 7. The story
 
-**Progression.** Level 1 to 10 across the whole game. XP comes from closing leads and cases, not from kills. Each level gives one attribute point or one talent. Talents are flat unlocks ("Knockouts are silent", "Read one extra afterimage frame"), with no trees.
+**Hidden truth.** A deep borehole drilled last year was meant to prove a new reef under No. 4. It found nothing. The mine has about eighteen months left. Brandt had the results replaced, paid Anneline to sign the false assay, and is selling the mine on Friday on the strength of it. Daniel found the real core, tray 114, and its assay sheet, hid them, and hired Ruth to confirm what he had before he broadcast it.
 
-**Loadout.** Two weapons, one coat (armour and pockets), three implant slots, a belt of four consumables. Around 40 hand-placed items in the whole game rather than random drops.
+**The object.** Nobody Ruth meets describes the box the same way.
 
-**Combat.** Real-time. Aim with mouse or right stick, dodge roll on a short recharge, two weapon attacks, up to three implant abilities on cooldown using Charge. Enemies have Health and Stagger; a staggered enemy can be **subdued** (non-lethal takedown) instead of killed. Subdued enemies can be questioned afterwards and are still around later in the story. Solo players get an optional AI partner who is also a story character.
+| Who | What they say it is |
+|---|---|
+| Hendrik Brandt | Stolen company property, worthless to anyone else |
+| Steyn | Evidence. Whoever holds it holds Brandt |
+| Mokoena | A map to rock nobody has touched |
+| Grace Tau | Collateral. Daniel pledged it against a loan |
+| Khoza | There is no box |
+| Anneline | A year and a half, then nothing |
 
-**Resources.** Credits (rent, bribes, gear, food), Charge (implant energy), and Heat per area (how much the local power wants you gone; raises patrols and closes doors).
+**Who killed Daniel.** Sam Nel. He owed Grace Tau more than he could pay and had been selling her what Daniel was working on. Daniel found out on Monday afternoon. It was Daniel's own pistol, taken from the station desk. It had nothing to do with the mine. By Tuesday morning Steyn's men have dressed the scene to point at Mokoena's crews, because Steyn wants a reason to clear the closed shafts.
 
-## 5. Story items are game items
+**Act by act.**
 
-Every object carries up to three facets. The same object is a different thing depending on what you do with it.
+- **Monday.** Ruth arrives at dusk. Daniel is not at the tavern. She finds the crowd outside the radio station. Khoza gives her the official version; Joseph gives her the town; Grace gives her a room. At night she can go back into the station, which is the stealth tutorial. A car from the big house fetches her.
+- **Tuesday.** The murder. Three questions on the board: who was at the station, whose gun, who gains. By nightfall Ruth names someone to Brandt and Khoza. If she names Mokoena's people, Steyn raids No. 2 shaft that night with her finding as his warrant.
+- **Wednesday.** Brandt thanks her, pays her, and tells her to go. Every one of the four separately asks whether she has "it". She meets Anneline. The Tell mechanic opens fully, and the first night of faction violence follows from what she said.
+- **Thursday.** Anneline is found dead in the assay lab, and Ruth was the last person seen with her. Steyn closes the roads. Ruth moves through her own town as a wanted person, finds tray 114 in the core yard hidden among thousands like it, and goes up to the big house. How many people are there, and on whose side, depends on Wednesday.
+- **Friday.** The buyers' cars arrive at the mine office at 10:00. Ruth chooses what happens to the box: to the buyers, to Brandt, to Joseph and the workers, on air from Daniel's station, or into the tailings dam. None of these saves the town. The sale collapsing closes the mine now. The sale going through closes it in eighteen months with the money gone. Then she walks down the main street to her car.
 
-- **Use**: what it does mechanically (weapon, key, implant, consumable).
-- **Evidence**: what facts it holds, revealed by examining it, hacking it, or showing it to an expert.
-- **Leverage**: who reacts when you show it to them, and how.
+**The epilogue** is playable. The street reflects who is alive, which buildings burned, what Ruth chose. Survivors will talk. The last screen gives the number of dead and the names.
 
-Examples:
+## 8. Investigation
 
-| Object | Use | Evidence | Leverage |
-|---|---|---|---|
-| Victim's optic implant | Equippable eye, grants low-light vision | Holds his last recorded frames (an *afterimage*) | His sister breaks down; the surgeon who cut it out panics |
-| Bastion Response sidearm | A good pistol | Ballistics match a body in Case 3 | Carrying it openly raises Heat with Bastion, opens doors with the dock union |
-| Bathhouse wristband | Opens lockers at the Glasshouse | Timestamp places the victim there at 01:40 | The attendant stops pretending not to know him |
+The case board is the wall of Ruth's room and a full-screen view anywhere else. There is no quest log and no objective marker.
 
-Consequences follow from this: selling, losing, or destroying an item removes its evidence. Equipping the dead man's eye is useful and is also something people notice. Looting is investigating.
+- **Clue:** one fact, marked as *seen* (Ruth observed it), *said* (someone told her), or *written* (a document or recording, which can be false).
+- **Lead:** an open question a clue raises. Leads are the to-do list and softly mark the people and places they touch.
+- **Insight:** two or three clues the player links on the board. A valid link produces a new card at once.
+- **Question:** each act poses two or three. Each takes one answer.
+- **Confrontation:** naming an answer to someone with power. Only then does the game respond to whether it was right.
 
-## 6. The case system
+Rules:
 
-This replaces the usual quest log. There are no objective markers and no "go here" text.
+1. Every insight needed for the truth can be reached at least three ways: looking, talking, or getting into somewhere Ruth should not be.
+2. Linking is free and immediate. Answers are never checked until they are spoken to someone.
+3. Each act has a planted answer with real support, and one *seen* clue that breaks it.
+4. A wrong answer moves the story on along a worse road. There is no fail screen for being wrong.
+5. Time removes evidence: scenes are cleaned, people leave on the morning bus, documents are shredded. The last route to a required insight is never removed.
 
-### 6.1 Building blocks
+**Objects.** There are no quest items. Every object has what it does, what it shows, and who reacts to it. Daniel's pistol is a weapon, the murder weapon, and the thing Sam cannot look at. Tray 114 is thirty kilograms of rock, the proof, and something each of the four will kill for a different reason.
 
-- **Clue**: one atomic fact with a source and a status. *Observed* (you saw it), *Claimed* (someone said it), or *Recorded* (from a device, which can be forged). Example: "Clean water in the lungs. (Observed, coroner's slab)".
-- **Lead**: an open question that a clue raises. Created automatically. "Where does a freight auditor meet chlorinated water?" Leads are the to-do list. Each names people and places it touches, and those get a soft highlight on the map. Closing a lead grants XP.
-- **Insight**: a conclusion made by the player linking two or three clues on the board. Insights unlock dialogue topics, new locations, and contradictions. Example: wristband timestamp + coroner's time of death gives "He was at the Glasshouse when he died."
-- **Question**: each case has three to five. Who, where, how, why. Each Question has a slot on the board that accepts one Answer backed by the player's Insights and clues.
-- **Theory**: the current set of Answers. It can be incomplete or wrong.
-- **Confrontation**: the point where the player acts on the Theory. Only then does the world respond to whether it was right.
+## 9. Conversations
 
-### 6.2 The loop
+Named characters are spoken to face to face: the view cuts from the isometric town to a first-person frame, a large portrait against the room Ruth is standing in, in the manner of Dune (1992). A short list of commands sits at the bottom right.
 
-```
-Scene / person / fight  ->  Clues  ->  Leads (where next)
-                              |
-                         Case board: link clues -> Insights
-                              |
-                     Fill Questions -> Theory
-                              |
-                       Confrontation -> Revelation -> consequences
-```
+- **Ask about…** topics, which exist because of clues and leads Ruth holds.
+- **Show…** any object or clue card.
+- **Press** when what they said conflicts with something *seen*.
+- **Tell…** give them a clue or an answer. Ruth chooses which, and can leave part of it out. She cannot invent facts, but she can tell different people different true things.
+- **Offer…** money, silence, a lift out of town.
+- **Leave.**
 
-### 6.3 Rules that keep it fair
+**Night resolves the town.** Each of the four acts overnight on what they currently believe: who has the box, who killed Daniel, who is talking to Ruth. The morning shows the result, such as a burned scrap yard, a missing guard, a new man on the gate, or a body. This is the engine of acts II and III, and the reason the body count is the player's.
 
-1. **Three routes.** Every Insight needed for the true answer is reachable from at least three clues obtained by different means: looking, talking, hacking, fighting. An action-heavy player who kicks in the door still finds the comm log on the man they subdued.
-2. **Linking is cheap, answering is not.** A valid link produces an Insight immediately; an invalid one says "nothing connects these". Answers to Questions are never validated until the Confrontation. This rewards attention without letting anyone brute-force the ending.
-3. **False trails are authored.** Each case contains a planted wrong answer with real supporting clues, and at least one clue that breaks it. The break is always an *Observed* clue.
-4. **No fail state.** A wrong Theory moves the story forward along a worse branch: the wrong person takes the fall, an ally is lost, the real culprit gets a head start. Later cases remember.
-5. **Evidence decays.** A Highveld storm washes outdoor scenes after a time block. Witnesses move on. Firefights destroy examinables in the room. Decay never removes the last route to a required Insight.
-6. **Contradictions.** In conversation, presenting a clue that conflicts with a *Claimed* clue from that speaker opens a Press. Success converts the claim, usually into something better.
+## 10. Stealth
 
-### 6.4 The case board
+Used for places Ruth has no right to be (the station at night, the assay lab, Steyn's compound, the big house, No. 2 shaft) and for all of Thursday.
 
-A physical wall in your office and a full-screen UI anywhere else. Columns per Question, clue cards with source and status icons, string between linked cards. The Read attribute adds faint hints on cards that have an unused link. In co-op it is one shared board (Section 9).
+- Guards see in cones, hear footsteps on gravel and iron sheeting, and follow routes tied to the shift clock.
+- Darkness hides; a torch reveals both ways.
+- Distractions are ordinary: a thrown stone, a car alarm, a phone left ringing.
+- Ruth can hold someone from behind and put them down without killing them. They wake later and remember her.
+- Being seen is not instant failure. People ask what she is doing, and in daylight a good answer often works.
+- A drawn weapon changes every conversation in town.
 
-### 6.5 Data shape (engine-neutral)
+## 11. Weapons, armour, health
 
-```json
-{
-  "clue": { "id": "c1_lungs_fresh", "text": "Clean water in the lungs.",
-            "status": "observed", "source": "coroner_slab",
-            "tags": ["thabo", "cause"], "raises": ["lead_where_drowned"] },
-  "insight": { "id": "i1_died_glasshouse", "from": ["c1_lungs_fresh", "c1_wristband_time"],
-               "text": "He drowned at the Glasshouse.", "unlocks": ["topic:attendant_night_shift"] },
-  "question": { "id": "q1_where", "answers": ["pan", "glasshouse", "apartment"],
-                "truth": "glasshouse", "supports": { "glasshouse": ["i1_died_glasshouse"] } }
-}
-```
+No upgrades, no attachments, no ammunition types, no experience.
 
-All story content is data like this. Dialogue, items, and scenes reference clue ids; nothing in the engine knows the plot.
+- **Weapons:** Ruth's 9 mm pistol with two magazines. Found during play: a revolver, a pump shotgun, a hunting rifle. Improvised: a torch, a tyre iron. She carries one long gun and one handgun. Ammunition is counted in single rounds and there is little of it.
+- **Armour:** one covert vest, obtainable on Wednesday. It stops pistol rounds a few times, slows her slightly, and is noticed in conversation.
+- **Health:** three states: fine, hurt, badly hurt. A first-aid kit takes her up one state. The clinic treats her fully but costs a block and the nurse asks questions. Wounds carry over to the next day.
+- **Enemies** are as fragile as she is. Two or three hits ends anyone. A fight with more than four opponents is one to avoid or to arrange allies for.
+- Death reloads the start of the current block.
 
-## 7. Face-to-face scenes
+## 12. Camera and controls
 
-Modelled on the conversation screens of Dune (1992): you look straight at the person.
+- 3D town, fixed-pitch isometric camera, free rotation, three zoom steps. Walls and roofs between camera and Ruth fade.
+- WASD or click to move, mouse to aim, one interact key with a small radial (Look, Take, Use, Talk).
+- **Focus** (hold): the view desaturates and anything examinable nearby is outlined.
+- Crouch, lean at corners, and a noise ring under Ruth's feet when moving.
 
-- Trigger: Talk to a named character, or a scripted beat. The isometric view pushes in on the character and cuts to a **first-person frame**: a large animated portrait over a painted backdrop of the place you are standing in, at the current time of day and weather.
-- The bottom of the screen is a short command list, not a dialogue tree of full sentences:
-  - **Ask about…** topic chips. Topics exist because of clues, leads, and insights you hold. Know more, ask more.
-  - **Show…** any item or clue card. This is where Leverage and Contradictions fire.
-  - **Press** when a contradiction is open. Uses Grit (threat) or Read (precision); the choice colours the relationship.
-  - **Offer…** credits, a favour, silence.
-  - **Come with me** / **Wait here** for characters who can accompany you.
-  - **Leave.**
-- Lines are short and voiced or text-ticked. The portrait reacts: eyes away on a lie if your Read is high enough.
-- Statements that matter drop a clue card onto the screen edge as they are spoken, so the player sees the system capture it.
-- **Travel interludes.** Riding the Blue Line between cities plays a window-view sequence with the detective's voice-over summarising open leads. It is the recap screen, in character.
-- **Revelation scenes** use the same format with one addition: the player lays their Answers on the table one at a time and the other person responds to each.
+## 13. First build
 
-## 8. The world
+Monday only: arrival, the crowd at the station, three conversations, the room and the board, the night entry into the station, the drive to the big house. About forty minutes. It exercises movement, Focus, conversation, clue capture, linking, stealth and one possible gunfight.
 
-**South Africa, late this century.** The state has contracted itself out. Policing is done by armed-response companies, power is rationed by schedule, and four cities are tied together by one fast rail line. The game is set in fictional futures of real places; the people, companies and organisations are invented.
-
-| Place | Drawn from | Character | Power | Opens |
-|---|---|---|---|---|
-| Egoli Central | Johannesburg CBD, Hillbrow, Braamfontein | Reclaimed office towers stacked with homes, rooftop gardens, street traders, minibus taxis, old mine dumps on the skyline, violent summer thunderstorms. Your office is here. | The Rank (taxi association) | Start |
-| The Deeps | The old gold mines under Johannesburg | Kilometres of worked-out tunnels. Informal miners, pumps, heat, black clinics, and things stored where nobody looks. | Nobody | Case 1 (edges), Case 5 |
-| Tshwane | Pretoria | Government and paperwork. Sandstone ministries, embassy row, archives, and jacaranda avenues that turn the streets purple in October. | The Registry | Case 2 |
-| eThekwini | Durban | The port. Container stacks, humid nights, a vast market under the flyovers, the beachfront, warm rain and floodwater. | Bastion (coastal division), dock union | Case 3 |
-| The Cape | Cape Town | Money under the mountain. A corporate enclave on the slopes above the City Bowl, clean, windy, bright, and watched. | Vaal Meridian | Case 4 |
-
-**Living in it.**
-
-- **Time.** Four blocks per day: morning, afternoon, night, small hours. Time advances with travel, sleep, and some actions. Shops, shifts, and crowds change by block.
-- **Load shedding.** Each area loses power on a published schedule, one block at a time. When the lights go, so do cameras, electric locks and turrets, street neon, and anywhere to recharge implants. Buildings with their own generators stay lit, and those are the ones owned by the people you are investigating. Players read the schedule the way they read a map: some doors only open in the dark.
-- **Schedules.** Named characters have places to be. The coroner eats at the same stand after shift, and is more talkative there.
-- **Your office.** A corner unit in a reclaimed tower. Bed (advance time, heal), the case board, a stash, a workbench for examining items in detail, the door clients knock on. It is also the co-op lobby. It changes as cases close.
-- **Upkeep.** Rent weekly. Street food gives small timed buffs and is where rumours surface as clues: kota and pap in Egoli, bunny chow in eThekwini. Missing rent does not end the game; it changes who you owe.
-- **Getting around.** On foot within an area. Minibus taxis between neighbourhoods, if the Rank will carry you. The Blue Line fast rail between cities, which plays the travel interlude.
-- **Street work.** Small cases from the neighbourhood (missing courier, stolen prosthetic, cheating partner) built from the same clue system with two Questions each. They pay rent and build reputation.
-- **Reputation and Heat** per area decide prices, which doors open, and who starts shooting on sight.
-- **Persistence.** People you subdued remember. People you killed are missing from later scenes, and others notice.
-- **Language.** Characters speak the way the place does: English mixed with isiZulu, Sesotho, Afrikaans and street slang, with meaning clear from context. The script needs a read by South African writers before it is final.
-
-## 9. Co-op (online, 2–4)
-
-- **Hosting.** One player's save is the canon world. Others join by code, drop in and out. Guests keep their character's XP, gear, and credits; case outcomes belong to the host's world, and guests get a "consulted on" record so they can replay the case as host with knowledge of it flagged.
-- **Splitting up is the point.** Players can be anywhere in the same area at once. One questions the attendant while another searches the lockers. Combat encounters scale to the players actually present.
-- **Shared board, personal knowledge.** Every clue goes to the shared board, tagged with who found it. Only the finder sees the full detail until they pin it or tell the others. Players talk; that is the co-op mechanic.
-- **Face-to-face scenes.** The player who starts one is the lead. Players nearby join as seconds: they see the scene, can queue a topic or an item for the lead to use, and can Press with their own attributes. Players elsewhere keep playing and get a transcript in the case file.
-- **Committing.** Answers on the board can be placed by anyone. Starting a Confrontation needs a majority. Dissent is recorded and some characters comment on it.
-- **Downed and revive** in combat. A full wipe wakes everyone in a clinic with a bill and a lost time block.
-- **Network model.** Server-authoritative simulation (host machine or small dedicated relay). Two channels: high-rate world state (movement, combat), and a low-rate ordered event log for case state (clues, board, dialogue), which also serves as the save format.
-
-## 10. Plot (draft)
-
-Five cases, one conspiracy, one city each. Each case stands alone and leaves one thread hanging.
-
-**Fixed truth, hidden from the player:** Vaal Meridian sells *Continuity*: a grown body and a copied mind for clients who can afford not to die. Copies are legally company property. Copies also drift without regular resync from the original, so the originals are kept alive in storage. Bodies land at the eThekwini port as medical freight, ride the rail to the City Deep dry port in Egoli, and are cleared at every step by Bastion Response.
-
-1. **The Drowned Client** (Egoli Central). Naledi Mokoena hires you to find her brother Thabo, a freight auditor at City Deep. You find him dead in a mine-water pan below the old dumps with his optic implant cut out, and a frame pointing at the Rank. (Vertical slice, Section 11.)
-2. **Jacaranda Season** (Tshwane). The eye was sold on to a data broker who works the ministries. Someone is buying every copy of its last recording. In the Registry archives you learn what Thabo was auditing: freight listed as "blanks", moving on a permit no department admits to issuing.
-3. **Harbour Mouth** (eThekwini). The port. A dock union that wants the blanks gone, a Bastion captain who wants you gone, and a warehouse of bodies with no one in them. The heaviest action in the game.
-4. **Under the Mountain** (The Cape). Inside Vaal Meridian. The Naledi Mokoena in their records died two years ago. Your client is a copy. Thabo found out and was killed for it, and she hired you because the gaps in her own memory frightened her.
-5. **Deep Level** (The Deeps). The originals are alive three kilometres under your own office, in a mine the city forgot. Waking them ends the copies, your client included. Leaving them keeps the machine running. Selling what you know buys you out. The ending is the last Confrontation, built from every Theory you committed to along the way.
-
-Recurring cast: Naledi Mokoena (client), Capt. Riaan Venter (Bastion Response, your ex-partner if you chose that background), MaDlamini (head of the Rank), Dr. Sable (surgeon who works for anyone), Dr. Chidi Okonkwo (coroner, your one honest source), Sipho (kota stand on your corner, hears everything), and your partner Zee Jacobs (the AI companion in solo).
-
-## 11. Vertical slice: "The Drowned Client"
-
-The first thing to build. One area (Egoli Central), about 60–90 minutes, exercises every system.
-
-**Truth.** Thabo was drowned in a private pool at the Glasshouse, a rooftop bathhouse on a reclaimed tower, by Sgt. Rook of Bastion Response. Dr. Sable removed the eye on the spot. The body was dumped in a mine-water pan and marked with the Rank's route colours to look like a taxi killing.
-
-**Questions.**
-
-| # | Question | Planted answer | True answer |
-|---|---|---|---|
-| Q1 | Where did he die? | The pan | The Glasshouse |
-| Q2 | Who took his eye? | The Rank | A surgeon (Dr. Sable) |
-| Q3 | Who wants the Rank blamed? | Nobody, they did it | Bastion Response (Rook) |
-
-**Clues and routes.**
-
-| Clue | Where | How | Feeds |
-|---|---|---|---|
-| Clean, chlorinated water in lungs; the pan is acid and orange | Coroner's slab | Look / ask Okonkwo | Q1 |
-| Glasshouse wristband, stamped 01:40 | Body's jacket lining | Look (Focus) | Q1 |
-| Attendant saw him go to the private pools | Glasshouse | Talk, or Show wristband | Q1 |
-| Pool drain log, emergency flush 02:05 | Glasshouse back office | Hack, or walk in during load shedding | Q1 |
-| Eye socket cut is surgical, cauterised | Coroner's slab | Look, better with Wire | Q2 |
-| Rank marshal: "We don't do eyes, no market" | The rank or the street | Talk, or subdue and question | Q2, Q3 |
-| Sable's clinic invoice, cash, that night | Clinic off the muthi market | Hack, steal, or Press Sable | Q2 |
-| Route colours on the body are last year's | The pan | Look; a marshal confirms | Q3 |
-| Patrol log gap, Rook's unit, 01:30–02:30 | Bastion depot terminal / Venter | Hack, or ask as ex-Bastion | Q3 |
-| Rook's comm: "Tell the doc it's done" | On Rook or his men | Subdue and loot | Q2, Q3 |
-
-**Confrontation.** At the Rank's multi-storey taxi rank, at night.
-
-- If the Theory blames the Rank: you go in shooting. A large fight between parked minibuses. You win, the case is "closed", Bastion thanks you, and MaDlamini is dead or an enemy for the rest of the game. No taxi will carry you again.
-- If the Theory clears them: you go in to talk. Halfway through the face-to-face with MaDlamini, Rook's unit raids the rank to tidy up. Same scale of fight, on the other side, with the marshals beside you. Rook can be subdued.
-
-**Revelation.** Face-to-face with Naledi in your office. You lay out your Answers. You choose what to hand over: the truth, the convenient version, or the eye itself. If you recovered the eye and play its afterimage, the last clear frame before the water is Naledi's face. That is the thread into Case 2.
-
-**Slice content budget.** One area (your tower and street, the pan, coroner, Glasshouse, clinic and market, the taxi rank, Bastion depot lobby), 8 speaking characters with portraits, 3 enemy types, 6 weapons and implants, about 25 clues, one travel interlude, one street case, one load-shedding block.
-
-## 12. Technology
-
-Engine is undecided. The design above does not depend on it; content is data (Section 6.5).
-
-| Option | For | Against |
-|---|---|---|
-| **Browser: Three.js + TypeScript, Node relay (Colyseus or similar)** | Join co-op by link, nothing to install. Can be built and playtested end to end in the cloud sessions used so far. | Lower visual ceiling, more hand-built tooling |
-| **Unity + Netcode for GameObjects** | You already have Unity experience in this repository. Strong tooling for lighting, animation, navmesh. | Cannot be compiled or run in these sessions; first test of every change happens on your machine |
-| **Godot 4** | Free, light, good 3D isometric support, headless export can run here | Smaller ecosystem for co-op and animation |
-
-Recommendation: browser for the vertical slice, because it gets a playable co-op build in front of you fastest and every change can be verified before you see it. The case data, dialogue, and plot carry over unchanged if the full game later moves to Unity.
-
-## 13. Build order for the slice
-
-1. Walkable Egoli Central block, rotatable camera, wall fade, interact radial, Focus mode.
-2. Item facets and inventory; clue capture; case board with linking.
-3. Face-to-face scene player driven by data; Ask, Show, Press.
-4. Combat: one gun, one melee, dodge, stagger and subdue, three enemy types.
-5. Case 1 content pass, Confrontation branches, Revelation scene.
-6. Co-op: session join, synced movement and combat, shared board, seconds in scenes.
-7. Office, time blocks, load shedding, storm decay, one street case.
+Engine is still open. With co-op gone, a browser build (Three.js) remains the fastest route to something playable and testable here; Unity or Godot are equally reasonable for the full game.
 
 ## 14. Open decisions
 
-- Engine (Section 12).
-- Art direction for portraits: painted stills with a few animated layers, or 3D heads rendered close.
-- Voice: full, partial (key scenes), or text only.
-- How dark the endings go, and whether any ending is unambiguously good.
+- Confirm the three assumptions at the top.
+- Whether Ruth is the right protagonist: an outsider, as in the source, or someone who grew up in Doornrand.
+- Art direction, and how to draw this town without postcard detail. The earlier concept art no longer applies.
 - Title.
