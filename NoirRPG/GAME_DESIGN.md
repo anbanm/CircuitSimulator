@@ -125,7 +125,21 @@ The police are the opposite of the four powers. The four have money, men and rea
 - **The mortuary at Evander**, where a forensic officer will tell Ruth more than the report says, if she is asked properly.
 - **The officer who moonlights for Steyn.** Not a villain: a sergeant with a second job on a security company's books, who mentions things. The station is not corrupt. It is porous.
 
-**Support, as a mechanic.** From Wednesday, when Brandt pays Ruth off, the police are the only backing she has. They cannot pay her. What Khoza can give is a short, visible list of favours, and each is used up when spent:
+**Funding.** Money is the game's one resource, and from Wednesday it comes from the police. Until then Ruth is spending Brandt's retainer. When he pays her off and tells her to leave, Khoza signs her on as a registered informer so that he can draw from the station's informer fund. It is small, it is slow, and every rand has a form behind it.
+
+| What the money is for | How it works |
+|---|---|
+| **Information** | The main use. Car guards, gate guards, clerks, a mortuary porter, a truck driver, and Grace Tau, who sells rumours at a price that goes up each day. Paying is one way to open a topic; Show and Press are the others |
+| **Ammunition** | Bought over the counter at the gun shop in town against Ruth's licence. Counted by the round, and there is never enough |
+| **A second weapon** | No upgrades and no attachments, as before. What money buys is one used long gun, or Khoza quietly lends a shotgun from the station safe, which is irregular and goes on his account |
+| **Armour** | One vest. Khoza signs a station vest out to her, or she buys a worn one from a security guard for more than it is worth |
+| **Getting by** | The room, fuel, airtime, the clinic |
+
+**Level of support.** How much comes through each morning depends on how far Khoza can justify her to his commander. It rises when she adds something solid to the docket and falls when she is wrong or when someone she named turns up dead. At its lowest she gets nothing and is on her own. At its highest it is still less than Steyn spends on diesel in a day, and the player should be able to see that.
+
+Whether the police can fund an informer this way, and what a private person may be lent, needs checking before it is final.
+
+**Favours.** Alongside the money, Khoza can give a short, visible list of favours, and each is used up when spent:
 
 | Favour | What it does | What it costs |
 |---|---|---|
@@ -135,7 +149,7 @@ The police are the opposite of the four powers. The four have money, men and rea
 | The car | Nkuna comes to one place, once | It is the only car. On Thursday it is behind a blockade |
 | An arrest | Khoza will pick up one person on Ruth's word | If she is wrong, he has nothing left to give |
 
-There are five favours and more than five uses for them. The player feels exactly how little the law can do, and that the people in it are trying.
+There are five favours and more than five uses for them. Between the money and the favours, the player feels exactly how little the law can do, and that the people in it are trying.
 
 **What it costs them.** The epilogue shows it. Khoza loses the case. Nkuna is still driving the same car.
 
@@ -257,7 +271,7 @@ Named characters are spoken to face to face: the view cuts from the isometric to
 - **Show…** any object or clue card.
 - **Press** when what they said conflicts with something *seen*.
 - **Tell…** give them a clue or an answer. Ruth chooses which, and can leave part of it out. She cannot invent facts, but she can tell different people different true things.
-- **Offer…** money, silence, a lift out of town.
+- **Offer…** money from what Ruth has left, silence, a lift out of town.
 - **Leave.**
 
 **Night resolves the town.** Each of the four acts overnight on what they currently believe: who has the crate, who killed Daniel, who is talking to Ruth. The morning shows the result, such as a burned scrap yard, a missing guard, a new man on the gate, or a body. This is the engine of acts II and III, and the reason the body count is the player's.
@@ -278,7 +292,7 @@ Used for places Ruth has no right to be (the station at night, the colliery lab,
 No upgrades, no attachments, no ammunition types, no experience.
 
 - **Weapons:** Ruth's 9 mm pistol with two magazines. Found during play: a revolver, a pump shotgun, a hunting rifle. Improvised: a torch, a tyre iron. She carries one long gun and one handgun. Ammunition is counted in single rounds and there is little of it.
-- **Armour:** one covert vest, obtainable on Wednesday. It stops pistol rounds a few times, slows her slightly, and is noticed in conversation.
+- **Armour:** one covert vest, obtainable from Wednesday through Khoza or bought second-hand. It stops pistol rounds a few times, slows her slightly, and is noticed in conversation.
 - **Health:** three states: fine, hurt, badly hurt. A first-aid kit takes her up one state. The clinic treats her fully but costs a block and the nurse asks questions. Wounds carry over to the next day.
 - **Enemies** are as fragile as she is. Two or three hits ends anyone. A fight with more than four opponents is one to avoid or to arrange allies for.
 - Death reloads the start of the current block.
