@@ -8,7 +8,7 @@ Status: design draft, no code yet. Names, plot and numbers are proposals to be c
 
 ## 1. The game in one paragraph
 
-You are a licensed finder (private investigator) in Saltgrave, a half-drowned coastal city run by corporations and policed by people on their payroll. You live there: you have an office with a bed and a wall you pin evidence to, rent due on Fridays, a noodle stall that knows your order. Cases come in. You walk the districts, search scenes, talk to people face to face, fight when talking fails, and assemble what you learned into a theory. The game never tells you whether the theory is right until you act on it.
+You are a licensed finder (private investigator) in Egoli Central, the old heart of Johannesburg, in a future South Africa run by corporations and policed by armed-response companies on their payroll. You live there: you have an office with a bed and a wall you pin evidence to, rent due on Fridays, a kota stand that knows your order. Cases come in, and they take you down the rail line to Tshwane, eThekwini and the Cape. You walk the districts, search scenes, talk to people face to face, fight when talking fails, and assemble what you learned into a theory. The game never tells you whether the theory is right until you act on it.
 
 ## 2. Design pillars
 
@@ -39,7 +39,7 @@ You are a licensed finder (private investigator) in Saltgrave, a half-drowned co
 
 No attribute gates a case solution. A low attribute means a longer or louder route, never a dead end.
 
-**Backgrounds** (pick one, sets starting attributes, one talent, and how some people greet you): Ex-Harbor Police, Fixer, Street Medic, Runner.
+**Backgrounds** (pick one, sets starting attributes, one talent, and how some people greet you): Ex-Bastion (armed response), Fixer, Street Medic, Runner.
 
 **Progression.** Level 1 to 10 across the whole game. XP comes from closing leads and cases, not from kills. Each level gives one attribute point or one talent. Talents are flat unlocks ("Knockouts are silent", "Read one extra afterimage frame"), with no trees.
 
@@ -47,7 +47,7 @@ No attribute gates a case solution. A low attribute means a longer or louder rou
 
 **Combat.** Real-time. Aim with mouse or right stick, dodge roll on a short recharge, two weapon attacks, up to three implant abilities on cooldown using Charge. Enemies have Health and Stagger; a staggered enemy can be **subdued** (non-lethal takedown) instead of killed. Subdued enemies can be questioned afterwards and are still around later in the story. Solo players get an optional AI partner who is also a story character.
 
-**Resources.** Credits (rent, bribes, gear, food), Charge (implant energy), and Heat per district (how much the local power wants you gone; raises patrols and closes doors).
+**Resources.** Credits (rent, bribes, gear, food), Charge (implant energy), and Heat per area (how much the local power wants you gone; raises patrols and closes doors).
 
 ## 5. Story items are game items
 
@@ -62,7 +62,7 @@ Examples:
 | Object | Use | Evidence | Leverage |
 |---|---|---|---|
 | Victim's optic implant | Equippable eye, grants low-light vision | Holds his last recorded frames (an *afterimage*) | His sister breaks down; the surgeon who cut it out panics |
-| Harbor Police sidearm | A good pistol | Ballistics match a body in Case 3 | Carrying it openly raises Heat with police, opens doors with the dock union |
+| Bastion Response sidearm | A good pistol | Ballistics match a body in Case 3 | Carrying it openly raises Heat with Bastion, opens doors with the dock union |
 | Bathhouse wristband | Opens lockers at the Glasshouse | Timestamp places the victim there at 01:40 | The attendant stops pretending not to know him |
 
 Consequences follow from this: selling, losing, or destroying an item removes its evidence. Equipping the dead man's eye is useful and is also something people notice. Looting is investigating.
@@ -73,8 +73,8 @@ This replaces the usual quest log. There are no objective markers and no "go her
 
 ### 6.1 Building blocks
 
-- **Clue**: one atomic fact with a source and a status. *Observed* (you saw it), *Claimed* (someone said it), or *Recorded* (from a device, which can be forged). Example: "Fresh water in the lungs. (Observed, coroner's slab)".
-- **Lead**: an open question that a clue raises. Created automatically. "Where does a dock auditor meet chlorinated water?" Leads are the to-do list. Each names people and places it touches, and those get a soft highlight on the map. Closing a lead grants XP.
+- **Clue**: one atomic fact with a source and a status. *Observed* (you saw it), *Claimed* (someone said it), or *Recorded* (from a device, which can be forged). Example: "Clean water in the lungs. (Observed, coroner's slab)".
+- **Lead**: an open question that a clue raises. Created automatically. "Where does a freight auditor meet chlorinated water?" Leads are the to-do list. Each names people and places it touches, and those get a soft highlight on the map. Closing a lead grants XP.
 - **Insight**: a conclusion made by the player linking two or three clues on the board. Insights unlock dialogue topics, new locations, and contradictions. Example: wristband timestamp + coroner's time of death gives "He was at the Glasshouse when he died."
 - **Question**: each case has three to five. Who, where, how, why. Each Question has a slot on the board that accepts one Answer backed by the player's Insights and clues.
 - **Theory**: the current set of Answers. It can be incomplete or wrong.
@@ -98,7 +98,7 @@ Scene / person / fight  ->  Clues  ->  Leads (where next)
 2. **Linking is cheap, answering is not.** A valid link produces an Insight immediately; an invalid one says "nothing connects these". Answers to Questions are never validated until the Confrontation. This rewards attention without letting anyone brute-force the ending.
 3. **False trails are authored.** Each case contains a planted wrong answer with real supporting clues, and at least one clue that breaks it. The break is always an *Observed* clue.
 4. **No fail state.** A wrong Theory moves the story forward along a worse branch: the wrong person takes the fall, an ally is lost, the real culprit gets a head start. Later cases remember.
-5. **Evidence decays.** Rain washes outdoor scenes after a time block. Witnesses move on. Firefights destroy examinables in the room. Decay never removes the last route to a required Insight.
+5. **Evidence decays.** A Highveld storm washes outdoor scenes after a time block. Witnesses move on. Firefights destroy examinables in the room. Decay never removes the last route to a required Insight.
 6. **Contradictions.** In conversation, presenting a clue that conflicts with a *Claimed* clue from that speaker opens a Press. Success converts the claim, usually into something better.
 
 ### 6.4 The case board
@@ -109,12 +109,12 @@ A physical wall in your office and a full-screen UI anywhere else. Columns per Q
 
 ```json
 {
-  "clue": { "id": "c1_lungs_fresh", "text": "Fresh water in the lungs.",
+  "clue": { "id": "c1_lungs_fresh", "text": "Clean water in the lungs.",
             "status": "observed", "source": "coroner_slab",
-            "tags": ["tobias", "cause"], "raises": ["lead_where_drowned"] },
+            "tags": ["thabo", "cause"], "raises": ["lead_where_drowned"] },
   "insight": { "id": "i1_died_glasshouse", "from": ["c1_lungs_fresh", "c1_wristband_time"],
                "text": "He drowned at the Glasshouse.", "unlocks": ["topic:attendant_night_shift"] },
-  "question": { "id": "q1_where", "answers": ["canal", "glasshouse", "apartment"],
+  "question": { "id": "q1_where", "answers": ["pan", "glasshouse", "apartment"],
                 "truth": "glasshouse", "supports": { "glasshouse": ["i1_died_glasshouse"] } }
 }
 ```
@@ -135,35 +135,38 @@ Modelled on the conversation screens of Dune (1992): you look straight at the pe
   - **Leave.**
 - Lines are short and voiced or text-ticked. The portrait reacts: eyes away on a lie if your Read is high enough.
 - Statements that matter drop a clue card onto the screen edge as they are spoken, so the player sees the system capture it.
-- **Travel interludes.** Riding the maglev between districts plays a window-view sequence with the detective's voice-over summarising open leads. It is the recap screen, in character.
+- **Travel interludes.** Riding the Blue Line between cities plays a window-view sequence with the detective's voice-over summarising open leads. It is the recap screen, in character.
 - **Revelation scenes** use the same format with one addition: the player lays their Answers on the table one at a time and the other person responds to each.
 
-## 8. The city
+## 8. The world
 
-**Saltgrave.** Sea walls failed a generation ago. The rich moved up; everyone else learned to live at the waterline.
+**South Africa, late this century.** The state has contracted itself out. Policing is done by armed-response companies, power is rationed by schedule, and four cities are tied together by one fast rail line. The game is set in fictional futures of real places; the people, companies and organisations are invented.
 
-| District | Character | Power | Opens |
-|---|---|---|---|
-| The Shallows | Flooded low town, stilt housing, canals, your office | Koi Dogs (gang) | Start |
-| Lantern Row | Night markets, memory parlours, clinics | Parlour owners | Case 2 |
-| Brasswork | Docks, container stacks, union halls | Harbor Police, dock union | Case 3 |
-| The Underline | Dead metro beneath it all, squatters, black clinics | Nobody | Case 3 |
-| The Spire | Corporate arcology, clean and watched | Halden-Voss | Case 4 |
+| Place | Drawn from | Character | Power | Opens |
+|---|---|---|---|---|
+| Egoli Central | Johannesburg CBD, Hillbrow, Braamfontein | Reclaimed office towers stacked with homes, rooftop gardens, street traders, minibus taxis, old mine dumps on the skyline, violent summer thunderstorms. Your office is here. | The Rank (taxi association) | Start |
+| The Deeps | The old gold mines under Johannesburg | Kilometres of worked-out tunnels. Informal miners, pumps, heat, black clinics, and things stored where nobody looks. | Nobody | Case 1 (edges), Case 5 |
+| Tshwane | Pretoria | Government and paperwork. Sandstone ministries, embassy row, archives, and jacaranda avenues that turn the streets purple in October. | The Registry | Case 2 |
+| eThekwini | Durban | The port. Container stacks, humid nights, a vast market under the flyovers, the beachfront, warm rain and floodwater. | Bastion (coastal division), dock union | Case 3 |
+| The Cape | Cape Town | Money under the mountain. A corporate enclave on the slopes above the City Bowl, clean, windy, bright, and watched. | Vaal Meridian | Case 4 |
 
 **Living in it.**
 
 - **Time.** Four blocks per day: morning, afternoon, night, small hours. Time advances with travel, sleep, and some actions. Shops, shifts, and crowds change by block.
-- **Schedules.** Named characters have places to be. The coroner drinks at the same bar after shift, and is more talkative there.
-- **Your office.** Bed (advance time, heal), the case board, a stash, a workbench for examining items in detail, the door clients knock on. It is also the co-op lobby. It changes as cases close: a commendation on the wall, or a brick through the window.
-- **Upkeep.** Rent weekly. Food stalls give small timed buffs and are where street rumours surface as clues. Missing rent does not end the game; it changes who you owe.
+- **Load shedding.** Each area loses power on a published schedule, one block at a time. When the lights go, so do cameras, electric locks and turrets, street neon, and anywhere to recharge implants. Buildings with their own generators stay lit, and those are the ones owned by the people you are investigating. Players read the schedule the way they read a map: some doors only open in the dark.
+- **Schedules.** Named characters have places to be. The coroner eats at the same stand after shift, and is more talkative there.
+- **Your office.** A corner unit in a reclaimed tower. Bed (advance time, heal), the case board, a stash, a workbench for examining items in detail, the door clients knock on. It is also the co-op lobby. It changes as cases close.
+- **Upkeep.** Rent weekly. Street food gives small timed buffs and is where rumours surface as clues: kota and pap in Egoli, bunny chow in eThekwini. Missing rent does not end the game; it changes who you owe.
+- **Getting around.** On foot within an area. Minibus taxis between neighbourhoods, if the Rank will carry you. The Blue Line fast rail between cities, which plays the travel interlude.
 - **Street work.** Small cases from the neighbourhood (missing courier, stolen prosthetic, cheating partner) built from the same clue system with two Questions each. They pay rent and build reputation.
-- **Reputation and Heat** per district decide prices, which doors open, and who starts shooting on sight.
+- **Reputation and Heat** per area decide prices, which doors open, and who starts shooting on sight.
 - **Persistence.** People you subdued remember. People you killed are missing from later scenes, and others notice.
+- **Language.** Characters speak the way the place does: English mixed with isiZulu, Sesotho, Afrikaans and street slang, with meaning clear from context. The script needs a read by South African writers before it is final.
 
 ## 9. Co-op (online, 2–4)
 
 - **Hosting.** One player's save is the canon world. Others join by code, drop in and out. Guests keep their character's XP, gear, and credits; case outcomes belong to the host's world, and guests get a "consulted on" record so they can replay the case as host with knowledge of it flagged.
-- **Splitting up is the point.** Players can be anywhere in the same district at once. One questions the attendant while another searches the lockers. Combat encounters scale to the players actually present.
+- **Splitting up is the point.** Players can be anywhere in the same area at once. One questions the attendant while another searches the lockers. Combat encounters scale to the players actually present.
 - **Shared board, personal knowledge.** Every clue goes to the shared board, tagged with who found it. Only the finder sees the full detail until they pin it or tell the others. Players talk; that is the co-op mechanic.
 - **Face-to-face scenes.** The player who starts one is the lead. Players nearby join as seconds: they see the scene, can queue a topic or an item for the lead to use, and can Press with their own attributes. Players elsewhere keep playing and get a transcript in the case file.
 - **Committing.** Answers on the board can be placed by anyone. Starting a Confrontation needs a majority. Dissent is recorded and some characters comment on it.
@@ -172,55 +175,55 @@ Modelled on the conversation screens of Dune (1992): you look straight at the pe
 
 ## 10. Plot (draft)
 
-Five cases, one conspiracy. Each case stands alone and leaves one thread hanging.
+Five cases, one conspiracy, one city each. Each case stands alone and leaves one thread hanging.
 
-**Fixed truth, hidden from the player:** Halden-Voss sells *Continuity*: a grown body and a copied mind for clients who can afford not to die. Copies are legally company property. Copies also drift without regular resync from the original, so the originals are kept alive in storage beneath the Spire. Bodies come in through Brasswork as medical freight, cleared by Harbor Police.
+**Fixed truth, hidden from the player:** Vaal Meridian sells *Continuity*: a grown body and a copied mind for clients who can afford not to die. Copies are legally company property. Copies also drift without regular resync from the original, so the originals are kept alive in storage. Bodies land at the eThekwini port as medical freight, ride the rail to the City Deep dry port in Egoli, and are cleared at every step by Bastion Response.
 
-1. **The Drowned Client.** Ines Marlowe hires you to find her brother Tobias, a dock auditor. You find him dead in a Shallows canal with his optic implant cut out, and a frame pointing at the Koi Dogs. (Vertical slice, Section 11.)
-2. **Paper Lanterns.** The eye went through Lantern Row's memory parlours. Someone is buying every copy of its last recording. You learn what Tobias was auditing: freight listed as "blanks".
-3. **Brasswork.** The docks. A union boss who wants the blanks gone, a police lieutenant who wants you gone, and a warehouse of bodies with no one in them. The heaviest action in the game.
-4. **The Spire.** Inside Halden-Voss. The Ines Marlowe in their records died two years ago. Your client is a copy. Tobias found out and was killed for it, and she hired you because the gaps in her own memory frightened her.
-5. **Low Tide.** The originals are alive under the Spire. Waking them ends the copies, your client included. Leaving them keeps the machine running. Selling what you know buys you out of Saltgrave. The ending is the last Confrontation, built from every Theory you committed to along the way.
+1. **The Drowned Client** (Egoli Central). Naledi Mokoena hires you to find her brother Thabo, a freight auditor at City Deep. You find him dead in a mine-water pan below the old dumps with his optic implant cut out, and a frame pointing at the Rank. (Vertical slice, Section 11.)
+2. **Jacaranda Season** (Tshwane). The eye was sold on to a data broker who works the ministries. Someone is buying every copy of its last recording. In the Registry archives you learn what Thabo was auditing: freight listed as "blanks", moving on a permit no department admits to issuing.
+3. **Harbour Mouth** (eThekwini). The port. A dock union that wants the blanks gone, a Bastion captain who wants you gone, and a warehouse of bodies with no one in them. The heaviest action in the game.
+4. **Under the Mountain** (The Cape). Inside Vaal Meridian. The Naledi Mokoena in their records died two years ago. Your client is a copy. Thabo found out and was killed for it, and she hired you because the gaps in her own memory frightened her.
+5. **Deep Level** (The Deeps). The originals are alive three kilometres under your own office, in a mine the city forgot. Waking them ends the copies, your client included. Leaving them keeps the machine running. Selling what you know buys you out. The ending is the last Confrontation, built from every Theory you committed to along the way.
 
-Recurring cast: Ines Marlowe (client), Lt. Aurel Dace (Harbor Police, your ex-partner if you chose that background), Mama Carp (Koi Dogs), Dr. Sable (surgeon who works for anyone), Okonkwo (coroner, your one honest source), Wen (noodle stall, hears everything), and your partner Juno Vale (the AI companion in solo).
+Recurring cast: Naledi Mokoena (client), Capt. Riaan Venter (Bastion Response, your ex-partner if you chose that background), MaDlamini (head of the Rank), Dr. Sable (surgeon who works for anyone), Dr. Chidi Okonkwo (coroner, your one honest source), Sipho (kota stand on your corner, hears everything), and your partner Zee Jacobs (the AI companion in solo).
 
 ## 11. Vertical slice: "The Drowned Client"
 
-The first thing to build. One district (The Shallows), about 60–90 minutes, exercises every system.
+The first thing to build. One area (Egoli Central), about 60–90 minutes, exercises every system.
 
-**Truth.** Tobias was drowned in a private pool at the Glasshouse bathhouse by Sgt. Rook of Harbor Police. Dr. Sable removed the eye on the spot. The body was dumped in the canal and tagged with a Koi Dogs mark to look like a gang killing.
+**Truth.** Thabo was drowned in a private pool at the Glasshouse, a rooftop bathhouse on a reclaimed tower, by Sgt. Rook of Bastion Response. Dr. Sable removed the eye on the spot. The body was dumped in a mine-water pan and marked with the Rank's route colours to look like a taxi killing.
 
 **Questions.**
 
 | # | Question | Planted answer | True answer |
 |---|---|---|---|
-| Q1 | Where did he die? | The canal | The Glasshouse |
-| Q2 | Who took his eye? | Koi Dogs | A surgeon (Dr. Sable) |
-| Q3 | Who wants the Dogs blamed? | Nobody, they did it | Harbor Police (Rook) |
+| Q1 | Where did he die? | The pan | The Glasshouse |
+| Q2 | Who took his eye? | The Rank | A surgeon (Dr. Sable) |
+| Q3 | Who wants the Rank blamed? | Nobody, they did it | Bastion Response (Rook) |
 
 **Clues and routes.**
 
 | Clue | Where | How | Feeds |
 |---|---|---|---|
-| Fresh, chlorinated water in lungs | Coroner's slab | Look / ask Okonkwo | Q1 |
-| Glasshouse wristband, stamped 01:40 | Body's coat lining | Look (Focus) | Q1 |
+| Clean, chlorinated water in lungs; the pan is acid and orange | Coroner's slab | Look / ask Okonkwo | Q1 |
+| Glasshouse wristband, stamped 01:40 | Body's jacket lining | Look (Focus) | Q1 |
 | Attendant saw him go to the private pools | Glasshouse | Talk, or Show wristband | Q1 |
-| Pool drain log, emergency flush 02:05 | Glasshouse back office | Hack | Q1 |
+| Pool drain log, emergency flush 02:05 | Glasshouse back office | Hack, or walk in during load shedding | Q1 |
 | Eye socket cut is surgical, cauterised | Coroner's slab | Look, better with Wire | Q2 |
-| Koi Dogs enforcer: "We don't do eyes, no market" | Dogs' den or street | Talk, or subdue and question | Q2, Q3 |
-| Sable's clinic invoice, cash, that night | Lantern-side clinic | Hack, steal, or Press Sable | Q2 |
-| Gang tag at the scene uses last year's mark | Canal wall | Look; a Dog confirms | Q3 |
-| Patrol log gap, Rook's unit, 01:30–02:30 | Precinct terminal / Dace | Hack, or ask as ex-police | Q3 |
+| Rank marshal: "We don't do eyes, no market" | The rank or the street | Talk, or subdue and question | Q2, Q3 |
+| Sable's clinic invoice, cash, that night | Clinic off the muthi market | Hack, steal, or Press Sable | Q2 |
+| Route colours on the body are last year's | The pan | Look; a marshal confirms | Q3 |
+| Patrol log gap, Rook's unit, 01:30–02:30 | Bastion depot terminal / Venter | Hack, or ask as ex-Bastion | Q3 |
 | Rook's comm: "Tell the doc it's done" | On Rook or his men | Subdue and loot | Q2, Q3 |
 
-**Confrontation.** At the Koi Dogs' den, at night.
+**Confrontation.** At the Rank's multi-storey taxi rank, at night.
 
-- If the Theory blames the Dogs: you go in shooting. A large fight. You win, the case is "closed", Harbor Police thank you, and Mama Carp is dead or an enemy for the rest of the game.
-- If the Theory clears them: you go in to talk. Halfway through the face-to-face with Mama Carp, Rook's unit raids the den to tidy up. Same scale of fight, on the other side, with the Dogs beside you. Rook can be subdued.
+- If the Theory blames the Rank: you go in shooting. A large fight between parked minibuses. You win, the case is "closed", Bastion thanks you, and MaDlamini is dead or an enemy for the rest of the game. No taxi will carry you again.
+- If the Theory clears them: you go in to talk. Halfway through the face-to-face with MaDlamini, Rook's unit raids the rank to tidy up. Same scale of fight, on the other side, with the marshals beside you. Rook can be subdued.
 
-**Revelation.** Face-to-face with Ines in your office. You lay out your Answers. You choose what to hand over: the truth, the convenient version, or the eye itself. If you recovered the eye and play its afterimage, the last clear frame before the water is Ines's face. That is the thread into Case 2.
+**Revelation.** Face-to-face with Naledi in your office. You lay out your Answers. You choose what to hand over: the truth, the convenient version, or the eye itself. If you recovered the eye and play its afterimage, the last clear frame before the water is Naledi's face. That is the thread into Case 2.
 
-**Slice content budget.** One district block (canal, office, coroner, Glasshouse, clinic, den, precinct lobby), 8 speaking characters with portraits, 3 enemy types, 6 weapons and implants, about 25 clues, one travel interlude, one street case.
+**Slice content budget.** One area (your tower and street, the pan, coroner, Glasshouse, clinic and market, the taxi rank, Bastion depot lobby), 8 speaking characters with portraits, 3 enemy types, 6 weapons and implants, about 25 clues, one travel interlude, one street case, one load-shedding block.
 
 ## 12. Technology
 
@@ -236,13 +239,13 @@ Recommendation: browser for the vertical slice, because it gets a playable co-op
 
 ## 13. Build order for the slice
 
-1. Walkable Shallows block, rotatable camera, wall fade, interact radial, Focus mode.
+1. Walkable Egoli Central block, rotatable camera, wall fade, interact radial, Focus mode.
 2. Item facets and inventory; clue capture; case board with linking.
 3. Face-to-face scene player driven by data; Ask, Show, Press.
 4. Combat: one gun, one melee, dodge, stagger and subdue, three enemy types.
 5. Case 1 content pass, Confrontation branches, Revelation scene.
 6. Co-op: session join, synced movement and combat, shared board, seconds in scenes.
-7. Office, time blocks, rain decay, one street case.
+7. Office, time blocks, load shedding, storm decay, one street case.
 
 ## 14. Open decisions
 
