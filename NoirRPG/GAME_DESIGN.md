@@ -1,4 +1,4 @@
-# SECUNDA (working title) — Game Design, v7
+# SECUNDA (working title) — Game Design, v8
 
 A detective story set in Secunda, Mpumalanga, over two weeks. Isometric, rotatable camera. Single player, one fixed main character, about five and a half hours.
 
@@ -62,6 +62,7 @@ These happen at a fixed day and hour whether Ruth is there or not. Some she know
 | 4 Thu, 9 Tue | 19:00 | Rehearsal at the music school | She learns the fourth floor and meets the director | She goes in blind on day 11 |
 | 5 Fri | 06:00 | The morning bus to Johannesburg | If Sam has not been named, she can catch him at the rank | Sam is gone for the rest of the game |
 | 5 Fri | night | Contractors' payday | The ATM row and the taverns are full of people who will talk for a drink | The town is quiet again by Sunday |
+| 5 Fri | 11:00 | A small memorial at Evander for the 1986 Kinross disaster | Joseph is there. So are people who knew her father | She never learns why Joseph trusted her |
 | 6 Sat | 10:00 | Daniel's funeral | All four powers, Brandt, Joseph and Khoza in one place, watching each other | She hears about it second-hand, from each of them differently |
 | 6 Sat | afternoon | Brandt pays Ruth off | (always happens, at the farm or by envelope at the guesthouse) | |
 | 7 Sun | dusk | Anneline walks at the lake | She approaches Ruth and offers to talk | She does not try again until day 9 |
@@ -377,7 +378,83 @@ Ruth gets out. That is the only thing the player can be sure of.
 
 The epilogue is playable. The town centre and the colliery gate reflect who is alive, what burned, what Ruth chose. Survivors will talk. The last screen gives the number of dead, the names, and what became of each case, dated, in the flat language of a court roll.
 
-## 8. Investigation
+## 8. Dreams: things the wind brings
+
+Short prose stories, shown as text, in the manner of the dream sequences in Lost Odyssey. They are the quiet half of the game. Ruth arrives as an outsider. The dreams are how the player, and Ruth, find out that she is not one.
+
+### What they are
+
+Ruth cannot remember where she is from. She knows the facts: born somewhere on the Highveld, raised by her mother in a township east of Johannesburg, a father she has no picture of. She has never been curious about it. But in Secunda the wind and the smells keep reaching something underneath what she remembers, and at night it comes back as stories she cannot place. Some are hers. Some were told to her as a small child by adults she has forgotten, about homes that were theirs and not hers: the men on the mines came from all over southern Africa, and they carried their places with them.
+
+So the dreams are small stories from Africa in two senses. They are a child's fragments of one home, and they are other people's homes as a child was told about them: a mountain where it snowed on horses, a sea that someone said was like the veld except that it moved, a lake with fish too small to count.
+
+### How they are triggered
+
+Not by story events. By the senses, out in the world.
+
+- A place or moment carries a cue: the wind rises, a smell is named in a single line at the edge of the screen, and for a second the painting loosens, the brushwork going soft the way it does at the edges of a conversation portrait. Nothing tells the player to do anything.
+- If Ruth sleeps that night, the dream comes. One a night at most.
+- If she works through the night instead, it does not. The cue fades after two days. With a calendar of timed events pulling at her, sleeping is a choice, and what it costs is the only thing in the game that is purely hers.
+- Dreams she has had are kept in the back of her notebook under *Things I can't place*, and can be read again.
+
+### How they look and sound
+
+- Text only, a few lines at a time, at reading pace. The words arrive and leave like breath. Some hang; some are blown off the screen.
+- Behind them, slow oil paint without edges: colour and weather, never a picture of the thing described.
+- Wind, and one instrument. The melody is the piece the youth orchestra is rehearsing on the fourth floor for Heritage Day, an arrangement of a lullaby. The player hears it in the dreams for ten nights before hearing it played. In the finale it is what the orchestra keeps playing while the hall empties.
+- Two to three minutes each. They can be skipped. They give no reward: no money, no clue, no standing. They are the only part of the game that asks for nothing.
+
+### The dreams
+
+About twelve across the fourteen nights. Each has a cue, a story, and something in the waking game that it quietly answers. These are seeds, not scripts.
+
+| Cue | Where and when | The story | What it touches |
+|---|---|---|---|
+| Peach blossom over a wall, and wind | A suburb street, first week (the trees flower here in early spring) | A tree on the other side of a fence that dropped its fruit on their side | See the sample below |
+| Coal smoke from a brazier on a cold morning | The taxi rank | A woman lighting the fire before dawn, and the smell that stayed in a school jersey all day | Grace Tau, who lights one behind the guesthouse |
+| Dust, then the first rain on it | Before a storm | Running to bring the washing in; someone counting between the flash and the thunder in a language Ruth no longer speaks | The language she drops into without noticing when she is tired |
+| Paraffin | A spaza shop in eMbalenhle | Homework by lamp, and a letter from a mine read aloud by a neighbour because nobody in the house could read it | Joseph, who reads documents for half his street |
+| Wet clay and paint | A woman repainting a yard wall | An old woman renewing the patterns on a homestead wall in the dry season, and the one line a child was allowed to paint | Ruth's surname, which belongs to this province |
+| The shift siren, and soap | The colliery gate at change of shift | A man who came home by bus once a year, smelling of soap and of something under the soap, with stories that were other men's | The dismissed crews |
+| Water at dusk | The lake | Someone telling a child about a sea: like the veld, except that it moves, and you cannot walk on it though it looks as if you could | Anneline, who is from the coast and hates it here |
+| A hymn through a wall | Sunday | A church held in a classroom, and the one hymn Ruth can still sing without knowing what the words mean | Daniel's funeral |
+| Burnt grass | A firebreak on the road to the farm | Black ground, and a week later green coming through it, and boys with sticks | The farm, which was someone's before it was Brandt's |
+| Snow that is not there | A cold wind off the plant at night | A mountain where it snowed on horses, told by a man in a blanket who laughed at how little the child believed him | Mokoena, whose people came down from those mountains |
+| Sour porridge and many voices | The funeral tea, day 6 | A long tent, a row of boxes, and all the women singing. She is very small. She does not know whose it is | The reveal, below |
+| Nothing | The first night, the smell of the plant | No dream comes. It is the only smell that brings nothing | |
+| The wind, with the windows down | The drive out, day 14 | Not a dream. She says the name of the place aloud | The last line of the game |
+
+### What they add up to
+
+The player who sleeps works it out before Ruth does. She was born twenty kilometres from here. Her father was a miner at the gold mine at Kinross, where a fire underground on 16 September 1986 killed 177 men. She was four. Her mother took her to Johannesburg and never spoke of it. The story's two weeks fall across the anniversary, which is one more date on the calendar: a small memorial at Evander that the player can attend or miss.
+
+It changes one thing in the waking story. Joseph Sithole was eighteen and underground at Kinross that day. He recognises her surname on the first night and says nothing. If she ever asks him, he tells her what her father was like, and that is why he trusted her before she had earned it.
+
+This uses a real disaster with real dead. Her father would be an invented man among them, not a named victim, and the dream never shows the fire. It needs to be handled with the families in mind, and it is one of the things to decide before going further.
+
+### A sample
+
+A first draft, to show the register: plain, short, nothing explained. All of these should be written, or rewritten, by South African writers, and the ones that draw on particular peoples and places by writers from them.
+
+> **The tree that was not ours**
+>
+> There was a peach tree, and it was not theirs.
+>
+> It stood on the far side of a wire fence, in a yard where a dog lived. Every spring it put its flowers over the wire as if the wire were not there.
+>
+> Her grandmother said a tree does not know about fences.
+>
+> In summer the fruit came down on their side. It was small and hard, more stone than peach. Her grandmother boiled it with sugar she had been keeping for something else, and put it in a jar that had been for something else before it was for peaches.
+>
+> She does not remember her grandmother's face. She remembers the hands, and the jar, and the dog, which never once barked at her.
+>
+> The year they left, the tree was in flower. It would have fruited that summer the same as any other. Nobody on that side of the wire would have picked it up.
+>
+> She has never liked peaches from a shop.
+>
+> She has never asked herself why.
+
+## 9. Investigation
 
 The case board is the wall of Ruth's room and a full-screen view anywhere else. There is no quest log and no objective marker.
 
@@ -399,7 +476,7 @@ Rules:
 
 **Objects.** There are no quest items. Every object has what it does, what it shows, and who reacts to it. Daniel's pistol is a weapon, the murder weapon, and the thing Sam cannot look at. The crate is forty sealed tins of crushed coal and a day book, the proof, and something each of the four wants for a different reason.
 
-## 9. Conversations
+## 10. Conversations
 
 Named characters are spoken to face to face: the view cuts from the isometric town to a first-person frame, a large portrait against the room Ruth is standing in, in the manner of Dune (1992). A short list of commands sits at the bottom right.
 
@@ -412,7 +489,7 @@ Named characters are spoken to face to face: the view cuts from the isometric to
 
 **Night resolves the town.** Each of the four acts overnight on what they currently believe: who has the crate, who killed Daniel, who is talking to Ruth. The morning shows the result, such as a burned scrap yard, a missing guard, a new man on the gate, or a body. This is the engine of acts II and III, and the reason the body count is the player's.
 
-## 10. Stealth
+## 11. Stealth
 
 Used for places Ruth has no right to be (the station at night, the colliery lab, the contractor camp, the farmhouse, Mokoena's truck yard) and for all of day 11.
 
@@ -423,7 +500,7 @@ Used for places Ruth has no right to be (the station at night, the colliery lab,
 - Being seen is not instant failure. People ask what she is doing, and in daylight a good answer often works.
 - A drawn weapon changes every conversation in town.
 
-## 11. Weapons, armour, health
+## 12. Weapons, armour, health
 
 No upgrades, no attachments, no ammunition types, no experience.
 
@@ -433,26 +510,27 @@ No upgrades, no attachments, no ammunition types, no experience.
 - **Enemies** are as fragile as she is. Two or three hits ends anyone. A fight with more than four opponents is one to avoid or to arrange allies for.
 - Death reloads the start of the current block.
 
-## 12. Camera and controls
+## 13. Camera and controls
 
 - 3D town, fixed-pitch isometric camera, free rotation, three zoom steps. Walls and roofs between camera and Ruth fade.
 - WASD or click to move, mouse to aim, one interact key with a small radial (Look, Take, Use, Talk).
 - **Focus** (hold): the view desaturates and anything examinable nearby is outlined.
 - Crouch, lean at corners, and a noise ring under Ruth's feet when moving.
 
-## 13. First build
+## 14. First build
 
 Day 1 only: arrival, the crowd at the station, three conversations, the room and the board, the night entry into the station, the drive to the farm. About forty minutes. It exercises movement, Focus, conversation, clue capture, linking, stealth and one possible gunfight.
 
 Engine is still open. With co-op gone, a browser build (Three.js) remains the fastest route to something playable and testable here; Unity or Godot are equally reasonable for the full game.
 
-## 14. What the research says to leave out
+## 15. What the research says to leave out
 
 No serial killer. No occult angle for colour. No murdered woman's body as spectacle. No hostel or informal settlement as scenery. No foreign crime boss. No single corrupt official who explains everything. No quick forensic breakthrough. Ruth is not a drinker with a past in the police; she is a file-builder.
 
-## 15. Open decisions
+## 16. Open decisions
 
 - Confirm the ground rules at the top, above all the line between the real town and the invented story.
-- Whether Ruth is the right protagonist: an outsider, as in the source, or someone who grew up in Secunda or eMbalenhle.
+- The dreams tie Ruth's forgotten childhood to the 1986 Kinross disaster. Confirm that, or choose an invented loss.
+- Who writes the dreams. They need South African writers.
 - Art: oil painting is chosen. The first oil set drew an invented tin-roof gold town and does not show Secunda; it needs redoing from reference.
 - Title.
