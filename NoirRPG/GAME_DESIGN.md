@@ -1,4 +1,4 @@
-# SECUNDA (working title) — Game Design, v8
+# SECUNDA (working title) — Game Design, v9
 
 A detective story set in Secunda, Mpumalanga, over two weeks. Isometric, rotatable camera. Single player, one fixed main character, about five and a half hours.
 
@@ -34,6 +34,20 @@ Only the structure is used. No text, names, scenes or dialogue are carried over.
 3. **Violence is short, final and remembered.** Nobody is a bullet sponge, including Ruth. Everyone who dies stays dead and is counted.
 4. **Two weeks, one place.** A few small areas known thoroughly, and a calendar of fixed events that does not wait for the player.
 5. **The basics only.** No levels, no stats, no upgrades, no loot.
+6. **She watches.** Ruth is a witness more than a hero. The game is about what she sees and what she can and cannot do about it.
+
+### Tone
+
+Closer to a Japanese animated drama, and to the dream stories of Lost Odyssey, than to a Western crime thriller.
+
+- **Stillness.** Long holds on weather, light and ordinary work: a kettle, a queue, washing on a line, the flare at night. The camera waits.
+- **Small gestures over speeches.** People show what they feel by what they do with their hands. Nobody explains themselves.
+- **Sentiment without irony.** The game is allowed to be tender about a tea urn, a choir folder or a child's cello. It does not wink.
+- **Sadness that is not despair.** Things pass, and are worth noticing because they pass. The ending is bleak and the days before it are full of small kindnesses.
+- **Silence.** Music is rare, and most of it is the one melody. Wind does the rest.
+- **Violence is brief and ugly**, and the game looks at what it leaves, not at the act.
+
+The oil-painted look carries this: soft edges, weather as colour, faces held a beat longer than is comfortable.
 
 ## 4. Structure
 
@@ -62,7 +76,6 @@ These happen at a fixed day and hour whether Ruth is there or not. Some she know
 | 4 Thu, 9 Tue | 19:00 | Rehearsal at the music school | She learns the fourth floor and meets the director | She goes in blind on day 11 |
 | 5 Fri | 06:00 | The morning bus to Johannesburg | If Sam has not been named, she can catch him at the rank | Sam is gone for the rest of the game |
 | 5 Fri | night | Contractors' payday | The ATM row and the taverns are full of people who will talk for a drink | The town is quiet again by Sunday |
-| 5 Fri | 11:00 | A small memorial at Evander for the 1986 Kinross disaster | Joseph is there. So are people who knew her father | She never learns why Joseph trusted her |
 | 6 Sat | 10:00 | Daniel's funeral | All four powers, Brandt, Joseph and Khoza in one place, watching each other | She hears about it second-hand, from each of them differently |
 | 6 Sat | afternoon | Brandt pays Ruth off | (always happens, at the farm or by envelope at the guesthouse) | |
 | 7 Sun | dusk | Anneline walks at the lake | She approaches Ruth and offers to talk | She does not try again until day 9 |
@@ -135,7 +148,7 @@ The town runs on a clock. Shifts change at the mine and the plant, the roads fil
 
 ## 6. People
 
-**Ruth Mahlangu**, 44. Ten years in a police commercial crime unit, now a registered private investigator at a two-person firm in Johannesburg. Careful, tired, good at paperwork. She left a unit where cases reported outnumbered arrests eight to one. Carries a licensed pistol, concealed as the law requires, which she has drawn twice in her life.
+**Ruth Mahlangu**, 44. A registered private investigator from Johannesburg, formerly police. That is nearly all the game says about her. She is a vessel: she watches, she listens, she writes things down, and she tries to find her way through a place whose rules everyone else already knows. She rarely says what she thinks and never explains herself. The model is the investigator in *Chinatown*, who is competent, who keeps looking, and who understands what he has been looking at only when it is too late to matter. Carries a licensed pistol, concealed as the law requires.
 
 **Daniel Brandt**, 36. The client. The owner's son, who ran a small community station in town, streaming online while its FM licence was pending, and had started broadcasting about the colliery. Shot outside the station on Monday evening.
 
@@ -367,7 +380,7 @@ The same standings decide the reverse. People she has wronged do not just fail t
 
 ### How it ends
 
-Ruth gets out. That is the only thing the player can be sure of.
+Ruth gets out. That is the only thing the player can be sure of. She does not fix the town and she does not fully understand it. On the last morning Khoza walks her to her car and tells her, kindly, to go home. It is the game's version of the last line of *Chinatown*: this is how it is here, and it was never hers to mend.
 
 - The sale collapsing closes the mine now. The sale going through closes it within the year with the money gone. Neither saves a job.
 - Sam Nel can be convicted, if Ruth named him. It is the one clean result available and it is the least important.
@@ -380,13 +393,13 @@ The epilogue is playable. The town centre and the colliery gate reflect who is a
 
 ## 8. Dreams: things the wind brings
 
-Short prose stories, shown as text, in the manner of the dream sequences in Lost Odyssey. They are the quiet half of the game. Ruth arrives as an outsider. The dreams are how the player, and Ruth, find out that she is not one.
+Short prose stories, shown as text, in the manner of the dream sequences in Lost Odyssey. They are the quiet half of the game. Ruth arrives as an outsider and leaves as one. The dreams are the only place the game looks inward, and they explain nothing.
 
 ### What they are
 
-Ruth cannot remember where she is from. She knows the facts: born somewhere on the Highveld, raised by her mother in a township east of Johannesburg, a father she has no picture of. She has never been curious about it. But in Secunda the wind and the smells keep reaching something underneath what she remembers, and at night it comes back as stories she cannot place. Some are hers. Some were told to her as a small child by adults she has forgotten, about homes that were theirs and not hers: the men on the mines came from all over southern Africa, and they carried their places with them.
+Ruth cannot remember where she is from, and the game does not know either. In Secunda the wind and the smells keep reaching something underneath what she remembers, and at night it comes back as stories she cannot place: a time and a place that feel like home and have no name. Some may be hers. Some may have been told to her once by adults she has forgotten, about homes that were theirs.
 
-So the dreams are small stories from Africa in two senses. They are a child's fragments of one home, and they are other people's homes as a child was told about them: a mountain where it snowed on horses, a sea that someone said was like the veld except that it moved, a lake with fish too small to count.
+So the dreams are small stories from Africa, and they do not stay in one place: a yard with a peach tree, a mountain where it snowed on horses, a sea that someone said was like the veld except that it moved, a lake with fish too small to count. They do not agree with each other about where home was. That is deliberate.
 
 ### How they are triggered
 
@@ -406,7 +419,7 @@ Not by story events. By the senses, out in the world.
 
 ### The dreams
 
-About twelve across the fourteen nights. Each has a cue, a story, and something in the waking game that it quietly answers. These are seeds, not scripts.
+About twelve across the fourteen nights. Each has a cue, a story, and something in the waking game that it rhymes with, without explaining it. These are seeds, not scripts.
 
 | Cue | Where and when | The story | What it touches |
 |---|---|---|---|
@@ -414,23 +427,21 @@ About twelve across the fourteen nights. Each has a cue, a story, and something 
 | Coal smoke from a brazier on a cold morning | The taxi rank | A woman lighting the fire before dawn, and the smell that stayed in a school jersey all day | Grace Tau, who lights one behind the guesthouse |
 | Dust, then the first rain on it | Before a storm | Running to bring the washing in; someone counting between the flash and the thunder in a language Ruth no longer speaks | The language she drops into without noticing when she is tired |
 | Paraffin | A spaza shop in eMbalenhle | Homework by lamp, and a letter from a mine read aloud by a neighbour because nobody in the house could read it | Joseph, who reads documents for half his street |
-| Wet clay and paint | A woman repainting a yard wall | An old woman renewing the patterns on a homestead wall in the dry season, and the one line a child was allowed to paint | Ruth's surname, which belongs to this province |
-| The shift siren, and soap | The colliery gate at change of shift | A man who came home by bus once a year, smelling of soap and of something under the soap, with stories that were other men's | The dismissed crews |
+| Wet clay and paint | A woman repainting a yard wall | An old woman renewing the patterns on a homestead wall in the dry season, and the one line a child was allowed to paint | Nothing. It may be a hint. It is never taken up |
+| The shift siren, and soap | The colliery gate at change of shift | A man who came home by bus once a year, smelling of soap and of something under the soap, with stories that were other men's | The dismissed crews, coming off their last shift |
 | Water at dusk | The lake | Someone telling a child about a sea: like the veld, except that it moves, and you cannot walk on it though it looks as if you could | Anneline, who is from the coast and hates it here |
 | A hymn through a wall | Sunday | A church held in a classroom, and the one hymn Ruth can still sing without knowing what the words mean | Daniel's funeral |
 | Burnt grass | A firebreak on the road to the farm | Black ground, and a week later green coming through it, and boys with sticks | The farm, which was someone's before it was Brandt's |
 | Snow that is not there | A cold wind off the plant at night | A mountain where it snowed on horses, told by a man in a blanket who laughed at how little the child believed him | Mokoena, whose people came down from those mountains |
-| Sour porridge and many voices | The funeral tea, day 6 | A long tent, a row of boxes, and all the women singing. She is very small. She does not know whose it is | The reveal, below |
+| Sour porridge and many voices | The funeral tea, day 6 | A long tent, and all the women singing. She is very small. She does not know whose it is, and she still does not | Daniel's funeral, where she is again the one person who did not know him |
 | Nothing | The first night, the smell of the plant | No dream comes. It is the only smell that brings nothing | |
-| The wind, with the windows down | The drive out, day 14 | Not a dream. She says the name of the place aloud | The last line of the game |
+| The wind, with the windows down | The drive out, day 14 | Not a dream. For a moment she almost has it. Then the road | The last image of the game |
 
-### What they add up to
+### What they do not add up to
 
-The player who sleeps works it out before Ruth does. She was born twenty kilometres from here. Her father was a miner at the gold mine at Kinross, where a fire underground on 16 September 1986 killed 177 men. She was four. Her mother took her to Johannesburg and never spoke of it. The story's two weeks fall across the anniversary, which is one more date on the calendar: a small memorial at Evander that the player can attend or miss.
+Nothing. There is no reveal. The dreams never say where Ruth is from, who the people in them were, whether these are her memories or stories someone told her, or whether the place is near here or a thousand kilometres away. The player may form a theory. The game never confirms one, and Ruth never asks anyone. Nobody in the waking story recognises her, and no document turns up with her name on it.
 
-It changes one thing in the waking story. Joseph Sithole was eighteen and underground at Kinross that day. He recognises her surname on the first night and says nothing. If she ever asks him, he tells her what her father was like, and that is why he trusted her before she had earned it.
-
-This uses a real disaster with real dead. Her father would be an invented man among them, not a named victim, and the dream never shows the fire. It needs to be handled with the families in mind, and it is one of the things to decide before going further.
+What the dreams give is not information. It is the feeling of having belonged somewhere, arriving in a town where she belongs to nothing, and then leaving again.
 
 ### A sample
 
@@ -530,7 +541,6 @@ No serial killer. No occult angle for colour. No murdered woman's body as specta
 ## 16. Open decisions
 
 - Confirm the ground rules at the top, above all the line between the real town and the invented story.
-- The dreams tie Ruth's forgotten childhood to the 1986 Kinross disaster. Confirm that, or choose an invented loss.
 - Who writes the dreams. They need South African writers.
 - Art: oil painting is chosen. The first oil set drew an invented tin-roof gold town and does not show Secunda; it needs redoing from reference.
 - Title.
