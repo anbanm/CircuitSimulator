@@ -1,17 +1,17 @@
-<title>Afterimage Storyboard</title>
+<title>Doornrand Art Review</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* Layout: a case file read top to bottom. Storyboard strip = numbered beats (a real sequence), frame left, notes right. Single dark look by choice: the art is night scenes. */
 :root {
   color-scheme: dark;
-  --bg: #0a1315;
-  --panel: #111e21;
-  --line: #24363a;
-  --fg: #d9e2df;
-  --muted: #8ea39f;
-  --amber: #e8a33d;
-  --magenta: #d5488f;
+  --bg: #17120f;
+  --panel: #211a16;
+  --line: #3a2f28;
+  --fg: #e6ddd2;
+  --muted: #a39384;
+  --amber: #d99a3c;
+  --magenta: #b08bd0;
   --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
   --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -37,7 +37,7 @@ section { display: flex; flex-direction: column; gap: 22px; }
 .beat .frame { border: 1px solid var(--line); background: var(--panel); }
 .beat .text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .beat .text .label::before { content: "Beat " counter(beat, decimal-leading-zero) " · "; color: var(--muted); }
-.todo { aspect-ratio: 16 / 9; max-width: 100%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; font-family: var(--mono); font-size: 0.8rem; color: var(--muted); border: 1px dashed var(--line); background: repeating-linear-gradient(135deg, transparent 0 14px, rgba(142,163,159,0.05) 14px 28px); }
+.todo { aspect-ratio: 16 / 9; max-width: 100%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; font-family: var(--mono); font-size: 0.8rem; color: var(--muted); border: 1px dashed var(--line); background: repeating-linear-gradient(135deg, transparent 0 14px, rgba(163,147,132,0.06) 14px 28px); }
 .sys { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
 .sys b { color: var(--fg); font-weight: 500; }
 
@@ -60,169 +60,83 @@ figcaption strong { font-family: var(--display); font-size: 1.15rem; font-weight
 <div class="wrap">
 
 <header>
-  <span class="label">Concept review 02 · Egoli Central · Case 1 "The Drowned Client"</span>
-  <h1>Afterimage</h1>
-  <p>Second pass, reset in a future South Africa. Johannesburg is home; the cases run down the rail line to Pretoria, Durban and Cape Town. Fifteen new frames, and the questions that need an answer are at the bottom.</p>
-  <img class="hero" src="concept/01_key_art.jpg" alt="A detective in a long coat on a rooftop looks over the Johannesburg inner city at night in a lightning storm, with a cylindrical tower, minibus taxis below and part of the city blacked out">
-  <p class="muted">Key art. Egoli Central in a Highveld storm, taxis below, one block dark from load shedding. The shop signs were invented by the image model and use real names; they come out in the next pass.</p>
+  <span class="label">Art review 03 · oil painting · five days in a mining town</span>
+  <h1>Doornrand</h1>
+  <p>The first eight frames in the chosen style. Everything is painted: the town, the people, the conversation screens. Notes on what worked and what did not are under each frame, and the decisions are at the bottom.</p>
+  <img class="hero" src="concept/01_main_street_dusk.jpg" alt="Oil-painted isometric view of a small mining town main street at dusk: a crowd behind police tape outside a radio station with an antenna mast, a police van, a covered body, and a woman standing beside a hatchback watching">
+  <p class="muted">Monday, dusk. The first thing the player sees: the crowd outside the radio station, and Ruth just out of her car. This is the gameplay camera.</p>
 </header>
 
 <section>
   <div class="sechead">
-    <span class="label">Storyboard</span>
-    <h2>Case 1, beat by beat</h2>
-    <p>One path through the case. Beats 2 to 6 can be played in any order and split between co-op partners. Each beat lists the system it exercises.</p>
-  </div>
-  <ol class="beats">
-    <li class="beat">
-      <img class="frame" src="concept/11_f2f_naledi.jpg" alt="Face-to-face screen: Naledi Mokoena across the desk in a dark raincoat, subtitle at bottom left, command list at bottom right, a clue card above it">
-      <div class="text">
-        <span class="label">Your office, night</span>
-        <h3>The client</h3>
-        <p>Naledi Mokoena wants her brother found. Bastion, the armed-response company that polices the city, says he is not missing. The first face-to-face scene teaches the command list, and "Thabo, freight auditor" drops in as the first clue card.</p>
-        <p class="sys"><b>Systems:</b> face-to-face, Ask about, clue capture, first lead.</p>
-      </div>
-    </li>
-    <li class="beat">
-      <img class="frame" src="concept/02_mine_pan.jpg" alt="Isometric view at night in rain: a detective crouches by a covered body on the bank of a bright orange mine-water pan below a mine headgear, with a drone, an armoured response vehicle, a container shop and a minibus taxi">
-      <div class="text">
-        <span class="label">The pan, small hours</span>
-        <h3>The body</h3>
-        <p>Thabo lies on the bank of an acid mine-water pan under the old dumps. Focus mode outlines what can be examined before the storm washes the scene: the jacket lining with a bathhouse wristband, the empty eye socket, taxi route colours daubed on him that are a year out of date.</p>
-        <p class="sys"><b>Systems:</b> isometric exploration, Focus mode, item facets, evidence decay timer.</p>
-      </div>
-    </li>
-    <li class="beat">
-      <img class="frame" src="concept/13_f2f_okonkwo.jpg" alt="Face-to-face screen: the coroner in scrubs and round glasses in a morgue lit by battery lanterns, subtitle about clean water in the lungs, clue card beside the command list">
-      <div class="text">
-        <span class="label">Municipal morgue, morning, power out</span>
-        <h3>The coroner</h3>
-        <p>Dr. Okonkwo works by lantern during load shedding. He gives the two facts that break the planted story: the water in the lungs is clean and chlorinated, not orange and acid, and the cut around the eye is surgical.</p>
-        <p class="sys"><b>Systems:</b> Observed clues, leads raised, splitting up, load shedding.</p>
-      </div>
-    </li>
-    <li class="beat">
-      <img class="frame" src="concept/04_egoli_street.jpg" alt="Isometric view of a busy inner-city street at night: traders under umbrellas, a grill stand, a hair salon, a traditional medicine stall next to a neon implant clinic, minibus taxis, a mural, a detective and partner in the crowd">
-      <div class="text">
-        <span class="label">Your street, afternoon</span>
-        <h3>Asking around</h3>
-        <p>The street you live on. Sipho's kota stand is where rumours surface. The traditional medicine stall sits next to the implant clinic, and the back room of one of them is Dr. Sable's. A Rank marshal at the taxi stop will talk if you ride with him.</p>
-        <p class="sys"><b>Systems:</b> living world, street food buffs, rumours as clues, reputation.</p>
-      </div>
-    </li>
-    <li class="beat">
-      <div class="todo">Not drawn yet: the Glasshouse. A rooftop bathhouse on a reclaimed tower, tiled private pools, steam, the city below, an attendant who remembers nothing until shown the wristband.</div>
-      <div class="text">
-        <span class="label">The Glasshouse, night</span>
-        <h3>Where he drowned</h3>
-        <p>Show the wristband and the attendant's story changes. The back-office terminal holds a drain log with an emergency flush at 02:05. Talk, hack, or wait for the building's power to drop and walk in: three routes to the same insight.</p>
-        <p class="sys"><b>Systems:</b> Show, Leverage, hacking, three-route rule.</p>
-      </div>
-    </li>
-    <li class="beat">
-      <div class="todo">Not drawn yet: Dr. Sable's clinic. A back room off the market, one chair, very clean instruments.</div>
-      <div class="text">
-        <span class="label">Sable's clinic, night</span>
-        <h3>Who took the eye</h3>
-        <p>The first Press. Sable claims never to have seen Thabo; the cauterised cut and a cash invoice say otherwise. Grit frightens them, Read corners them, and the two leave different relationships behind.</p>
-        <p class="sys"><b>Systems:</b> Contradiction, Press, Claimed clue converted.</p>
-      </div>
-    </li>
-    <li class="beat">
-      <img class="frame" src="concept/10_office.jpg" alt="Isometric cutaway of a corner office in a tower at night: a case board with red string, a bed with a patterned blanket, a workbench with a cybernetic eye, candles, a gas stove and a solar battery, lightning outside">
-      <div class="text">
-        <span class="label">Your office, any time</span>
-        <h3>The wall</h3>
-        <p>A corner unit in a reclaimed tower. The case board is a real wall in the room you sleep in. Candles, a gas stove and a solar battery sit ready for the next outage. Players gather here to link clues and argue about the answers.</p>
-        <p class="sys"><b>Systems:</b> case board, insights, co-op lobby, home base.</p>
-      </div>
-    </li>
-    <li class="beat">
-      <img class="frame" src="concept/12_f2f_madlamini.jpg" alt="Face-to-face screen: MaDlamini in a bright headwrap and beads, glowing geometric tattoos on her forearms, a chrome hand on a walking stick, a taxi rank behind her">
-      <div class="text">
-        <span class="label">The rank, night</span>
-        <h3>The confrontation</h3>
-        <p>MaDlamini runs the Rank from an office over the taxi bays. If the theory clears her people, you come to talk and this scene plays. If it blames them, you never see this screen: you come up the ramp shooting.</p>
-        <p class="sys"><b>Systems:</b> committing a theory, majority vote in co-op, branch.</p>
-      </div>
-    </li>
-    <li class="beat">
-      <img class="frame" src="concept/05_taxi_rank_combat.jpg" alt="Isometric combat on a taxi rank deck at night: four players fight armoured officers with riot shields between rows of white minibus taxis, with muzzle flashes and a blue electric arc">
-      <div class="text">
-        <span class="label">The rank, minutes later</span>
-        <h3>The raid</h3>
-        <p>Bastion hits the rank mid-conversation. The fight is the same size on either branch; what changes is which side you are on. The taxis are cover, the marshals' booth is the objective, and a staggered officer can be subdued and questioned afterwards.</p>
-        <p class="sys"><b>Systems:</b> combat, stagger and subdue, encounter scaling.</p>
-      </div>
-    </li>
-    <li class="beat">
-      <div class="todo">Not drawn yet: the afterimage. A grainy, eye-shaped recording frame. Water, a hand, and Naledi's face.</div>
-      <div class="text">
-        <span class="label">Your office, the next morning</span>
-        <h3>The revelation</h3>
-        <p>Naledi again, same chair. You lay your answers on the desk one at a time and she reacts to each. If you recovered the eye, its last clear frame is her face. Case 2 starts there, on the train to Tshwane.</p>
-        <p class="sys"><b>Systems:</b> revelation scene, consequences, hook.</p>
-      </div>
-    </li>
-  </ol>
-</section>
-
-<section>
-  <div class="sechead">
-    <span class="label">Decision 1</span>
-    <h2>Art direction</h2>
-    <p>The same crime scene in two styles. Painterly is richer and moodier. Graphic is cheaper to build in 3D, runs well in a browser, and keeps small characters readable when four players and a dozen enemies are on screen.</p>
-  </div>
-  <div class="wide">
-    <figure>
-      <img class="frame" src="concept/02_mine_pan.jpg" alt="Painterly version of the mine pan crime scene">
-      <figcaption><strong>A · Painterly</strong><span class="muted">Dense texture, soft light, lots of small detail. Needs high-quality assets to hold up when the camera rotates.</span></figcaption>
-    </figure>
-    <figure>
-      <img class="frame" src="concept/03_mine_pan_graphic.jpg" alt="Graphic cel-shaded version of the mine pan crime scene with flat colour and inked outlines">
-      <figcaption><strong>B · Graphic noir</strong><span class="muted">Flat shading, inked edges, five colours. The orange water and the taxi read instantly. Suits a small team.</span></figcaption>
-    </figure>
-  </div>
-</section>
-
-<section>
-  <div class="sechead">
-    <span class="label">World</span>
-    <h2>Down the line</h2>
-    <p>One city per case, all at the gameplay camera angle this time. Each has its own palette so a player knows where they are from a single frame.</p>
+    <span class="label">The world in play</span>
+    <h2>One street, three lights</h2>
+    <p>A short game set in one place depends on the player seeing that place change. These are the same kind of view at dusk, at night and on the last morning.</p>
   </div>
   <div class="grid">
     <figure>
-      <img class="frame" src="concept/06_tshwane.jpg" alt="Isometric view of a government avenue with jacaranda trees in purple bloom, sandstone ministries with glass annexes, a queue at security scanners">
-      <figcaption><strong>Tshwane · Case 2</strong><span class="muted">Jacaranda season. Sandstone, queues, scanners, and a glass archive bolted onto every ministry. The paper trail.</span></figcaption>
+      <img class="frame" src="concept/01_main_street_dusk.jpg" alt="Main street at dusk, warm orange and violet">
+      <figcaption><strong>Monday, dusk</strong><span class="muted">Reads clearly at this size: crowd, tape, van, body, Ruth. The colour is warm and saturated, close to a picture book. The corrugated roofs and verandas carry the place without any landmark.</span></figcaption>
     </figure>
     <figure>
-      <img class="frame" src="concept/07_ethekwini.jpg" alt="Isometric view of a flooded port market at night under a flyover: spice stalls, lit pedicabs, shipping containers, an open container of glowing pods guarded by armed officers">
-      <figcaption><strong>eThekwini · Case 3</strong><span class="muted">Port meets market under the flyovers. Spice stalls, floodwater, and an open container of pods under guard.</span><span class="fix">Containers show real shipping brands: remove</span></figcaption>
+      <img class="frame" src="concept/05_core_yard_night.jpg" alt="Core yard at night: racks of core trays, a guard with a torch, a woman crouched in shadow reading a tray under one orange floodlight">
+      <figcaption><strong>Thursday, night: the core yard</strong><span class="muted">Stealth works in paint. One floodlight, one torch beam, and Ruth in the violet shadow is all the information the player needs.</span><span class="fix">Ruth and the guard's uniform are wrong; brushwork is smoother than the rest</span></figcaption>
     </figure>
     <figure>
-      <img class="frame" src="concept/08_the_cape.jpg" alt="Isometric view of a white corporate terrace on a rocky slope in daylight with a reflecting pool, protea gardens, white-uniformed staff and one figure in a dark coat">
-      <figcaption><strong>The Cape · Case 4</strong><span class="muted">The only daylight in the game. White terraces, proteas, turrets on the roofline, and one dark coat crossing the plaza.</span></figcaption>
-    </figure>
-    <figure>
-      <img class="frame" src="concept/09_the_deeps.jpg" alt="Isometric view inside a mine: a tunnel junction with rail tracks, a camp of tents and fires, a clinic with a magenta cross, gold in the rock, and a steel vault door leaking white light">
-      <figcaption><strong>The Deeps · Case 5</strong><span class="muted">Under Johannesburg. A miners' camp, a clinic in a mine cage, gold still in the rock, and a vault door that should not be there.</span></figcaption>
+      <img class="frame" src="concept/08_friday_morning.jpg" alt="The same street in pale morning light: a burned shopfront, a boarded window, flowers on the radio station step, two dark SUVs, a woman walking to her car">
+      <figcaption><strong>Friday, morning</strong><span class="muted">The epilogue. Pale, washed out, quiet. Flowers on the station step, the buyers' cars passing through, Ruth walking to her car. The tone is right.</span><span class="fix">Ruth does not match her sheet</span></figcaption>
     </figure>
   </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <span class="label">Conversations</span>
+    <h2>Face to face</h2>
+    <p>The player looks straight at one person, with the subtitle below and six commands at the bottom right: Ask about, Show, Press, Tell, Offer, Leave.</p>
+  </div>
+  <div class="wide">
+    <figure>
+      <img class="frame" src="concept/07_talk_brandt.jpg" alt="Oil portrait of a gaunt old man in an armchair with an oxygen tube, blanket over his knees, mine photographs on the wall, a lamp; subtitle reads Find who killed my son. Then go home.">
+      <figcaption><strong>Hendrik Brandt, the big house</strong><span class="muted">The strongest frame of the set. The room tells you who he is: survey plan, headgear photographs, tea going cold. Dark, rich, specific.</span></figcaption>
+    </figure>
+    <figure>
+      <img class="frame" src="concept/02_talk_joseph.jpg" alt="Oil portrait of an older man in a work jacket at a tavern table under a bare bulb, a pool table behind; subtitle reads Three years ago he brought them in. Nobody told them to leave.">
+      <figcaption><strong>Joseph Sithole, the tavern</strong><span class="muted">The loose unfinished edges are a good device: the painting gets vaguer the further it is from the person you are talking to. His face is too generic and needs a redraw as a specific man.</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <span class="label">Main character</span>
+    <h2>Ruth Mahlangu</h2>
+  </div>
   <figure>
-    <img class="frame" src="concept/14_blue_line.jpg" alt="A detective in a hat and coat sits by a train window at dusk; outside, golden grassland, pylons, a township with solar roofs, a storm over a city skyline; one subtitle line at the bottom">
-    <figcaption><strong>The Blue Line</strong><span class="muted">Travel interlude and recap screen: the Highveld at dusk with the open leads read back in voice-over.</span><span class="fix">Detective and carriage do not match the rest: redraw</span></figcaption>
+    <img class="frame" src="concept/03_ruth.jpg" alt="Oil study sheet of a woman in her forties with short greying hair, dark blazer, jeans, boots and a canvas bag: full figure, close portrait, and three small studies crouching, holding a torch and writing in a notebook">
+    <figcaption><span class="muted">This is the reference. Short greying hair, blazer, jeans, boots, canvas bag; tired and watchful. Three of the scene frames drew someone else, so every frame from here on is generated with this sheet attached. The pistol should sit under the blazer, not in front of it.</span></figcaption>
   </figure>
 </section>
 
 <section>
   <div class="sechead">
-    <span class="label">Characters</span>
-    <h2>The four backgrounds</h2>
+    <span class="label">The map</span>
+    <h2>The whole town</h2>
   </div>
   <figure>
-    <img class="frame" src="concept/15_backgrounds.jpg" alt="Line-up of four playable characters labelled Ex-Bastion, Fixer, Street Medic, Runner">
-    <figcaption><span class="muted">Ex-Bastion with the company patch torn off, the Fixer with shweshwe-print lining, the Street Medic, and the Runner with a forearm deck and cabling, which fixes the first pass. The case board screen from pass one still stands; its layout does not depend on the setting.</span></figcaption>
+    <img class="frame" src="concept/04_town_overview.jpg" alt="Oil-painted overview of a small mining town: main street, church, police station, company houses, a hostel, a settlement beyond a railway line, a working headgear with a core yard, an abandoned headgear, a pale tailings dump, and a house among gum trees on a ridge">
+    <figcaption><span class="muted">Everything in the design is here and in a believable relation: main street in the middle, the working shaft and core yard against the tailings dump, the old shaft at the edge, the settlement across the railway, the big house on the ridge looking down on all of it. This can be the basis for the level layout.</span></figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="sechead">
+    <span class="label">Home base</span>
+    <h2>The room above the tavern</h2>
+  </div>
+  <figure>
+    <img class="frame" src="concept/06_ruths_room.jpg" alt="Oil cutaway of a rented room with an iron bed, a table with a laptop, an open suitcase and a wall of photographs and string, with a bar and pool table visible on the floor below">
+    <figcaption><span class="muted">The idea works: the evidence wall in a rented room, the tavern alive underneath, the pistol on the bedside table. The execution misses. The building looks like a European inn, and the woman is not Ruth.</span><span class="fix">Redo</span></figcaption>
   </figure>
 </section>
 
@@ -232,10 +146,10 @@ figcaption strong { font-family: var(--display); font-size: 1.15rem; font-weight
     <h2>What needs deciding</h2>
   </div>
   <ul class="decisions">
-    <li><h3>Painterly or graphic?</h3><p>My recommendation is B, graphic noir, for the game world, keeping the painterly style for face-to-face portraits and travel interludes. Simple world view, rich conversation screens.</p></li>
-    <li><h3>Does this feel like the right South Africa?</h3><p>The details I leaned on: minibus taxis and the rank, mine dumps and acid water, load shedding, jacarandas, the Durban market and port, proteas on the mountain. Tell me what is missing or wrong, and which names and details should change.</p></li>
-    <li><h3>Cast</h3><p>If Naledi, MaDlamini and Dr. Okonkwo look right, they become the reference portraits every later frame is matched to. The player detective is not settled: he looks different in the key art, the office and the train.</p></li>
-    <li><h3>Next batch</h3><p>The three missing storyboard frames (Glasshouse, Sable's clinic, the afterimage), a clean key art and port frame without real names or brands, a redrawn Blue Line, and portraits for Capt. Venter, Dr. Sable, Sipho and Zee Jacobs.</p></li>
+    <li><h3>Which oil treatment?</h3><p>The eight frames drifted between three. Warm and saturated (Monday dusk), dark and rich (Brandt), pale and dry (Friday). My recommendation: Brandt's treatment for every conversation, and for the town a version of Monday dusk with the colour pulled back, so it reads less like an illustration and more like a painting of a real place. Light then changes by day, ending in Friday's pallor.</p></li>
+    <li><h3>Is Ruth right?</h3><p>If the study sheet is her, it becomes the fixed reference.</p></li>
+    <li><h3>Does the town look like a real place to you?</h3><p>This pass took its detail from how a mining town is built. Say what looks false.</p></li>
+    <li><h3>Next frames</h3><p>Redo the room, the core yard and Friday with Ruth's sheet attached. Then the four powers as conversation portraits (Steyn, Mokoena, Grace Tau, Captain Khoza), Anneline in the assay lab, and tray 114 itself.</p></li>
   </ul>
 </section>
 
