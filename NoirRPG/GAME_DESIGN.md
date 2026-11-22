@@ -1,6 +1,6 @@
 # SECUNDA (working title) — Game Design, v6
 
-A detective story set in Secunda, Mpumalanga, over five days. Isometric, rotatable camera. Single player, one fixed main character, three to four hours.
+A detective story set in Secunda, Mpumalanga, over two weeks. Isometric, rotatable camera. Single player, one fixed main character, about five hours.
 
 Status: design draft, no code. This version revises v4 using the research in `reports/` (the Secunda setting report, and the crime research notes in `research_notes/`). Character and company names are placeholders.
 
@@ -16,7 +16,7 @@ Ground rules for using a real place:
 
 ## 1. The game in one paragraph
 
-Ruth Mahlangu, a private investigator, drives into Secunda on a Monday evening to meet a client. He is shot before she finds him. His father owns a family colliery outside town, and three years ago brought in hard people to break a strike there and never got rid of them. Four of them now feed on the mine and the people around it. Over five days Ruth finds out who killed her client, learns what he was hiding, and decides what to tell whom. On Friday the colliery is to be sold, and what things look like that morning is the ending.
+Ruth Mahlangu, a private investigator, drives into Secunda on a Monday evening to meet a client. He is shot before she finds him. His father owns a family colliery outside town, and three years ago brought in hard people to break a strike there and never got rid of them. Four of them now feed on the mine and the people around it. Over two weeks Ruth finds out who killed her client, learns what he was hiding, and decides what to tell whom. On the second Friday the colliery is to be sold, and what things look like that morning is the ending.
 
 ## 2. Source
 
@@ -32,21 +32,53 @@ Only the structure is used. No text, names, scenes or dialogue are carried over.
 1. **What you tell people is the main verb.** The town changes because of who you informed, not who you shot.
 2. **The player solves it.** The game hands out facts. Conclusions are the player's, and wrong ones play out.
 3. **Violence is short, final and remembered.** Nobody is a bullet sponge, including Ruth. Everyone who dies stays dead and is counted.
-4. **Five days, one place.** A few small areas known thoroughly, with a clock that does not wait.
+4. **Two weeks, one place.** A few small areas known thoroughly, and a calendar of fixed events that does not wait for the player.
 5. **The basics only.** No levels, no stats, no upgrades, no loot.
 
 ## 4. Structure
 
-Four acts across five days. Each day has three blocks: morning, afternoon, night. A block ends when the player moves time on (sleeping, waiting, travelling out to the mine) or when a scripted event closes it.
+Four acts across two weeks, fourteen days from a Monday to the Sunday after next. Each day has three blocks: morning, afternoon, night. The player does not play every block. Ruth can let time pass (sleeping, waiting for a records request, healing, waiting for money to come through), and whole days can go by in a minute. What she cannot do is stop the calendar.
 
 | Act | Days | Length | What happens |
 |---|---|---|---|
-| I. Arrival | Monday | 40 min | The client is dead. Ruth meets the people around him, takes a room, and is summoned to the farm, where the old man hires her to find his son's killer. |
-| II. The four | Tuesday, Wednesday | 90 min | The murder is solved, rightly or wrongly. The old man pays Ruth off, and from then her only backing is a detective with two cars. She learns about the crate, finds a witness, and decides who to tell. |
-| III. Harvest | Thursday | 60 min | It comes apart. Ruth's witness is killed and Ruth is blamed. The roads are blockaded and Steyn's men are looking for her. She finds the crate and reaches the old man. The heaviest stealth and action. |
-| IV. Epilogue | Friday | 20 min | The morning of the sale. Ruth decides what happens to the crate, then walks through what is left. No combat. |
+| I. Arrival | 1–2 | 45 min | The client is dead. Ruth meets the people around him, takes a room, and is summoned to the farm, where the old man hires her to find his son's killer. |
+| II. The murder | 3–7 | 100 min | The first week. Daniel's murder is solved, rightly or wrongly. The funeral puts everyone in one place. The old man pays Ruth off, and from then her only backing is a detective with two cars. |
+| III. The fraud | 8–11 | 110 min | The second week. The buyers arrive to test the coal. Ruth finds a witness and decides who to tell. The witness is killed, Ruth is blamed, the roads are blockaded. The heaviest stealth and action. |
+| IV. Epilogue | 12–14 | 30 min | The sale, the choice, and what is left. Ruth makes her statement and drives out. No combat. |
 
-**Leaving.** Ruth's car is parked outside the guesthouse. From Tuesday onward the player can drive out at any time, and the epilogue plays for the town as it stands. Taking the old man's money on Wednesday is a complete, short, bad ending.
+About five hours in all, which is longer than first planned.
+
+### Timed events
+
+These happen at a fixed day and hour whether Ruth is there or not. Some she knows from the start; most she learns about and writes into her notebook, which is the game's calendar. Being elsewhere is always allowed and always costs something.
+
+| Day | When | Event | If Ruth is there | If she is not |
+|---|---|---|---|---|
+| 1 Mon | 18:10 | Daniel is shot outside the station | She arrives minutes later, to the crowd | (always happens) |
+| 2 Tue | 09:00 | Post-mortem at Evander | She hears what the report will leave out | She gets the report on day 5, two lines long |
+| 2 Tue | by dawn | Steyn's men dress the scene | If she was in the station overnight, she saw it as it really was | The planted cartridge case is all there is |
+| 3 Wed | 19:00 | Daniel's last recorded programme goes out on the station's automation | She hears him thank "a friend in eMbalenhle who keeps things safe" | It airs once. Afterwards it can only be found on the station computer |
+| 4 Thu | 17:00 | Sam Nel's instalment is due at Grace Tau's | She sees who pays, who cannot, and what Grace takes instead | Grace's loan book is the only record |
+| 5 Fri | 06:00 | The morning bus to Johannesburg | If Sam has not been named, she can catch him at the rank | Sam is gone for the rest of the game |
+| 5 Fri | night | Contractors' payday | The ATM row and the taverns are full of people who will talk for a drink | The town is quiet again by Sunday |
+| 6 Sat | 10:00 | Daniel's funeral | All four powers, Brandt, Joseph and Khoza in one place, watching each other | She hears about it second-hand, from each of them differently |
+| 6 Sat | afternoon | Brandt pays Ruth off | (always happens, at the farm or by envelope at the guesthouse) | |
+| 7 Sun | dusk | Anneline walks at the lake | She approaches Ruth and offers to talk | She does not try again until day 9 |
+| 8 Mon | 14:00 | The buyers' technical team arrives | She sees who meets them and who is kept away | |
+| 8 Mon | 23:00 | The buyers' samples are swapped in the lab store | A stealth sequence: she can watch it, photograph it, or stop it | The buyers' tests pass on day 10 |
+| 9 Tue | 17:00 | Community meeting in eMbalenhle about the water | Mokoena's forum announces the blockade; she learns the day and the roads | The blockade is a surprise |
+| 10 Wed | 15:00 | Earliest slot Khoza can get for Anneline's statement is fixed for day 11, 08:00 | | |
+| 10 Wed | 21:00 | A guest checks into the last bed at the guesthouse | She can see his car, his hands, the name he gives | The register is all there is |
+| 11 Thu | 05:00 | The blockade goes up | | |
+| 11 Thu | 06:40 | Anneline is shot at her gate | Ruth can be close enough to see the car, never close enough to stop it | She hears it on a security radio |
+| 12 Fri | 10:00 | The sale is signed at the colliery office | She decides what happens to the tins and the day book | The sale goes through |
+| 12 Fri | night | The plant comes back up after the shutdown, and the flares light the whole sky | | |
+| 13 Sat | 11:00 | Ruth's statement at the station | | |
+| 14 Sun | dawn | She leaves | | |
+
+Other things run on their own clocks. A records request takes three working days. Money comes through each morning. Wounds carry from day to day. Rumours Grace sells cost more each day.
+
+**Leaving.** Ruth's car is parked outside the guesthouse. From day 2 onward the player can drive out at any time, and the epilogue plays for the town as it stands. Taking the old man's money on day 6 and going is a complete, short, bad ending.
 
 ## 5. The place
 
@@ -56,7 +88,7 @@ Four acts across five days. Each day has three blocks: morning, afternoon, night
 
 Most of the town depends on one employer, which has put its own estimate of jobs at risk from the move away from coal at nearly 25,000. That uncertainty is the mood of the game. The story's colliery running out is a small version of the same question.
 
-**When.** A week in September, during the plant's annual maintenance shutdown, when up to twenty thousand contractors arrive and every guesthouse is full. A town full of strangers explains why nobody looks twice at Ruth, or at Steyn's extra men. (Cosmos flowers from mid-March to May, so the earlier autumn setting and its flowers are dropped.)
+**When.** Two weeks in September, during the plant's annual maintenance shutdown, when up to twenty thousand contractors arrive and every guesthouse is full. A town full of strangers explains why nobody looks twice at Ruth, or at Steyn's extra men. (Cosmos flowers from mid-March to May, so the earlier autumn setting and its flowers are dropped.)
 
 **The map.** Secunda is too spread out to walk, so the game is four small areas joined by short drives in Ruth's car.
 
@@ -75,12 +107,12 @@ This is the first area to be designed and drawn. Street-level facts here are thi
 
 | Location | Use in the story |
 |---|---|
-| Community radio station (fictional), a unit in a shop row | Daniel's station. Murder scene on Monday; night entry is the stealth tutorial; the broadcast desk is one of Friday's choices |
-| Shop row and parking lot | The crowd on Monday. Car guards and shop staff are the first witnesses |
-| Police station (the real one is on Steenkamp Street) | Captain Khoza, the docket, the cells. Ruth is brought here on Thursday if caught |
+| Community radio station (fictional), a unit in a shop row | Daniel's station. Murder scene on day 1; night entry is the stealth tutorial; the broadcast desk is one of the final choices |
+| Shop row and parking lot | The crowd on day 1. Car guards and shop staff are the first witnesses |
+| Police station (the real one is on Steenkamp Street) | Captain Khoza, the docket, the cells. Ruth is brought here on day 11 if caught |
 | Bank and ATM row | Where Grace Tau's borrowers draw their wages with cards she holds. ATM slips tie Sam Nel to her |
 | Municipal offices (the real head office is on Horwood Street, the main street) | Rates and land records for the farm and the colliery: *written* clues, some of them altered. The water is off and the queue is long |
-| 24-hour fuel station | Open when nothing else is. Night meetings, a camera that saw a car on Monday |
+| 24-hour fuel station | Open when nothing else is. Night meetings, a camera that saw a car on the first night |
 | The lake | Where Anneline will talk, after dark, away from the mine |
 
 **Residential area.** Suburbs of single-storey houses on generous plots behind walls, with lawns, carports and street trees, and walled townhouse complexes among them.
@@ -88,13 +120,13 @@ This is the first area to be designed and drawn. Street-level facts here are thi
 | Location | Use in the story |
 |---|---|
 | Grace Tau's guesthouse (fictional), a converted house with rooms built on behind | Ruth's room, the board, the save point. Contractors' vehicles in the yard, and Grace always at the kitchen door |
-| Daniel Brandt's house | Searched on Tuesday. He lived in town, not on the farm, and the house says why |
-| Sam Nel's flat, in a block of walk-ups | Entered on Tuesday. The debt, the pawn slips, and what he was selling |
-| Anneline Petersen's townhouse, in a complex with a boom gate | Wednesday's meeting. Thursday's reason for running |
-| Marius Steyn's house, the highest wall on the street | Optional entry on Wednesday night. What Steyn believes about the crate |
-| Green strips between the neighbourhoods, part of the original town plan | On Thursday the roads are blockaded or watched. These are how Ruth crosses town on foot. Whether they carry continuous footpaths today is not confirmed |
+| Daniel Brandt's house | Searched in the first week. He lived in town, not on the farm, and the house says why |
+| Sam Nel's flat, in a block of walk-ups | Entered in the first week. The debt, the pawn slips, and what he was selling |
+| Anneline Petersen's townhouse, in a complex with a boom gate | Where she lives, and where she is shot on day 11 |
+| Marius Steyn's house, the highest wall on the street | Optional entry in the second week. What Steyn believes about the crate |
+| Green strips between the neighbourhoods, part of the original town plan | On day 11 the roads are blockaded or watched. These are how Ruth crosses town on foot. Whether they carry continuous footpaths today is not confirmed |
 
-**Driving** is the travel interlude: the road, the plant on the skyline, and the car radio. After Monday, Daniel's station plays his old programmes on repeat, and what is on the radio changes with what Ruth has done.
+**Driving** is the travel interlude: the road, the plant on the skyline, and the car radio. After the first night, Daniel's station plays his old programmes on repeat, and what is on the radio changes with what Ruth has done.
 
 The town runs on a clock. Shifts change at the mine and the plant, the roads fill and empty, and named people have places to be at each block.
 
@@ -120,12 +152,12 @@ Others: **Anneline Petersen**, who runs the colliery lab, signs the certificates
 
 The police are the opposite of the four powers. The four have money, men and reach and no right to any of it. The police have the right and almost nothing else.
 
-- **Captain Sizwe Khoza**, detective. About a hundred and fifty open dockets, two working cars, a commander who wants numbers. He calls Daniel's death a robbery on Monday because a robbery can be closed. He is honest, and once Ruth shows him something he cannot ignore he is on her side.
+- **Captain Sizwe Khoza**, detective. About a hundred and fifty open dockets, two working cars, a commander who wants numbers. He calls Daniel's death a robbery on the first night because a robbery can be closed. He is honest, and once Ruth shows him something he cannot ignore he is on her side.
 - **Constable Lerato Nkuna**, three years in, drives the car that works. She is the one who actually comes when called.
 - **The mortuary at Evander**, where a forensic officer will tell Ruth more than the report says, if she is asked properly.
 - **The officer who moonlights for Steyn.** Not a villain: a sergeant with a second job on a security company's books, who mentions things. The station is not corrupt. It is porous.
 
-**Funding.** Money is the game's one resource, and from Wednesday it comes from the police. Until then Ruth is spending Brandt's retainer. When he pays her off and tells her to leave, Khoza signs her on as a registered informer so that he can draw from the station's informer fund. It is small, it is slow, and every rand has a form behind it.
+**Funding.** Money is the game's one resource, and from the end of the first week it comes from the police. Until then Ruth is spending Brandt's retainer. When he pays her off and tells her to leave, Khoza signs her on as a registered informer so that he can draw from the station's informer fund. It is small, it is slow, and every rand has a form behind it.
 
 | What the money is for | How it works |
 |---|---|
@@ -145,8 +177,8 @@ Whether the police can fund an informer this way, and what a private person may 
 |---|---|---|
 | The docket | Ruth reads what the police have and adds to it. Her clues become *written* and count later | Khoza's name is on the access register |
 | A statement taken | Something said to Ruth becomes evidence | An appointment in a book other people can read |
-| A records request | Phone or bank records for one person | It takes two days. Ask on Tuesday or not at all |
-| The car | Nkuna comes to one place, once | It is the only car. On Thursday it is behind a blockade |
+| A records request | Phone or bank records for one person | It takes three working days. Ask too late and it arrives after the sale |
+| The car | Nkuna comes to one place, once | It is the only car. On day 11 it is behind a blockade |
 | An arrest | Khoza will pick up one person on Ruth's word | If she is wrong, he has nothing left to give |
 
 There are five favours and more than five uses for them. Between the money and the favours, the player feels exactly how little the law can do, and that the people in it are trying.
@@ -163,8 +195,8 @@ There are five favours and more than five uses for them. Between the money and t
 
 The game has two murders and each looks like the other kind.
 
-- **Daniel Brandt, Monday.** A broadcaster exposing a mine is shot outside his station. The town assumes a hit. The police call it a robbery. It is neither: it is personal, done by someone one step from him, which is what most murders here are.
-- **Anneline Petersen, Thursday.** A lab manager is shot in her car at the gate of her complex and her laptop and bag are taken. It looks like a hijacking gone wrong. It is a paid killing, the rare kind that is rising and that almost never reaches the person who paid.
+- **Daniel Brandt, day 1.** A broadcaster exposing a mine is shot outside his station. The town assumes a hit. The police call it a robbery. It is neither: it is personal, done by someone one step from him, which is what most murders here are.
+- **Anneline Petersen, day 11.** A lab manager is shot in her car at the gate of her complex and her laptop and bag are taken. It looks like a hijacking gone wrong. It is a paid killing, the rare kind that is rising and that almost never reaches the person who paid.
 
 ### The storylines
 
@@ -175,27 +207,27 @@ Six threads. None is a side story: each supplies a cause, a clue or a cost for a
 | **The strike** | Three years ago the underground crews refused an instruction to load waste rock in with the coal. Brandt called it an unprotected strike, brought in Steyn, and dismissed them. Their case is still in the labour courts |
 | **The fraud** | Since then the colliery has sold stone as coal on false certificates. The proof is the crate: sealed retained samples and the lab's day book, which goes back to the week of the strike |
 | **The debts** | The dismissed men borrowed from Grace Tau to live. Others stood surety for them. She holds their cards |
-| **Daniel's murder** | Monday |
-| **The hit** | Thursday |
-| **Shutdown week** | Twenty thousand strangers in town, every bed taken, the water off, and a power cut in the centre |
+| **Daniel's murder** | Day 1 |
+| **The hit** | Day 11 |
+| **The shutdown** | Twenty thousand strangers in town, every bed taken, the water off, and a power cut in the centre |
 
 How they lock together:
 
 1. **The strike made the debts.** Dismissed crews borrowed from Grace. Sam Nel, Daniel's technician, stood surety for his brother, one of them.
 2. **The debts killed Daniel.** Sam could not pay, so he sold Grace what Daniel was working on. Daniel found out. The chain that ends in Daniel's death starts with his father's decision three years ago, and neither man knows it.
-3. **Daniel's murder told everyone about the crate.** Grace sold what Sam told her to Steyn and to Mokoena. By Wednesday all four are asking Ruth for "it", each believing it is something different.
-4. **The crate is two things.** The tins prove the fraud and matter to the buyers. The day book proves why the crews refused to load, and matters to Joseph and the dismissed men. On Friday Ruth can send them to different people.
+3. **Daniel's murder told everyone about the crate.** Grace sold what Sam told her to Steyn and to Mokoena. By the funeral all four are asking Ruth for "it", each believing it is something different.
+4. **The crate is two things.** The tins prove the fraud and matter to the buyers. The day book proves why the crews refused to load, and matters to Joseph and the dismissed men. At the sale Ruth can send them to different people.
 5. **The crate needs Anneline.** Tins are only coal unless the person who sealed them says so under oath. She agrees to make a statement. That makes her the most valuable person in town and the most exposed.
 6. **Protecting her exposes her.** If Ruth asks Captain Khoza to take the statement, the appointment is seen at the station by an officer who moonlights for Steyn. If Ruth tells any of the four instead, it travels the same way. Every route to keeping Anneline safe is a route by which Steyn learns she will talk.
 7. **Everyone has a hand in the hit and nobody planned it alone.** Steyn takes the news to Brandt as leverage. Brandt pays. Steyn arranges it and so owns Brandt, which is all he ever wanted. The gunman is hired from outside the province through one of Mokoena's drivers, without Mokoena knowing. The pistol is one "lost" from Steyn's own armoury. The gunman takes a bed in the only place with a bed left, Grace Tau's guesthouse, down the corridor from Ruth.
-8. **Shutdown week hides it.** One more stranger in a hired bakkie is invisible. The power cut killed the cameras in the centre on Monday. On Thursday Mokoena's forum blockades the roads over docked haulage and Tuesday's raid, and the one police car that works cannot get through to Anneline's complex.
+8. **The shutdown hides it.** One more stranger in a hired bakkie is invisible. The power cut killed the cameras in the centre on the first night. On day 11 Mokoena's forum blockades the roads over docked haulage and Tuesday's raid, and the one police car that works cannot get through to Anneline's complex.
 9. **The hit reaches back to the strike.** The pistol was used before: a shaft steward was shot and wounded during the strike, a docket that has sat in Khoza's pile for three years. The cartridge cases match. Proving it takes a ballistics laboratory with a backlog of tens of thousands of cases. The result arrives long after Friday.
 
 ### The hidden truth, plainly
 
-- **The fraud.** Brandtskraal's remaining coal is thin and full of stone. Certificates have been false for three years. Brandt paid Anneline to sign them. The colliery is to be sold on Friday on the strength of its sales contracts. This follows documented coal-quality frauds in Mpumalanga; the sampling and laboratory detail needs review by someone who has worked in a coal lab.
-- **Who killed Daniel.** Sam Nel, with Daniel's own pistol from the station desk, on Monday afternoon when Daniel confronted him.
-- **Who dressed the scene.** Steyn's men, by Tuesday morning, to point at Mokoena's drivers, who are already suspected of swapping loads. Steyn wants the forum off his gate.
+- **The fraud.** Brandtskraal's remaining coal is thin and full of stone. Certificates have been false for three years. Brandt paid Anneline to sign them. The colliery is to be sold on the second Friday on the strength of its sales contracts. This follows documented coal-quality frauds in Mpumalanga; the sampling and laboratory detail needs review by someone who has worked in a coal lab.
+- **Who killed Daniel.** Sam Nel, with Daniel's own pistol from the station desk, on the afternoon of day 1 when Daniel confronted him.
+- **Who dressed the scene.** Steyn's men, by the next morning, to point at Mokoena's drivers, who are already suspected of swapping loads. Steyn wants the forum off his gate.
 - **Who killed Anneline.** A hired man who does not know who paid. Brandt paid. Steyn arranged it.
 - **Where the crate is.** Daniel left it with the one person nobody would search: it is in Joseph Sithole's back room in eMbalenhle, and Joseph has not opened it.
 
@@ -217,18 +249,17 @@ Nobody Ruth meets describes the crate the same way.
 
 Taken from how real staged scenes were undone.
 
-- **Monday is not a robbery:** nothing was taken from Daniel or his car. **And not a hit:** one shot, close, from a pistol kept in the station desk; no car waiting; the emergency call came twenty minutes late and from Sam's phone.
-- **Sam:** his phone was switched off for the hour that matters. A loan settlement at Grace's is dated Monday morning, before Daniel died. He had already listed the station's mixing desk for sale.
-- **The frame:** the cartridge case Steyn's men "found" on Tuesday is the wrong calibre for the wound the forensic officer at the Evander mortuary describes.
-- **Thursday is not a hijacking:** her car was left; only the laptop and bag went. The gate motor had been disabled the night before. The guesthouse register has a guest who paid cash, gave a contractor's name that no contractor recognises, and left at four in the morning.
+- **Day 1 is not a robbery:** nothing was taken from Daniel or his car. **And not a hit:** one shot, close, from a pistol kept in the station desk; no car waiting; the emergency call came twenty minutes late and from Sam's phone.
+- **Sam:** his phone was switched off for the hour that matters. A loan settlement at Grace's is dated that same morning, before Daniel died. He had already listed the station's mixing desk for sale.
+- **The frame:** the cartridge case Steyn's men "found" the next day is the wrong calibre for the wound the forensic officer at the Evander mortuary describes.
+- **Day 11 is not a hijacking:** her car was left; only the laptop and bag went. The gate motor had been disabled the night before. The guesthouse register has a guest who paid cash, gave a contractor's name that no contractor recognises, and left at four in the morning.
 
 ### Act by act
 
-- **Monday.** Ruth arrives at dusk. Daniel is not at the guesthouse. She finds the crowd outside the radio station, in the dark, because the power in the centre is out. Khoza gives her the official version; Joseph, who was Daniel's contact, gives her the background and says nothing about the box in his back room; Grace gives her the last free room in town. At night Ruth can go back into the station, which is the stealth tutorial. A car from the farm fetches her, and Brandt hires her to find who killed his son.
-- **Tuesday.** The murder. Three questions on the board: was it a robbery, whose gun, who gains. The body is at the mortuary in Evander. Sam's flat, Daniel's house, Grace's loan book. By nightfall Ruth names someone to Brandt and Khoza. If she names Mokoena's drivers, Steyn raids the truck yard that night with her finding as his warrant, and Sam is on the morning bus.
-- **Wednesday.** Brandt thanks her, pays her, and tells her to go. She now has no client. Every one of the four separately asks whether she has "it". She meets Anneline at the lake, who offers a statement. Ruth decides who to trust with that. A new guest checks in down the corridor.
-- **Thursday.** Anneline is killed. Ruth was the last person seen with her and Steyn's men say so. The roads are blockaded. Ruth crosses town on foot, works out where Daniel would have left the crate, reaches Joseph's house, and then the farm. How many people are there, and on whose side, depends on Wednesday.
-- **Friday.** The buyers' cars arrive at the colliery office at 10:00. Ruth chooses what happens to the tins and to the day book, together or apart: the buyers, Brandt, Joseph and the dismissed men's lawyer, Khoza's docket, the air from Daniel's station, or the slimes dam. Then she drives out past the plant.
+- **Act I, days 1–2.** Ruth arrives at dusk. Daniel is not at the guesthouse. She finds the crowd outside the radio station, in the dark, because the power in the centre is out. Khoza gives her the official version; Joseph, who was Daniel's contact, gives her the background and says nothing about the box in his back room; Grace gives her the last free room in town. At night Ruth can go back into the station, which is the stealth tutorial, and see the scene before it is dressed. A car from the farm fetches her, and Brandt hires her to find who killed his son. Next morning, the post-mortem.
+- **Act II, days 3–7.** The murder. Three questions on the board: was it a robbery, whose gun, who gains. Sam's flat, Daniel's house, Grace's loan book, the last broadcast, instalment night, the bus, payday. Ruth names someone to Brandt and Khoza when she is ready, and no later than the funeral. If she names Mokoena's drivers, Steyn raids the truck yard that night with her finding as his warrant. At the funeral every one of the four separately asks whether she has "it". That afternoon Brandt thanks her, pays her, and tells her to go. On Sunday evening, Anneline.
+- **Act III, days 8–11.** The fraud. The buyers come to test the coal and Ruth can watch the test being rigged. She has a witness, a detective with five favours, and a little money each morning. She works out what the crate is and that it is two things. She decides who to trust with Anneline's statement. A stranger takes the last bed. On day 11 the roads close, Anneline is killed on her way to the station, and Ruth, the last person seen with her, crosses town on foot to Joseph's house and then to the farm. How many people are there, and on whose side, depends on what she told whom.
+- **Act IV, days 12–14.** The buyers' cars arrive at the colliery office at 10:00 on Friday. Ruth chooses what happens to the tins and to the day book, together or apart: the buyers, Brandt, Joseph and the dismissed men's lawyer, Khoza's docket, the air from Daniel's station, or the slimes dam. That night the plant restarts. On Saturday she makes her statement. On Sunday she drives out past the plant.
 
 ### How it ends
 
@@ -278,7 +309,7 @@ Named characters are spoken to face to face: the view cuts from the isometric to
 
 ## 10. Stealth
 
-Used for places Ruth has no right to be (the station at night, the colliery lab, the contractor camp, the farmhouse, Mokoena's truck yard) and for all of Thursday.
+Used for places Ruth has no right to be (the station at night, the colliery lab, the contractor camp, the farmhouse, Mokoena's truck yard) and for all of day 11.
 
 - Guards see in cones, hear footsteps on gravel and iron sheeting, and follow routes tied to the shift clock.
 - Darkness hides; a torch reveals both ways.
@@ -292,7 +323,7 @@ Used for places Ruth has no right to be (the station at night, the colliery lab,
 No upgrades, no attachments, no ammunition types, no experience.
 
 - **Weapons:** Ruth's 9 mm pistol with two magazines. Found during play: a revolver, a pump shotgun, a hunting rifle. Improvised: a torch, a tyre iron. She carries one long gun and one handgun. Ammunition is counted in single rounds and there is little of it.
-- **Armour:** one covert vest, obtainable from Wednesday through Khoza or bought second-hand. It stops pistol rounds a few times, slows her slightly, and is noticed in conversation.
+- **Armour:** one covert vest, obtainable in the second week through Khoza or bought second-hand. It stops pistol rounds a few times, slows her slightly, and is noticed in conversation.
 - **Health:** three states: fine, hurt, badly hurt. A first-aid kit takes her up one state. The clinic treats her fully but costs a block and the nurse asks questions. Wounds carry over to the next day.
 - **Enemies** are as fragile as she is. Two or three hits ends anyone. A fight with more than four opponents is one to avoid or to arrange allies for.
 - Death reloads the start of the current block.
@@ -306,7 +337,7 @@ No upgrades, no attachments, no ammunition types, no experience.
 
 ## 13. First build
 
-Monday only: arrival, the crowd at the station, three conversations, the room and the board, the night entry into the station, the drive to the farm. About forty minutes. It exercises movement, Focus, conversation, clue capture, linking, stealth and one possible gunfight.
+Day 1 only: arrival, the crowd at the station, three conversations, the room and the board, the night entry into the station, the drive to the farm. About forty minutes. It exercises movement, Focus, conversation, clue capture, linking, stealth and one possible gunfight.
 
 Engine is still open. With co-op gone, a browser build (Three.js) remains the fastest route to something playable and testable here; Unity or Godot are equally reasonable for the full game.
 
