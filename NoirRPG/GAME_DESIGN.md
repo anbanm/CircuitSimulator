@@ -1,4 +1,4 @@
-# SECUNDA (working title) — Game Design, v9
+# SECUNDA (working title) — Game Design, v10
 
 A detective story set in Secunda, Mpumalanga, over two weeks. Isometric, rotatable camera. Single player, one fixed main character, about five and a half hours.
 
@@ -397,9 +397,9 @@ Short prose stories, shown as text, in the manner of the dream sequences in Lost
 
 ### What they are
 
-Ruth cannot remember where she is from, and the game does not know either. In Secunda the wind and the smells keep reaching something underneath what she remembers, and at night it comes back as stories she cannot place: a time and a place that feel like home and have no name. Some may be hers. Some may have been told to her once by adults she has forgotten, about homes that were theirs.
+Ruth cannot remember where she is from, and the game does not know either. In Secunda the wind and the smells keep reaching something underneath what she remembers, and at night it comes back as stories she cannot place: times and places that feel like home and are not hers to remember. They are real. They belong to the people this ground took (below).
 
-So the dreams are small stories from Africa, and they do not stay in one place: a yard with a peach tree, a mountain where it snowed on horses, a sea that someone said was like the veld except that it moved, a lake with fish too small to count. They do not agree with each other about where home was. That is deliberate.
+So the dreams are small stories from Africa, and they do not stay in one place, because the men did not come from one place: a yard with a peach tree, a mountain where it snowed on horses, a sea that someone said was like the veld except that it moved, a lake with fish too small to count. Each is somebody's home, as he carried it down with him.
 
 ### How they are triggered
 
@@ -428,20 +428,40 @@ About twelve across the fourteen nights. Each has a cue, a story, and something 
 | Dust, then the first rain on it | Before a storm | Running to bring the washing in; someone counting between the flash and the thunder in a language Ruth no longer speaks | The language she drops into without noticing when she is tired |
 | Paraffin | A spaza shop in eMbalenhle | Homework by lamp, and a letter from a mine read aloud by a neighbour because nobody in the house could read it | Joseph, who reads documents for half his street |
 | Wet clay and paint | A woman repainting a yard wall | An old woman renewing the patterns on a homestead wall in the dry season, and the one line a child was allowed to paint | Nothing. It may be a hint. It is never taken up |
-| The shift siren, and soap | The colliery gate at change of shift | A man who came home by bus once a year, smelling of soap and of something under the soap, with stories that were other men's | The dismissed crews, coming off their last shift |
+| The shift siren, and soap | The colliery gate at change of shift | A man who has just been paid, choosing a blanket to send home, taking a long time over the colour | The dismissed crews, and Kinross, the day before |
 | Water at dusk | The lake | Someone telling a child about a sea: like the veld, except that it moves, and you cannot walk on it though it looks as if you could | Anneline, who is from the coast and hates it here |
 | A hymn through a wall | Sunday | A church held in a classroom, and the one hymn Ruth can still sing without knowing what the words mean | Daniel's funeral |
 | Burnt grass | A firebreak on the road to the farm | Black ground, and a week later green coming through it, and boys with sticks | The farm, which was someone's before it was Brandt's |
 | Snow that is not there | A cold wind off the plant at night | A mountain where it snowed on horses, told by a man in a blanket who laughed at how little the child believed him | Mokoena, whose people came down from those mountains |
-| Sour porridge and many voices | The funeral tea, day 6 | A long tent, and all the women singing. She is very small. She does not know whose it is, and she still does not | Daniel's funeral, where she is again the one person who did not know him |
+| Sour porridge and many voices | The funeral tea, day 6 | A stopped shift, and all the women singing. Men holding their own service because they were left out of the official one | Daniel's funeral, and the day of mourning in 1986 |
+| A board of numbered tags | The lamp room at the colliery, at change of shift | A clerk at the end of a shift, counting the hooks that are still empty, and counting again | Middelbult, 1993 |
+| A sound under the floor | A truck passing the guesthouse at night | A woman in a company house who hears the ground speak once, like furniture being moved in a room below, and goes on with the washing | Coalbrook, 1960 |
 | Nothing | The first night, the smell of the plant | No dream comes. It is the only smell that brings nothing | |
 | The wind, with the windows down | The drive out, day 14 | Not a dream. For a moment she almost has it. Then the road | The last image of the game |
 
+### Whose they are
+
+The real ones. The stories in the dreams are not invented losses. They are the memories of this ground: the men who died under it and the people who waited for them. They survive now in three places only: in newspaper clippings gone brown, in things left behind, and in the dreams of people who have long forgotten, or who never knew.
+
+- **Kinross, 16 September 1986.** A fire underground at the gold mine twenty kilometres from Secunda. 177 men died of the fumes and 235 were hurt. When the owners held a memorial, the workers objected to being left out of it, and on 1 October they stopped work to hold their own. The game's two weeks fall across the anniversary.
+- **Middelbult, 13 May 1993.** A methane explosion at one of the collieries that feed the plant. 53 men died.
+- **Coalbrook, 21 January 1960.** The collapse at the colliery that fed the first of these plants, in the other company town, the one Secunda is named second after. 435 men were never brought up. It is the worst mining disaster the country has had.
+
+The dreams never show a fire or a fall of rock. They are about the day before, or the people at home: a man who has just been paid and is choosing a blanket to send; a wife who hears the hooter go at the wrong hour; a lamp-room clerk with a board of numbered tags and gaps in it at the end of the shift; a child at a funeral for someone she is told is her uncle. No real person is named or portrayed. They are the kind of people who were there.
+
+**Three places the souls live.** All three are in the waking game as well as the dreams.
+
+- **Clippings.** Daniel kept a wall of them. Joseph keeps a biscuit tin. The local paper's bound volumes are in the library. Each can be read, and each plants a cue.
+- **Things left behind.** A lamp tag nobody collected. A hard hat with a name in koki pen on a shelf at the mortuary. A memorial stone at Evander with the grass grown over the lowest row of names. A blanket still in its plastic.
+- **Dreams.** In Ruth, who has no reason to have them.
+
 ### What they do not add up to
 
-Nothing. There is no reveal. The dreams never say where Ruth is from, who the people in them were, whether these are her memories or stories someone told her, or whether the place is near here or a thousand kilometres away. The player may form a theory. The game never confirms one, and Ruth never asks anyone. Nobody in the waking story recognises her, and no document turns up with her name on it.
+Nothing, as far as Ruth is concerned. There is no reveal. The game never says why these come to her: whether someone of hers was among them, whether she was told these things as a child, or whether a town simply does this to anyone who sleeps in it and pays attention. Nobody recognises her. No document turns up with her name on it. She is a vessel, and for two weeks the place pours through her.
 
-What the dreams give is not information. It is the feeling of having belonged somewhere, arriving in a town where she belongs to nothing, and then leaving again.
+What the dreams give is not information. It is the weight of people who were here, in a town that has got used to not thinking about them.
+
+**Handling.** These are real dead with living families. The dreams should be written with the mining communities, not only about them, and reviewed before anything is published.
 
 ### A sample
 
@@ -541,6 +561,6 @@ No serial killer. No occult angle for colour. No murdered woman's body as specta
 ## 16. Open decisions
 
 - Confirm the ground rules at the top, above all the line between the real town and the invented story.
-- Who writes the dreams. They need South African writers.
+- Who writes the dreams. They need South African writers, and people from the mining communities whose dead they are.
 - Art: oil painting is chosen. The first oil set drew an invented tin-roof gold town and does not show Secunda; it needs redoing from reference.
 - Title.
