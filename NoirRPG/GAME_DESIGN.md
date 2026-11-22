@@ -323,7 +323,33 @@ It goes wrong because of the blockade. The rehearsal for the Heritage Day concer
 - **The gunman** is about to be killed by the people who hired him. Warned, he is a second armed man on the third floor who wants out. He is also the man who shot Anneline.
 - **The driver** is the only person who met both sides. If he walks out alive, the ending is different.
 - **Mokoena** can lift the blockade with a phone call, which brings the rest of the station and an ambulance, and puts Ruth in his debt in front of the police.
-- **Khoza and Nkuna** do what the player asks. Each can hold a stair, run the evacuation, or come up with Ruth. Either can be hurt.
+- **Khoza and Nkuna** do what the player asks. Each can hold a stair, run the evacuation, or come up with Ruth. Either can be hurt. What they bring, and who else comes, depends on where Ruth stands with them (below).
+
+**Who answers the phone.** What Ruth can call on in the finale is decided by the ten days before it. Every named person has a standing with her, shown in her notebook in plain words: *stranger*, *knows her*, *trusts her*, *owes her*. It moves when she pays fairly or not at all, keeps or breaks a promise, names the right or the wrong person, turns up at the funeral, or gets someone hurt. In the finale her phone is a tool like the fire alarm. Each call or message costs seconds off the clock, and people answer according to their standing.
+
+| Contact | If they trust her | If they do not |
+|---|---|---|
+| **Captain Khoza** | Radios the neighbouring station at Evander, on the far side of the blockade. A second car arrives in about twelve minutes | Comes himself, and tells nobody, because he does not know who at the station would pass it on |
+| **Constable Nkuna** | Brings the car, the shotgun from the safe, and the first-aid bag | Brings the car |
+| **The forensic officer at Evander** | Wakes the Evander station commander personally. Faster than the radio | Does not pick up |
+| **Joseph Sithole**, inside, in the basses | Reads a text under his folder and acts on it: warns the director, moves the youngest into the practice rooms, tells Ruth where the driver is standing | His phone is off for rehearsal |
+| **The music director** | Will act on one message from Ruth without asking why: keep playing, or start moving people | Stops the rehearsal to ask what is going on, loudly |
+| **Abel Mokoena** | Lifts the blockade. The rest of the station and an ambulance get through | Wants to know what it is worth |
+| **Grace Tau** | Opens her back door, and phones the two door guards who owe her money | Sells the news that Ruth is coming |
+| **The car guard on the parking lot** | Signals when the team's vehicle pulls in and how many get out, by flashing the lot lights | Has gone home |
+| **A guard from Steyn's firm** whom Ruth spared, paid or simply spoke to as a person | Leaves the basement door on the latch and tells her how many are on each floor | Reports her |
+| **The dismissed men**, through Joseph | Thirty people walk to the building and stand in the street. Nobody on the door wants to be watched doing this | Nobody comes |
+
+**One more ally.** One person can come into the building with Ruth, Khoza and Nkuna. Who it is depends on who trusts her most by day 11, and each changes how the finale plays.
+
+| Ally | What they bring |
+|---|---|
+| **Vusi Sithole**, Joseph's nephew, a dismissed miner trained in mine rescue | Moves people calmly through dark and smoke. With him the evacuation is faster and nobody is trampled |
+| **A guard who walks off the door** | Knows the building, the radio channel and the men upstairs by name. Can talk one of the four down |
+| **Sam Nel's brother** | Wants to do one thing right. No skills, no fear, and a reason to be listened to by the choir, who know him |
+| **Nobody** | If Ruth has burned everyone, she goes in with two police officers and what she is carrying |
+
+The same standings decide the reverse. People she has wronged do not just fail to help: a guard she hurt recognises her at the door, and someone she lied to makes a call of their own.
 
 **Ways it can go.**
 
