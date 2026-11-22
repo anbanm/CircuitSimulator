@@ -1,6 +1,6 @@
-# SECUNDA (working title) — Game Design, v6
+# SECUNDA (working title) — Game Design, v7
 
-A detective story set in Secunda, Mpumalanga, over two weeks. Isometric, rotatable camera. Single player, one fixed main character, about five hours.
+A detective story set in Secunda, Mpumalanga, over two weeks. Isometric, rotatable camera. Single player, one fixed main character, about five and a half hours.
 
 Status: design draft, no code. This version revises v4 using the research in `reports/` (the Secunda setting report, and the crime research notes in `research_notes/`). Character and company names are placeholders.
 
@@ -43,10 +43,10 @@ Four acts across two weeks, fourteen days from a Monday to the Sunday after next
 |---|---|---|---|
 | I. Arrival | 1–2 | 45 min | The client is dead. Ruth meets the people around him, takes a room, and is summoned to the farm, where the old man hires her to find his son's killer. |
 | II. The murder | 3–7 | 100 min | The first week. Daniel's murder is solved, rightly or wrongly. The funeral puts everyone in one place. The old man pays Ruth off, and from then her only backing is a detective with two cars. |
-| III. The fraud | 8–11 | 110 min | The second week. The buyers arrive to test the coal. Ruth finds a witness and decides who to tell. The witness is killed, Ruth is blamed, the roads are blockaded. The heaviest stealth and action. |
+| III. The fraud | 8–11 | 130 min | The second week. The buyers arrive to test the coal. Ruth finds a witness and decides who to tell. The witness is killed, Ruth is blamed, the roads are blockaded. It ends at 21:00 on day 11 in a five-storey building with a rehearsal on the fourth floor. |
 | IV. Epilogue | 12–14 | 30 min | The sale, the choice, and what is left. Ruth makes her statement and drives out. No combat. |
 
-About five hours in all, which is longer than first planned.
+About five and a half hours in all, which is longer than first planned.
 
 ### Timed events
 
@@ -59,6 +59,7 @@ These happen at a fixed day and hour whether Ruth is there or not. Some she know
 | 2 Tue | by dawn | Steyn's men dress the scene | If she was in the station overnight, she saw it as it really was | The planted cartridge case is all there is |
 | 3 Wed | 19:00 | Daniel's last recorded programme goes out on the station's automation | She hears him thank "a friend in eMbalenhle who keeps things safe" | It airs once. Afterwards it can only be found on the station computer |
 | 4 Thu | 17:00 | Sam Nel's instalment is due at Grace Tau's | She sees who pays, who cannot, and what Grace takes instead | Grace's loan book is the only record |
+| 4 Thu, 9 Tue | 19:00 | Rehearsal at the music school | She learns the fourth floor and meets the director | She goes in blind on day 11 |
 | 5 Fri | 06:00 | The morning bus to Johannesburg | If Sam has not been named, she can catch him at the rank | Sam is gone for the rest of the game |
 | 5 Fri | night | Contractors' payday | The ATM row and the taverns are full of people who will talk for a drink | The town is quiet again by Sunday |
 | 6 Sat | 10:00 | Daniel's funeral | All four powers, Brandt, Joseph and Khoza in one place, watching each other | She hears about it second-hand, from each of them differently |
@@ -71,6 +72,7 @@ These happen at a fixed day and hour whether Ruth is there or not. Some she know
 | 10 Wed | 21:00 | A guest checks into the last bed at the guesthouse | She can see his car, his hands, the name he gives | The register is all there is |
 | 11 Thu | 05:00 | The blockade goes up | | |
 | 11 Thu | 06:40 | Anneline is shot at her gate | Ruth can be close enough to see the car, never close enough to stop it | She hears it on a security radio |
+| 11 Thu | 21:00 | The handover on the third floor, under the music school's late rehearsal | The finale | Two men are dead and the team is on the stairs |
 | 12 Fri | 10:00 | The sale is signed at the colliery office | She decides what happens to the tins and the day book | The sale goes through |
 | 12 Fri | night | The plant comes back up after the shutdown, and the flares light the whole sky | | |
 | 13 Sat | 11:00 | Ruth's statement at the station | | |
@@ -107,7 +109,7 @@ This is the first area to be designed and drawn. Street-level facts here are thi
 
 | Location | Use in the story |
 |---|---|
-| Community radio station (fictional), a unit in a shop row | Daniel's station. Murder scene on day 1; night entry is the stealth tutorial; the broadcast desk is one of the final choices |
+| Community radio station (fictional), on the fifth floor of an office block in the centre | Daniel's station. Murder scene on day 1; night entry is the stealth tutorial; the broadcast desk is one of the final choices |
 | Shop row and parking lot | The crowd on day 1. Car guards and shop staff are the first witnesses |
 | Police station (the real one is on Steenkamp Street) | Captain Khoza, the docket, the cells. Ruth is brought here on day 11 if caught |
 | Bank and ATM row | Where Grace Tau's borrowers draw their wages with cards she holds. ATM slips tie Sam Nel to her |
@@ -262,8 +264,79 @@ Taken from how real staged scenes were undone.
 
 - **Act I, days 1–2.** Ruth arrives at dusk. Daniel is not at the guesthouse. She finds the crowd outside the radio station, in the dark, because the power in the centre is out. Khoza gives her the official version; Joseph, who was Daniel's contact, gives her the background and says nothing about the box in his back room; Grace gives her the last free room in town. At night Ruth can go back into the station, which is the stealth tutorial, and see the scene before it is dressed. A car from the farm fetches her, and Brandt hires her to find who killed his son. Next morning, the post-mortem.
 - **Act II, days 3–7.** The murder. Three questions on the board: was it a robbery, whose gun, who gains. Sam's flat, Daniel's house, Grace's loan book, the last broadcast, instalment night, the bus, payday. Ruth names someone to Brandt and Khoza when she is ready, and no later than the funeral. If she names Mokoena's drivers, Steyn raids the truck yard that night with her finding as his warrant. At the funeral every one of the four separately asks whether she has "it". That afternoon Brandt thanks her, pays her, and tells her to go. On Sunday evening, Anneline.
-- **Act III, days 8–11.** The fraud. The buyers come to test the coal and Ruth can watch the test being rigged. She has a witness, a detective with five favours, and a little money each morning. She works out what the crate is and that it is two things. She decides who to trust with Anneline's statement. A stranger takes the last bed. On day 11 the roads close, Anneline is killed on her way to the station, and Ruth, the last person seen with her, crosses town on foot to Joseph's house and then to the farm. How many people are there, and on whose side, depends on what she told whom.
-- **Act IV, days 12–14.** The buyers' cars arrive at the colliery office at 10:00 on Friday. Ruth chooses what happens to the tins and to the day book, together or apart: the buyers, Brandt, Joseph and the dismissed men's lawyer, Khoza's docket, the air from Daniel's station, or the slimes dam. That night the plant restarts. On Saturday she makes her statement. On Sunday she drives out past the plant.
+- **Act III, days 8–11.** The fraud. The buyers come to test the coal and Ruth can watch the test being rigged. She has a witness, a detective with five favours, and a little money each morning. She works out what the crate is and that it is two things. She decides who to trust with Anneline's statement. A stranger takes the last bed. On day 11 the roads close, Anneline is killed on her way to the station, and Ruth, the last person seen with her, crosses town on foot to Joseph's house. That evening she learns where the gunman is to be paid, and what is on the floor above. The finale follows.
+- **Act IV, days 12–14.** Before dawn on Friday Ruth drives out to the farm and sits across from Brandt one last time. There is no fight; he is an old man in a chair. The buyers' cars arrive at the colliery office at 10:00 on Friday. Ruth chooses what happens to the tins and to the day book, together or apart: the buyers, Brandt, Joseph and the dismissed men's lawyer, Khoza's docket, the air from Daniel's station, or the slimes dam. That night the plant restarts. On Saturday she makes her statement. On Sunday she drives out past the plant.
+
+### The finale: the music school, day 11, 21:00
+
+The last playable action in the game, and the one place where it can get heavy. It is the hit's own aftermath arriving somewhere it was never meant to be.
+
+**The building.** A five-storey 1980s office block in the town centre, half let (fictional; whether the real centre has a block this tall is not confirmed). Steyn's firm holds its security contract. The player has been here since day 1 and knows it floor by floor before the finale starts.
+
+| Floor | What is there | When the player learns it |
+|---|---|---|
+| Roof | Daniel's antenna mast and the plant room | Day 1 |
+| 5 | Daniel's radio station | Day 1, the murder scene and the stealth tutorial |
+| 4 | A community music school: a rehearsal hall, six practice rooms, an instrument store. Youth orchestra and adult choir | Optional visits on day 4 and day 9, when Ruth can sit in on a rehearsal and meet the director |
+| 3 | A labour broker's office, the front for the driver who hired the gunman, and where shutdown contractors buy drugs | Day 8 onward, if Ruth follows the driver |
+| 2 | Empty offices, glass partitions, stacked furniture | |
+| 1 | Steyn's control room for this building: cameras, door locks, the lift | Day 2, if she asks to see Monday's footage and is told there is none |
+| Ground | Lobby and guard desk, Grace Tau's cash-loan shop, a shuttered pharmacy | Day 1 |
+| Basement | Parking, the generator, the service lift, the loading door | |
+
+**What is happening.** The gunman is owed the second half of his fee. The driver is to pay him at 21:00 on the third floor, in cash and product, in a building that should be empty. Brandt and Steyn have decided otherwise: a four-man team from Steyn's firm will kill both men at the handover and leave it looking like a drug deal that went wrong. It is the same logic as the morning's killing, applied to the people who did it.
+
+It goes wrong because of the blockade. The rehearsal for the Heritage Day concert, which should have finished at half past eight, started late because nobody could get across town, and at 21:00 there are forty people on the fourth floor, half of them under eighteen. The driver, who has been expecting something like this, runs upstairs into the rehearsal with the cash. Steyn's team now has two targets in a room full of witnesses and a guard force on the door that takes its orders from them.
+
+**Who is there with Ruth.** The blockade has the station's other officers on the wrong side of town. She has Captain Khoza, whose daughter plays in the orchestra, Constable Nkuna, and whatever she has built over ten days.
+
+**The objective.** Get from the street to the fourth floor and get forty people out before the team goes up. Everything else is optional: the driver alive, the gunman alive, Steyn's men alive, the day book that Joseph, who sings bass, has brought with him to hand over.
+
+**The clock.** The player arrives at about 20:50. The handover is at 21:00. The team needs a few minutes on the third floor and then starts up the stairs. Being early changes everything; so does being late.
+
+**Ways in.**
+
+| Route | What it takes | What it risks |
+|---|---|---|
+| The lobby | Khoza's badge. The guards stall and radio upstairs | The team knows police are in the building |
+| Talking the guards round | A guard Ruth has spoken to before, and something to Show them: this is not a job they were told about | Works only if she spent time on them earlier |
+| The basement ramp | An access card lifted from a guard, or the loading door forced | Noise. Leads to the generator and the service lift |
+| Grace Tau's shop | Grace, if she is still on speaking terms, has a back door into the service corridor | Owing Grace |
+| The roof | Across from the next building and down through the station, which Ruth knows in the dark | Slow. Arrives above the fourth floor, not below it |
+| The fire stair | An alarmed external door | The alarm, which is also a tool |
+
+**Ways up.** The main stair, which the team will use. The fire stair. The service lift from the basement. The passenger lift, which runs only if the control room lets it. A service riser with a ladder between floors 1 and 5.
+
+**The building as a set of switches.** This is the Crusader part: the level is a machine and the player can work it.
+
+- **The control room.** Take it and Ruth sees every floor, locks and unlocks the fire doors, and holds the lift. Lose it and the team sees her.
+- **The power.** The distribution board is in the basement. Cut it and the building goes dark: good for stealth, bad for forty frightened people, and the lift stops where it is. The generator can bring back the emergency lights only.
+- **The fire alarm.** Empties the fourth floor down the fire stair without anyone having to be told why. Also releases every magnetic lock in the building, for both sides.
+- **The sprinklers and extinguishers.** Cover, not weapons.
+- **Glass and furniture on the second floor.** It breaks, and it can be stacked.
+- **The station's desk on the fifth floor.** It still drives a speaker in every corridor. Ruth can talk to the whole building, or put Daniel's signal back on the air and tell the town what is happening. People come. Four men with rifles do not want a crowd.
+
+**The people as options.** This is the Deus Ex part: nearly everyone in the building can be turned, used, or left alone, depending on what Ruth knows and what she did earlier.
+
+- **The guards on the door** earn very little and were told to keep people out. Some will walk away if they understand what is upstairs.
+- **The music director** will move forty people quietly if asked the right way, and can keep the orchestra playing while they go, one desk at a time, so the floor below hears no change. The music carries on through the whole sequence until the hall is empty.
+- **The gunman** is about to be killed by the people who hired him. Warned, he is a second armed man on the third floor who wants out. He is also the man who shot Anneline.
+- **The driver** is the only person who met both sides. If he walks out alive, the ending is different.
+- **Mokoena** can lift the blockade with a phone call, which brings the rest of the station and an ambulance, and puts Ruth in his debt in front of the police.
+- **Khoza and Nkuna** do what the player asks. Each can hold a stair, run the evacuation, or come up with Ruth. Either can be hurt.
+
+**Ways it can go.**
+
+| Approach | Shape |
+|---|---|
+| Quiet | In by the basement or the roof, control room first, fire doors locked on the team, hall emptied down the fire stair to music. Possibly no shot fired |
+| Loud | Up the main stair behind Khoza's badge. Short, close, final. Everyone is as fragile as Ruth is |
+| Sideways | The alarm, the speakers, the crowd, the blockade lifted. Ruth barely enters the building and the team leaves on its own, with both its targets still alive |
+| Late | The handover has happened. Two men are dead on the third floor and the team is on the stairs |
+
+**What the game counts.** How many of the forty were hurt, and it should be possible, and hard, for that to be none. Who of the driver, the gunman and Steyn's four is alive. Whether Khoza and Nkuna are. Whether the day book came out. How many people Ruth killed. All of it goes on the last screen.
+
+**Why it belongs.** No attack like this is documented in Secunda; it is invention. It is built from documented parts: a hit cleaned up by killing the hired men, a drug sale as the cover, a security firm that controls a building, and a police station with two officers free. It also puts the cost where the research says it falls, on people who were only in the room.
 
 ### How it ends
 
@@ -271,8 +344,8 @@ Ruth gets out. That is the only thing the player can be sure of.
 
 - The sale collapsing closes the mine now. The sale going through closes it within the year with the money gone. Neither saves a job.
 - Sam Nel can be convicted, if Ruth named him. It is the one clean result available and it is the least important.
-- The gunman may be caught, through the pistol or the bakkie. He will plead, take fifteen to twenty years, and say truthfully that he does not know who paid. The driver who hired him, the one person who met both sides, is gone by Saturday.
-- Brandt is seventy-eight and will not live to stand trial. Steyn is never charged. Without Anneline the tins are disputed for years.
+- The gunman, if he lived through the finale, pleads, takes fifteen to twenty years, and says truthfully that he does not know who paid. The driver, the one person who met both sides, decides everything: dead, the chain ends with him; alive, he can name Steyn, and whether he does depends on what protection Khoza can offer, which is very little.
+- Brandt is seventy-eight and will not live to stand trial. Steyn is charged only if the driver lives and talks, and even then the trial is years away. Without Anneline the tins are disputed for years.
 - The day book can win the dismissed men their case. The judgment comes after the mine has closed.
 - Khoza is taken off the docket, which goes to a provincial unit and stops moving. The ballistics match on the strike shooting comes back the following winter.
 
