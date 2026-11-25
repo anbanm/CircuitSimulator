@@ -1,0 +1,588 @@
+<title>Secunda Autoplay Demo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: one screen. 3D stage fills it; notebook left, director's notes right, subtitles bottom, transport bar under everything.
+   Single dark look by choice: the game is night, sodium light and oil paint. */
+:root {
+  color-scheme: dark;
+  --bg: #14100e; --panel: rgba(24,19,16,.86); --line: #3b3029; --fg: #e9e0d4; --muted: #a59685;
+  --ochre: #dba04a; --violet: #a58fc9; --brick: #9c4a34; --good: #8fb98a;
+  --serif: "Lora", Georgia, serif; --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; overflow: hidden; }
+#app { position: relative; height: 100%; display: flex; flex-direction: column; }
+#stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #0c0a09; }
+#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transition: filter .6s; }
+#c.focus { filter: saturate(.18) brightness(.82) contrast(1.1); }
+#labels { position: absolute; inset: 0; pointer-events: none; }
+.lab { position: absolute; transform: translate(-50%,-100%); font: 500 11px var(--mono); letter-spacing: .04em; color: var(--fg); background: rgba(12,10,9,.7); padding: 2px 6px; border: 1px solid var(--line); white-space: nowrap; }
+.lab.look { color: var(--ochre); border-color: var(--ochre); }
+.panel { position: absolute; background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(3px); }
+.k { font: 500 10px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); }
+#hud { top: 12px; left: max(12px, env(safe-area-inset-left, 0px)); padding: 8px 12px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; max-width: calc(100% - 24px); }
+#hud b { font: 600 15px var(--serif); }
+#hud span { font: 12px var(--mono); color: var(--muted); }
+#hud .money { color: var(--good); }
+#notebook { top: 62px; left: max(12px, env(safe-area-inset-left, 0px)); width: 250px; max-height: calc(100% - 190px); overflow: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+#notebook h4, #notes h4 { margin: 0; }
+#notebook ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+#notebook li { font-size: 12.5px; line-height: 1.35; padding-left: 20px; position: relative; animation: pop .5s; }
+#notebook li i { position: absolute; left: 0; top: 1px; font: 500 9px var(--mono); font-style: normal; color: var(--bg); background: var(--muted); padding: 1px 3px; }
+#notebook li i.seen { background: var(--ochre); } #notebook li i.said { background: var(--violet); } #notebook li i.writ { background: var(--good); }
+#notebook li.lead { color: var(--muted); font-style: italic; padding-left: 14px; }
+#notebook li.lead::before { content: "?"; position: absolute; left: 0; color: var(--ochre); font-style: normal; }
+#notebook li.stand { padding-left: 0; font: 11.5px var(--mono); color: var(--muted); } #notebook li.stand b { color: var(--fg); font-weight: 500; }
+#notes { top: 12px; right: max(12px, env(safe-area-inset-right, 0px)); width: 280px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+#notes .mech { font: 600 16px var(--serif); }
+#notes p { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--fg); }
+#notes ul { margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.4; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+#sub { left: 50%; bottom: 14px; transform: translateX(-50%); width: min(720px, calc(100% - 32px)); padding: 10px 16px; font: 16px/1.5 var(--serif); text-align: center; border-color: transparent; background: rgba(12,10,9,.78); }
+#sub:empty { display: none; }
+#sub em { color: var(--ochre); font-style: normal; font: 500 11px var(--mono); letter-spacing: .1em; display: block; margin-bottom: 2px; }
+#card { right: max(12px, env(safe-area-inset-right, 0px)); bottom: 90px; width: 230px; padding: 10px 12px; background: #e8dcc4; color: #2a211a; border: 0; box-shadow: 0 6px 18px rgba(0,0,0,.5); transform: rotate(1.5deg) translateX(130%); transition: transform .5s cubic-bezier(.2,.9,.3,1.1); font: 13px/1.4 var(--serif); }
+#card.in { transform: rotate(1.5deg) translateX(0); }
+#card .k { color: var(--brick); }
+#meter { left: 50%; top: 64px; transform: translateX(-50%); padding: 6px 12px; font: 11px var(--mono); display: flex; gap: 10px; align-items: center; }
+#meter div { width: 120px; height: 6px; background: #2a221d; } #meter div i { display: block; height: 100%; width: 0; background: var(--ochre); transition: width .2s; }
+/* full-screen layers */
+.layer { position: absolute; inset: 0; display: flex; }
+#plate { background-size: cover; background-position: center; align-items: flex-end; justify-content: center; animation: drift 40s linear forwards; }
+#plate::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 55%, rgba(8,6,5,.85)); }
+#f2f { background: #120e0c; }
+#f2f .pic { position: absolute; inset: 0; background-size: cover; background-position: center 20%; }
+#f2f .pic.ph { background: radial-gradient(ellipse at 50% 38%, #5a4636 0, #2b2019 38%, #120e0c 75%); display: flex; align-items: center; justify-content: center; }
+#f2f .pic.ph b { font: 600 clamp(60px, 16vw, 160px) var(--serif); color: rgba(233,224,212,.13); }
+#f2f .pic.ph small { position: absolute; top: 38%; margin-top: clamp(50px, 12vw, 110px); font: 11px var(--mono); color: var(--muted); letter-spacing: .1em; }
+#f2f .who { position: absolute; left: max(20px, env(safe-area-inset-left, 0px)); top: 64px; display: flex; flex-direction: column; gap: 2px; }
+#f2f .who b { font: 600 20px var(--serif); } #f2f .who span { font: 11px var(--mono); color: var(--muted); }
+#f2f .bar { position: absolute; left: 0; right: 0; bottom: 0; min-height: 132px; background: linear-gradient(transparent, rgba(8,6,5,.92) 30%); display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 40px max(20px, env(safe-area-inset-right, 0px)) 18px max(20px, env(safe-area-inset-left, 0px)); }
+#f2f .line { font: 19px/1.45 var(--serif); max-width: 640px; min-width: 0; min-height: 56px; }
+#f2f .line.ruth { color: var(--violet); font-style: italic; }
+#f2f .cmds { display: flex; gap: 14px; align-items: flex-end; flex-shrink: 0; }
+#f2f .topics { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; text-align: right; font: 13px var(--serif); color: var(--muted); }
+#f2f .topics li.on { color: var(--bg); background: var(--ochre); padding: 0 6px; }
+#f2f .verbs { list-style: none; margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; font: 500 12px var(--mono); letter-spacing: .1em; color: var(--muted); }
+#f2f .verbs li.on { color: var(--ochre); } #f2f .verbs li.off { opacity: .35; } #f2f .verbs li.new { color: var(--fg); animation: blink 1s 3; }
+#board { background: #1c1612 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect width='1' height='1' fill='%23ffffff' opacity='.03'/%3E%3C/svg%3E"); flex-direction: column; padding: 70px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); gap: 14px; align-items: center; }
+#board h3 { margin: 0; font: 600 20px var(--serif); } #board .q { font: 500 12px var(--mono); letter-spacing: .1em; color: var(--ochre); }
+#board .wall { position: relative; width: min(760px, 100%); flex: 1; min-height: 240px; }
+#board .cd { position: absolute; width: 150px; padding: 8px 10px; background: #e8dcc4; color: #2a211a; font: 12.5px/1.35 var(--serif); box-shadow: 0 4px 12px rgba(0,0,0,.5); opacity: 0; transition: opacity .5s, box-shadow .3s; }
+#board .cd.in { opacity: 1; } #board .cd.sel { box-shadow: 0 0 0 2px var(--ochre), 0 4px 12px rgba(0,0,0,.5); }
+#board .cd.ins { background: #f3d58a; font-weight: 600; } #board .cd.ans { background: transparent; color: var(--fg); border: 1px dashed var(--ochre); box-shadow: none; }
+#board svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#board svg line { stroke: #b23a2a; stroke-width: 2; stroke-dasharray: 600; stroke-dashoffset: 600; transition: stroke-dashoffset 1s; } #board svg line.in { stroke-dashoffset: 0; }
+#cal { display: grid; grid-template-columns: repeat(14, 1fr); gap: 3px; width: min(760px, 100%); }
+#cal div { min-height: 46px; border: 1px solid var(--line); padding: 3px; font: 9.5px/1.2 var(--mono); color: var(--muted); overflow: hidden; } #cal div b { display: block; color: var(--fg); } #cal div.ev { border-color: var(--ochre); color: var(--ochre); }
+#dream { background: linear-gradient(120deg, #2a1f2e, #4a3040, #6b4a3a, #2a2433); background-size: 300% 300%; animation: paint 30s ease infinite; align-items: center; justify-content: center; flex-direction: column; gap: 14px; padding: 24px; }
+#dream .cue { font: 11px var(--mono); letter-spacing: .14em; color: rgba(233,224,212,.6); text-transform: uppercase; }
+#dream .t { font: italic 22px/1.6 var(--serif); max-width: 560px; text-align: center; min-height: 110px; transition: opacity 1.2s, transform 6s linear; }
+#fin { background: #0f0c0b; flex-direction: column; padding: 62px max(310px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); gap: 12px; }
+#fin .top { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; } #fin .clock { font: 500 26px var(--mono); color: var(--ochre); }
+#fin .cols { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; flex: 1; min-height: 0; }
+#fin .feeds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; align-content: start; min-width: 0; }
+#fin .feed { aspect-ratio: 16/10; max-width: 100%; min-width: 0; overflow: hidden; background: #1b2227; border: 1px solid #2c3840; padding: 5px; font: 10px/1.3 var(--mono); color: #8fa3ad; display: flex; flex-direction: column; justify-content: space-between; transition: background .4s, border-color .4s; }
+#fin .feed.hot { border-color: var(--brick); background: #2a1c19; color: #e3b1a4; } #fin .feed.ok { border-color: var(--good); }
+#fin .side { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
+#fin ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; }
+#fin li { padding: 5px 8px; border: 1px solid var(--line); display: flex; justify-content: space-between; gap: 8px; } #fin li span { color: var(--muted); font: 11px var(--mono); text-align: right; }
+#fin li.on { border-color: var(--ochre); } #fin li.done { border-color: var(--good); } #fin li.done span { color: var(--good); }
+#fin .choice { border: 1px solid var(--brick); padding: 10px; display: flex; flex-direction: column; gap: 8px; } #fin .choice .btns { display: flex; gap: 8px; }
+#fin .choice .btns b { flex: 1; text-align: center; padding: 8px; border: 1px solid var(--line); font: 500 12px var(--mono); letter-spacing: .1em; } #fin .choice .btns b.on { background: var(--brick); border-color: var(--brick); }
+#fin .tbar { height: 4px; background: #2a221d; } #fin .tbar i { display: block; height: 100%; background: var(--brick); width: 100%; }
+#end { background: rgba(10,8,7,.94); align-items: center; justify-content: center; flex-direction: column; gap: 12px; padding: 24px; text-align: center; }
+#end h2 { margin: 0; font: 600 28px var(--serif); } #end p { margin: 0; max-width: 520px; line-height: 1.5; color: var(--muted); }
+/* transport */
+#bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 8px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px)); border-top: 1px solid var(--line); background: #100d0b; }
+#bar button { font: 500 12px var(--mono); color: var(--fg); background: #241c17; border: 1px solid var(--line); padding: 6px 10px; cursor: pointer; }
+#bar button:hover { border-color: var(--ochre); } #bar button:focus-visible { outline: 2px solid var(--ochre); outline-offset: 1px; }
+#bar button.on { background: var(--ochre); color: var(--bg); border-color: var(--ochre); }
+#bar .sp { flex: 1; } #bar .sc { color: var(--muted); font: 11px var(--mono); }
+@keyframes pop { from { opacity: 0; transform: translateX(-8px); } }
+@keyframes blink { 50% { opacity: .3; } }
+@keyframes paint { 0%,100% { background-position: 0 50%; } 50% { background-position: 100% 50%; } }
+@keyframes drift { from { background-size: 100% auto; } to { background-size: 112% auto; } }
+@media (max-width: 900px) { #notes { width: 220px; } #notebook { width: 200px; } }
+@media (max-width: 700px) {
+  #notebook { display: none; } #notes { top: 58px; left: 12px; right: 12px; width: auto; padding: 6px 10px; gap: 2px; } #notes ul, #notes .k { display: none; }
+  #notes .mech { font-size: 13px; } #notes p { font-size: 11.5px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  #f2f .who { top: 150px; } #board { padding-top: 150px; } #meter { top: 150px; }
+  #sub { font-size: 14px; } #f2f .line { font-size: 15px; } #f2f .bar { flex-direction: column; align-items: stretch; } #f2f .cmds { justify-content: flex-end; }
+  #fin { padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-top: 150px; } #fin .cols { grid-template-columns: minmax(0, 1fr); overflow: auto; } #cal { grid-template-columns: repeat(7, 1fr); } #board .cd { width: 120px; font-size: 11px; }
+  #plate { animation: none; background-size: cover; }
+}
+@media (prefers-reduced-motion: reduce) { #plate, #dream { animation: none; } }
+</style>
+
+<div id="app">
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="labels"></div>
+    <div id="plate" class="layer" hidden></div>
+    <div id="f2f" class="layer" hidden>
+      <div class="pic"></div>
+      <div class="who"><b></b><span></span></div>
+      <div class="bar">
+        <div class="line"></div>
+        <div class="cmds"><ul class="topics"></ul><ul class="verbs"></ul></div>
+      </div>
+    </div>
+    <div id="board" class="layer" hidden>
+      <span class="q">The wall of room four</span><h3>Was it a robbery?</h3>
+      <div class="wall"><svg></svg></div>
+      <div id="cal"></div>
+    </div>
+    <div id="dream" class="layer" hidden><div class="cue"></div><div class="t"></div></div>
+    <div id="fin" class="layer" hidden></div>
+    <div id="end" class="layer" hidden></div>
+    <div id="hud" class="panel"><b id="h-day">Day 1</b><span id="h-time"></span><span id="h-place"></span><span id="h-money" class="money"></span></div>
+    <div id="notebook" class="panel"><h4 class="k">Notebook</h4><ul id="nb"></ul></div>
+    <div id="notes" class="panel"><h4 class="k">What the game is doing</h4><div class="mech" id="n-mech">Starting</div><p id="n-text"></p><h4 class="k" id="n-oh" hidden>What else the player could do</h4><ul id="n-others"></ul></div>
+    <div id="meter" class="panel" hidden><span>SEEN</span><div><i></i></div></div>
+    <div id="card" class="panel"><div class="k"></div><div class="tx"></div></div>
+    <div id="sub" class="panel"></div>
+  </div>
+  <div id="bar">
+    <button id="b-play" type="button">Pause</button>
+    <button id="b-1" type="button" class="on">1×</button><button id="b-2" type="button">2×</button><button id="b-4" type="button">4×</button>
+    <button id="b-next" type="button">Next scene</button><button id="b-re" type="button">Restart</button>
+    <span class="sp"></span><span class="sc" id="b-sc"></span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>window.THREE || document.write('<script src="vendor/three.min.js"><\/script>');</script>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const S = { speed: 1, paused: false, token: 0, scene: 0, money: null, fast: false };
+class Skip extends Error {}
+function sleep(ms) {
+  const tok = S.token;
+  return new Promise((res, rej) => {
+    let t = 0, last = performance.now();
+    (function f(now) {
+      if (tok !== S.token) return rej(new Skip());
+      const dt = Math.min(100, now - last); last = now;
+      if (!S.paused) t += dt * S.speed;
+      t >= ms ? res() : requestAnimationFrame(f);
+    })(last);
+  });
+}
+async function tween(ms, fn) {
+  const tok = S.token; let t = 0, last = performance.now();
+  return new Promise((res, rej) => (function f(now) {
+    if (tok !== S.token) return rej(new Skip());
+    const dt = Math.min(100, now - last); last = now;
+    if (!S.paused) t += dt * S.speed;
+    const k = Math.min(1, t / ms); fn(k * k * (3 - 2 * k));
+    k >= 1 ? res() : requestAnimationFrame(f);
+  })(last));
+}
+
+/* ---------- 3D stage ---------- */
+const canvas = $("#c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+const scene = new THREE.Scene();
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -200, 400);
+const cam = { t: new THREE.Vector3(), yaw: Math.PI / 4, zoom: 1 };
+const amb = new THREE.AmbientLight(0xffffff, .5), sun = new THREE.DirectionalLight(0xffffff, .7);
+scene.add(amb, sun);
+let world = new THREE.Group(); scene.add(world);
+let tickers = [], labelled = [];
+function updCam() {
+  const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return;
+  if (canvas.width !== Math.floor(w * renderer.getPixelRatio())) renderer.setSize(w, h, false);
+  const a = w / h, vs = 24 / cam.zoom;
+  camera.left = -vs * a; camera.right = vs * a; camera.top = vs; camera.bottom = -vs;
+  const d = 100, el = .68;
+  camera.position.set(cam.t.x + d * Math.sin(cam.yaw) * Math.cos(el), cam.t.y + d * Math.sin(el), cam.t.z + d * Math.cos(cam.yaw) * Math.cos(el));
+  camera.lookAt(cam.t); camera.updateProjectionMatrix();
+}
+const v3 = new THREE.Vector3();
+function frame(now) {
+  updCam();
+  if (!S.paused) tickers.forEach(f => f(now));
+  renderer.render(scene, camera);
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  labelled.forEach(o => {
+    v3.copy(o.obj.position); v3.y += o.h; v3.project(camera);
+    o.el.style.left = ((v3.x + 1) / 2 * w) + "px"; o.el.style.top = ((1 - v3.y) / 2 * h) + "px";
+  });
+  requestAnimationFrame(frame);
+}
+function clearWorld() {
+  scene.remove(world); world = new THREE.Group(); scene.add(world);
+  tickers = []; labelled.forEach(o => o.el.remove()); labelled = [];
+}
+const mat = c => new THREE.MeshLambertMaterial({ color: c });
+function box(x, z, w, d, h, c, y = 0) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c)); m.position.set(x, y + h / 2, z); world.add(m); return m;
+}
+function person(c, x, z, hat) {
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(.32, .38, 1.25, 10), mat(c)); b.position.y = .62;
+  const hd = new THREE.Mesh(new THREE.SphereGeometry(.26, 10, 8), mat(0x6b4a36)); hd.position.y = 1.45;
+  g.add(b, hd);
+  if (hat) { const ht = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .12, 10), mat(hat)); ht.position.y = 1.7; g.add(ht); }
+  g.position.set(x, 0, z); world.add(g); return g;
+}
+function label(obj, text, h = 2.4, cls = "") {
+  const el = document.createElement("div"); el.className = "lab " + cls; el.textContent = text; $("#labels").appendChild(el);
+  const o = { obj, el, h }; labelled.push(o); return o;
+}
+function unlabel(o) { o.el.remove(); labelled = labelled.filter(x => x !== o); }
+async function walk(a, pts, sp = 3.2) {
+  for (const [x, z] of pts) {
+    const sx = a.position.x, sz = a.position.z, dist = Math.hypot(x - sx, z - sz);
+    await tween(dist / sp * 1000, k => a.position.set(sx + (x - sx) * k, 0, sz + (z - sz) * k));
+  }
+}
+async function camTo(x, z, zoom = cam.zoom, yaw = cam.yaw, ms = 1800) {
+  const s = { x: cam.t.x, z: cam.t.z, zoom: cam.zoom, yaw: cam.yaw };
+  await tween(ms, k => { cam.t.set(s.x + (x - s.x) * k, 0, s.z + (z - s.z) * k); cam.zoom = s.zoom + (zoom - s.zoom) * k; cam.yaw = s.yaw + (yaw - s.yaw) * k; });
+}
+function ring(x, z, r = 1.2) {
+  const m = new THREE.Mesh(new THREE.RingGeometry(r, r + .18, 32), new THREE.MeshBasicMaterial({ color: 0xdba04a, side: THREE.DoubleSide, transparent: true }));
+  m.rotation.x = -Math.PI / 2; m.position.set(x, .08, z); world.add(m);
+  const t = now => { const s = 1 + .15 * Math.sin(now / 250); m.scale.set(s, s, s); }; tickers.push(t);
+  return { m, t };
+}
+async function focus(items, ms = 3200) {
+  canvas.classList.add("focus");
+  const rs = items.map(i => ({ r: ring(i.x, i.z, i.r || 1.2), l: label({ position: new THREE.Vector3(i.x, 0, i.z) }, i.name, i.h || 2.2, "look") }));
+  await sleep(ms);
+  rs.forEach(o => { world.remove(o.r.m); tickers = tickers.filter(t => t !== o.r.t); unlabel(o.l); });
+  canvas.classList.remove("focus");
+}
+
+/* ---------- UI helpers ---------- */
+function hud(day, time, place) { $("#h-day").textContent = day; $("#h-time").textContent = time; $("#h-place").textContent = place; }
+function money(n) { S.money = n; $("#h-money").textContent = n == null ? "" : "R " + n.toLocaleString("en-ZA"); }
+function note(mech, text, others = []) {
+  $("#n-mech").textContent = mech; $("#n-text").textContent = text;
+  $("#n-others").innerHTML = ""; others.forEach(o => { const li = document.createElement("li"); li.textContent = o; $("#n-others").appendChild(li); });
+  $("#n-oh").hidden = !others.length;
+}
+async function say(text, ms, tag) {
+  $("#sub").innerHTML = ""; if (tag) { const e = document.createElement("em"); e.textContent = tag; $("#sub").appendChild(e); }
+  $("#sub").appendChild(document.createTextNode(text));
+  await sleep(ms || 1400 + text.length * 48); $("#sub").innerHTML = "";
+}
+const KIND = { seen: "SEEN", said: "SAID", writ: "WRITTEN" };
+async function clue(kind, text) {
+  const c = $("#card"); c.querySelector(".k").textContent = "Clue · " + KIND[kind]; c.querySelector(".tx").textContent = text;
+  c.classList.add("in");
+  const li = document.createElement("li"); li.innerHTML = `<i class="${kind}">${KIND[kind][0]}</i>`; li.appendChild(document.createTextNode(text)); $("#nb").appendChild(li);
+  $("#notebook").scrollTop = 1e4;
+  await sleep(2600); c.classList.remove("in");
+}
+function lead(text) { const li = document.createElement("li"); li.className = "lead"; li.textContent = text; $("#nb").appendChild(li); $("#notebook").scrollTop = 1e4; }
+function standing(name, s) {
+  let li = document.querySelector(`#nb li[data-n="${name}"]`);
+  if (!li) { li = document.createElement("li"); li.className = "stand"; li.dataset.n = name; $("#nb").appendChild(li); }
+  li.innerHTML = `<b>${name}</b>: ${s}`; $("#notebook").scrollTop = 1e4;
+}
+function show(id, on) { $(id).hidden = !on; }
+function chrome(on) { ["#notebook", "#labels"].forEach(i => $(i).style.visibility = on ? "" : "hidden"); }
+
+/* ---------- face to face ---------- */
+const VERBS = ["ASK ABOUT", "SHOW", "PRESS", "TELL", "OFFER", "LEAVE"];
+function verbs(state = {}) {
+  $("#f2f .verbs").innerHTML = VERBS.map(v => `<li class="${state[v] || ""}">${v}</li>`).join("");
+}
+async function talk(o, steps) {
+  const f = $("#f2f"), pic = f.querySelector(".pic");
+  pic.className = "pic" + (o.img ? "" : " ph"); pic.style.backgroundImage = o.img ? `url(${o.img})` : "";
+  pic.innerHTML = o.img ? "" : `<b>${o.name.split(" ").pop()[0]}</b><small>PORTRAIT TO COME</small>`;
+  f.querySelector(".who b").textContent = o.name; f.querySelector(".who span").textContent = o.role;
+  const line = f.querySelector(".line"), topics = f.querySelector(".topics"); line.textContent = ""; topics.innerHTML = "";
+  let vs = Object.assign({ SHOW: "off", PRESS: "off", TELL: "off", OFFER: "off" }, o.verbs || {}); verbs(vs);
+  chrome(false); show("#f2f", true);
+  try {
+    for (const s of steps) {
+      if (s.note) note(...s.note);
+      if (s.npc) { line.className = "line"; line.textContent = s.npc; await sleep(1500 + s.npc.length * 50); }
+      if (s.ruth) { line.className = "line ruth"; line.textContent = s.ruth; await sleep(1200 + s.ruth.length * 45); }
+      if (s.enable) { vs[s.enable] = "new"; verbs(vs); await sleep(2200); vs[s.enable] = ""; }
+      if (s.verb) {
+        verbs(Object.assign({}, vs, { [s.verb]: "on" }));
+        if (s.topics) {
+          topics.innerHTML = s.topics.map(t => `<li>${t}</li>`).join(""); await sleep(1300);
+          topics.children[s.pick].className = "on"; await sleep(1100); topics.innerHTML = "";
+        } else await sleep(1200);
+        verbs(vs);
+      }
+      if (s.clue) await clue(...s.clue);
+      if (s.wait) await sleep(s.wait);
+    }
+  } finally { show("#f2f", false); chrome(true); }
+}
+
+/* ---------- world: Atlas House and its parking lot ---------- */
+function buildAtlas(night) {
+  clearWorld();
+  scene.background = new THREE.Color(night ? 0x0b0a10 : 0x1a1620);
+  amb.color.set(night ? 0x6a6aa0 : 0xa898b8); amb.intensity = night ? .62 : .85;
+  sun.color.set(night ? 0x6a78b0 : 0xffb070); sun.intensity = night ? .35 : .7; sun.position.set(-40, 30, 20);
+  box(0, 0, 120, 90, .1, 0x2b2a2c, -.1);                                   // tar
+  for (let i = -6; i <= 6; i++) for (const z of [8, 20]) box(i * 3.2 + 6, z, .12, 5, .02, 0x8a8478); // parking bays
+  box(-18, -16, 26, 14, 19.2, 0x6e4433);                                    // Atlas House, five storeys over a ground floor
+  for (let f = 0; f < 6; f++) { box(-18, -8.95, 25, .1, 1.3, f === 0 ? 0x33414a : 0x191c22, f * 3.2 + 1.1); box(-18, -16, 26.3, 14.3, .35, 0x8d857a, f * 3.2 + 2.85); }
+  box(-18, -16, 6, 5, 2.4, 0x55504a, 19.2);                                 // plant room
+  box(-10, -13, .15, .15, 7, 0x777777, 19.2);                               // antenna mast
+  const red = new THREE.Mesh(new THREE.SphereGeometry(.3, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff3020 })); red.position.set(-10, 26.4, -13); world.add(red);
+  for (let f = 0; f < 6; f++) box(-3.9, -14 + (f % 2 ? 2 : -2), 2, 3.6, .15, 0x7c7f84, f * 3.2 + 1.6); // fire stair landings
+  box(-3.9, -14, .15, .15, 19.2, 0x7c7f84); box(-3.9, -18, .15, .15, 19.2, 0x7c7f84);
+  box(-18, -8.6, 7, .7, .5, 0x4a5a3a);                                      // flower box
+  box(22, -22, 34, 9, 4, 0x7a5140); box(22, -17.2, 34, 1.2, .25, 0x9a948a, 3.2); // shop row opposite
+  for (const [x, z, c] of [[-2, 8, 0xc9c9c9], [7.5, 8, 0x8f2f2f], [14, 20, 0xdcdcdc], [-9, 20, 0x3d4c66], [20, 8, 0xe2e2e2]]) box(x, z, 2, 4.4, 1.5, c);
+  for (const x of [-30, 0, 30]) { box(x, 30, .2, .2, 7, 0x555555); }      // dead streetlights
+  if (night) { const l = new THREE.PointLight(0xffa040, .9, 30); l.position.set(-18, 3, -6); world.add(l); }
+}
+
+/* ---------- scenes ---------- */
+const SCENES = [];
+const scn = (title, run) => SCENES.push({ title, run });
+
+scn("Driving in", async () => {
+  hud("Day 1 · Monday", "17:50", "The road in"); money(null); chrome(false);
+  $("#plate").style.backgroundImage = "url(concept/s1_skyline_dusk.jpg)"; show("#plate", true);
+  note("Travel interlude", "Driving between areas is where the game is quiet. The plant fills the skyline, and the narration and the car radio set up what the player is about to walk into.",
+    ["Nothing. This is the one place the player only watches."]);
+  await say("Ruth Mahlangu came into Secunda on a Monday evening in September with the windows up, and the smell came in anyway.", 6500);
+  await say("She had a room booked at a guesthouse and a client she had never met.", 4500);
+  await say("He had said: I have something I need looked at by a person who doesn't live here.", 5000, "DANIEL BRANDT, BY PHONE");
+  await say("He would not explain. He had been dead for forty minutes.", 4500);
+  show("#plate", false); chrome(true);
+});
+
+scn("Atlas House", async () => {
+  hud("Day 1 · Monday", "19:10", "Horwood Street, power out"); buildAtlas(false);
+  cam.t.set(4, 0, 6); cam.zoom = .8; cam.yaw = Math.PI / 4;
+  // the scene
+  const blanket = box(-12, -4, 1.9, .8, .22, 0x8a8a8a); box(-11.1, -3.5, .14, .3, .1, 0x1a1512); box(-11.1, -3.75, .14, .3, .1, 0x1a1512);
+  box(-12, -1.2, 9, .06, .06, 0xd8c23a, .9); box(-16.5, -3, .06, 3.6, .06, 0xd8c23a, .9); box(-7.5, -3, .06, 3.6, .06, 0xd8c23a, .9);
+  const van = box(-4, -1, 2.1, 4.8, 1.9, 0xe8e8e8); const blue = new THREE.PointLight(0x3060ff, 1.6, 34); blue.position.set(-4, 2.6, -1); world.add(blue);
+  tickers.push(now => blue.intensity = 1 + Math.sin(now / 160) * 1.2);
+  box(-21, -2, 2.1, 5, 1.7, 0xb8bcc2);                                       // Daniel's silver double cab
+  const crowd = [];
+  for (let i = 0; i < 34; i++) { const a = Math.PI * (.08 + .84 * i / 33), r = 9 + (i % 4) * 1.3; crowd.push(person([0x3b5a8c, 0x8c6a3b, 0x5a5a5a, 0x7a3b3b, 0xc9b24a][i % 5], -12 + Math.cos(a) * r, -1 + Math.sin(a) * r * .8)); }
+  const khoza = person(0x6b4a2c, -8, 1.2); label(khoza, "Capt. Khoza");
+  const joseph = person(0x4a4a4a, -2, 13, 0x2a2a2a);
+  const car = box(40, 26, 4, 1.9, 1.4, 0x7d8084);
+  note("Arrival", "The world is small and built in 3D, seen from a fixed angle the player can rotate. The crowd, the tape and the police light tell her what has happened before anyone speaks.");
+  await tween(4500, k => car.position.x = 40 - 26 * k);
+  const ruth = person(0x2e2a3a, 13.5, 24); label(ruth, "Ruth");
+  await say("Atlas House, on Horwood. You can't miss it, it's the one with everybody standing outside.", 4800, "GRACE TAU");
+  await Promise.all([walk(ruth, [[6, 14], [-4, 6]]), camTo(-8, 2, 1.25)]);
+  note("Rotating the camera", "The camera turns in quarter steps so the player can see behind buildings and cars. Walls between the camera and Ruth fade.",
+    ["Zoom in or out", "Turn the other way"]);
+  await camTo(-8, 2, 1.25, Math.PI / 4 + Math.PI / 2, 2600);
+  await sleep(700);
+  note("Focus", "Holding Focus drains the colour and outlines whatever can be examined nearby. Nothing is marked as important; the player decides what to look at.",
+    ["Examine the body first", "Go straight to the policeman", "Work the crowd"]);
+  await focus([{ x: -12, z: -4, name: "The blanket", r: 1.6 }, { x: -21, z: -2, name: "Silver double cab", r: 3 }, { x: -8, z: 1.2, name: "Policeman" }, { x: -2, z: 13, name: "Old man, hat in hand" }, { x: -18, z: -8.6, name: "Flower box", r: 3.6 }], 4200);
+  await walk(ruth, [[-9.5, -1]]);
+  await say("A grey blanket with a shape under it, and a pair of shoes. They were good shoes.", 4500);
+  await walk(ruth, [[-8.8, .4]]);
+  await talk({ name: "Captain Sizwe Khoza", role: "Detective · stranger" }, [
+    { note: ["Face to face", "Talking to a named person cuts to a first-person frame. The commands at the bottom right are the whole conversation system. Topics exist because of what Ruth has seen.", ["Show him her investigator's card", "Leave and look first"]] },
+    { npc: "Robbery. Phone's gone. Laptop bag's gone. People saw him carry it out, now it's not here." },
+    { clue: ["said", "Daniel's phone and laptop bag are missing."] },
+    { verb: "ASK ABOUT", topics: ["The robbery", "His wallet", "His watch", "His car"], pick: 1 },
+    { ruth: "His wallet?" }, { npc: "In his pocket." },
+    { verb: "ASK ABOUT", topics: ["The robbery", "His watch", "His car"], pick: 1 },
+    { ruth: "Watch?" }, { npc: "On his arm." },
+    { verb: "ASK ABOUT", topics: ["The robbery", "His car"], pick: 1 },
+    { ruth: "Car?" }, { npc: "…The keys are in his hand." },
+    { clue: ["said", "Wallet, watch and car were all left."] },
+    { note: ["A contradiction opens", "What he has just said conflicts with what he called it. Press lights up. Using it would force him to say out loud that it is not a robbery.", ["Press: he admits it, and likes her less for making him", "Leave it: he keeps his robbery, and she keeps his goodwill"]], enable: "PRESS" },
+    { npc: "I've got a hundred and fifty dockets. I've got two cars that start. A robbery I can close." },
+    { verb: "LEAVE" },
+    { npc: "It's a robbery. Go and eat something." },
+  ]);
+  standing("Khoza", "knows her");
+  note("Standing", "Ruth did not press, so Khoza moves from stranger to knows her. Standing with each person decides who answers the phone on day 11.");
+  await sleep(2600);
+  await Promise.all([camTo(-3, 9, 1.25, Math.PI / 4 + Math.PI / 2), walk(ruth, [[-5, 8]])]);
+  const jl = label(joseph, "Old man", 2.6, "look");
+  await say("He had a scar across the bridge of his nose that was faintly blue. Coal does that if it gets into a cut.", 5200);
+  await clue("seen", "An old miner at the back of the crowd, looking at the shoes.");
+  await Promise.all([walk(joseph, [[10, 22], [34, 30]], 2.2), say("He walked like a man carrying something, although his hands were empty.", 4800)]);
+  unlabel(jl); lead("Who is the old man, and what is he carrying?");
+  note("Leads", "A clue can raise a question. Questions are the only to-do list the game has, and they are written in Ruth's words, not as objectives.");
+  await sleep(3200);
+});
+
+scn("The fifth floor, 23:00", async () => {
+  hud("Day 1 · Monday", "23:00", "Atlas House, the tape is gone"); buildAtlas(true);
+  cam.t.set(2, 0, 4); cam.zoom = 1.1; cam.yaw = Math.PI / 4;
+  const ruth = person(0x2e2a3a, 16, 22); label(ruth, "Ruth");
+  const guard = person(0x18181c, -14, 10); label(guard, "Guard");
+  const cone = new THREE.Mesh(new THREE.CircleGeometry(9, 24, -.45, .9), new THREE.MeshBasicMaterial({ color: 0xdba04a, transparent: true, opacity: .22, side: THREE.DoubleSide }));
+  cone.rotation.x = -Math.PI / 2; world.add(cone);
+  const nring = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 24), new THREE.MeshBasicMaterial({ color: 0xa58fc9, transparent: true, opacity: .6, side: THREE.DoubleSide })); nring.rotation.x = -Math.PI / 2; world.add(nring);
+  let gdir = 0; const seen = $("#meter i");
+  tickers.push(now => {
+    cone.position.set(guard.position.x, .06, guard.position.z); cone.rotation.z = gdir;
+    nring.position.set(ruth.position.x, .05, ruth.position.z); const s = 1 + .5 * Math.abs(Math.sin(now / 300)); nring.scale.set(s, s, s);
+    const dx = ruth.position.x - guard.position.x, dz = ruth.position.z - guard.position.z, d = Math.hypot(dx, dz);
+    let ang = Math.atan2(-dz, dx) - gdir; ang = Math.atan2(Math.sin(ang), Math.cos(ang));
+    seen.style.width = (d < 9 && Math.abs(ang) < .45 ? 100 : d < 13 ? Math.max(0, (13 - d) * 9) : 0) + "%";
+  });
+  show("#meter", true);
+  note("Stealth", "Guards see in a cone and walk routes. Ruth leaves a noise ring when she moves. Parked cars break the line of sight. Being seen at night in a place she has no right to be does not end the game; it starts a conversation she would rather not have.",
+    ["Talk her way past the lobby guard", "Come back in daylight, after the scene has been changed", "Go to bed and take the dream"]);
+  const patrol = (async () => { try { for (let i = 0; i < 3; i++) { gdir = 0; await walk(guard, [[10, 10]], 1.6); gdir = Math.PI; await walk(guard, [[-14, 10]], 1.6); } } catch (e) {} })();
+  await say("At eleven that night the police took the tape away, because they needed it for something else. Ruth went back.", 5200);
+  await walk(ruth, [[14, 14.5]], 2.2); await sleep(2600);
+  await say("She waits behind the car until the light has gone past.", 3000);
+  await walk(ruth, [[8, 5], [1, -6], [-3.6, -11]], 2.6);
+  await camTo(-6, -12, 1.5, Math.PI / 4, 1500);
+  await say("The fire stair door had been propped open with a brick by somebody who smoked.", 4500);
+  show("#meter", false);
+  // interior
+  clearWorld(); scene.background = new THREE.Color(0x0b0a0d); amb.intensity = 1.15; amb.color.set(0xb8a898); sun.intensity = .45; sun.color.set(0xffd0a0);
+  hud("Day 1 · Monday", "23:20", "Radio Skoorsteen, fifth floor");
+  box(0, 0, 18, 11, .1, 0x3a322b, -.1); box(0, -5.5, 18, .2, 2.8, 0x5a4c40); box(-9, 0, .2, 11, 2.8, 0x54473c); box(0, 0, .2, 5, 2.8, 0x54473c);
+  box(4.5, -2, 3.4, 1.4, .8, 0x6b5338); const drawer = box(5.6, -1.1, .9, .5, .25, 0x3d2f20, .05); box(4.5, -2.2, .12, .12, .7, 0x999999, .8);
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(.5, .25, .15), new THREE.MeshBasicMaterial({ color: 0xff2a1a })); lamp.position.set(3.4, 1.1, -2); world.add(lamp);
+  const lp = new THREE.PointLight(0xff3020, .9, 9); lp.position.set(3.4, 1.4, -2); world.add(lp);
+  box(-5, 3.6, 4, 1.3, .6, 0x4a5568); box(-4.5, -5.3, 7, .1, 1.8, 0xb9a98a, .7);
+  const r2 = person(0x2e2a3a, -7.5, 4.5); label(r2, "Ruth");
+  cam.t.set(0, 0, 0); cam.zoom = 2.3; cam.yaw = Math.PI / 4;
+  await walk(r2, [[-3, 1.5]], 2);
+  note("Looking", "Indoors the game slows down. Each thing she examines becomes a clue marked seen, said or written. Seen is the strongest: nobody can have lied to her about it.",
+    ["Search the computer for recordings", "Take something. It would be missed"]);
+  await focus([{ x: 5.6, z: -1.1, name: "Bottom drawer, open", r: .9 }, { x: -4.5, z: -5.1, name: "Wall of cuttings", r: 2.6 }, { x: 3.4, z: -2, name: "ON AIR", r: .8 }], 4000);
+  await walk(r2, [[-4.5, -3.6]], 2);
+  await say("Between the photographs he had pinned newspaper cuttings, gone the brown of weak tea.", 4500);
+  await clue("writ", "Cuttings: Kinross 1986, 177. Middelbult 1993, 53. Coalbrook 1960, 435. The numbers gone over in pen.");
+  note("Things left behind", "The cuttings are real history. Reading them does nothing tonight. It plants a cue, and if she sleeps on a later night, one of those places comes to her as a dream.");
+  await walk(r2, [[1.5, 1], [5.4, .1]], 2);
+  await say("A pistol case, the hard plastic kind with foam cut to the shape of a gun, and the foam was empty.", 5000);
+  await clue("seen", "Empty pistol case in the bottom desk drawer. One row of 9 mm missing from the box.");
+  lead("Who knew which drawer?");
+  await say("On the desk a small red lamp was lit. It said ON AIR. Nobody had told it he was dead either.", 5200);
+  note("The dead man's radio", "The station's computer keeps playing his programmes. From now on they are on the car radio whenever she drives, and one of them, on day 3, airs only once.");
+  await say("…the trick is not hiding. The trick is getting used to it. That is the only industry we have ever truly mastered. We could export it.", 7500, "RADIO SKOORSTEEN · ARCHIVE");
+});
+
+scn("The farm, midnight", async () => {
+  hud("Day 1 · Monday", "00:10", "The Brandt farm"); clearWorld(); chrome(false);
+  await talk({ name: "Hendrik Brandt", role: "Owner, Brandtskraal Colliery · stranger", img: "concept/07_talk_brandt.jpg" }, [
+    { note: ["A scripted summons", "Some conversations come to Ruth on the calendar whether she wants them or not. This one sets the first week's job and pays for it.", ["Refuse the job and work for nobody from day 1", "Ask what Daniel wanted looked at, and watch him not answer"]] },
+    { npc: "You're what my son spent my money on." },
+    { ruth: "He hadn't paid me yet." },
+    { npc: "He wouldn't have. He thought things should be free. Water. Electricity. The truth." },
+    { verb: "ASK ABOUT", topics: ["His son", "The mine", "What Daniel wanted looked at"], pick: 2 },
+    { ruth: "He said he had something he wanted looked at." },
+    { npc: "He had a great many things he wanted looked at. It's a tiring way to live." },
+    { clue: ["seen", "Brandt reacted to 'something he wanted looked at', and put it away again."] },
+    { npc: "Find who killed my son. Then go home." },
+  ]);
+  money(8000); lead("Find who killed Daniel Brandt."); chrome(true);
+  note("Money", "Brandt's retainer is the only money in the first week. It buys information, ammunition, the room and fuel. When he pays her off on day 6 it stops, and what replaces it is much smaller.");
+  await say("It was the first thing anyone in Secunda had asked her to do, and she did it. That was the joke, if you like jokes.", 6000);
+});
+
+scn("The wall", async () => {
+  hud("Day 1 · Monday", "01:30", "Room four, Tau's Rest"); clearWorld(); chrome(false);
+  const wall = $("#board .wall"); wall.querySelectorAll(".cd").forEach(e => e.remove()); const svg = wall.querySelector("svg"); svg.innerHTML = "";
+  const cards = [["Phone and laptop bag missing", 4, 6, "said"], ["Wallet, watch and car all left", 56, 4, "said"], ["Empty pistol case in his desk", 6, 54, "seen"], ["Old miner at the back of the crowd", 60, 58, "seen"]];
+  const els = cards.map(([t, x, y, k]) => { const d = document.createElement("div"); d.className = "cd"; d.style.left = x + "%"; d.style.top = y + "%"; d.innerHTML = `<span class="k" style="color:#9c4a34">${KIND[k]}</span><br>`; d.appendChild(document.createTextNode(t)); wall.appendChild(d); return d; });
+  const cal = $("#cal"); cal.innerHTML = ""; for (let i = 1; i <= 14; i++) { const d = document.createElement("div"); d.innerHTML = `<b>${i}</b>`; cal.appendChild(d); }
+  show("#board", true);
+  note("The board", "Every clue is a card on the wall of her room. The player links two cards with string. If they connect, a new card appears: an insight. Linking is free and answers at once.",
+    ["Link the pistol case to the missing phone", "Leave the board and sleep"]);
+  for (const e of els) { e.classList.add("in"); await sleep(600); }
+  await sleep(1500); els[0].classList.add("sel"); await sleep(900); els[1].classList.add("sel"); await sleep(700);
+  const W = wall.clientWidth, H = wall.clientHeight; const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  ln.setAttribute("x1", W * .04 + 75); ln.setAttribute("y1", H * .06 + 30); ln.setAttribute("x2", W * .56 + 75); ln.setAttribute("y2", H * .04 + 30); svg.appendChild(ln);
+  await sleep(60); ln.classList.add("in"); await sleep(1300);
+  const ins = document.createElement("div"); ins.className = "cd ins"; ins.style.left = "30%"; ins.style.top = "26%"; ins.innerHTML = `<span class="k" style="color:#9c4a34">INSIGHT</span><br>Taken to hide something, not to sell.`; wall.appendChild(ins);
+  await sleep(60); ins.classList.add("in"); els[0].classList.remove("sel"); els[1].classList.remove("sel"); await sleep(2600);
+  note("Answers are not checked", "She can pin an answer to the question at any time. The game does not say whether it is right. It only responds when she says it aloud to someone with power, on day 5.");
+  const ans = document.createElement("div"); ans.className = "cd ans in"; ans.style.left = "33%"; ans.style.top = "76%"; ans.textContent = "ANSWER: No. Someone he knew."; wall.appendChild(ans);
+  await sleep(3400);
+  note("The calendar", "Fixed events happen at their hour whether Ruth is there or not. She knows a few from the start and writes in the rest as she learns of them.",
+    ["Be at the post-mortem at 09:00 and hear what the report leaves out", "Skip it and get two lines on day 5"]);
+  const ev = [[2, "09:00 post-mortem, Evander"], [3, "19:00 his last broadcast"], [6, "10:00 funeral"], [12, "10:00 the sale"]];
+  for (const [d, t] of ev) { const c = cal.children[d - 1]; c.className = "ev"; c.innerHTML = `<b>${d}</b>${t}`; await sleep(1100); }
+  await sleep(2500); show("#board", false); chrome(true);
+});
+
+scn("Sleep", async () => {
+  hud("Day 2 · Tuesday", "night", "Room four"); clearWorld(); chrome(false);
+  const d = $("#dream"), t = d.querySelector(".t"), cue = d.querySelector(".cue"); t.textContent = ""; cue.textContent = "Tuesday night · the cue was peach blossom over a wall";
+  show("#dream", true);
+  note("Dreams", "If Ruth passed a cue during the day and chooses to sleep, a dream comes: a short story in text, with wind and one instrument. If she works through the night instead, it is lost. Dreams give no reward.",
+    ["Work through the night: break into Sam Nel's flat while he is at the station", "Skip the dream"]);
+  const lines = ["There was a peach tree, and it was not theirs.", "Every spring it put its flowers over the wire as if the wire were not there.", "Her grandmother said a tree does not know about fences.",
+    "A man came home that year with money folded in a handkerchief. He said \"down\" the way other people say \"away.\"", "He went back on the bus in September. The tree was in flower.", "She has never liked peaches from a shop.", "She has never asked herself why."];
+  for (const l of lines) { t.style.transition = "none"; t.style.opacity = 0; t.style.transform = "translateY(6px)"; t.textContent = l; await sleep(80); t.style.transition = ""; t.style.opacity = 1; t.style.transform = "translateY(-6px)"; await sleep(2400 + l.length * 55); t.style.opacity = 0; await sleep(1100); }
+  show("#dream", false); chrome(true);
+  const li = document.createElement("li"); li.className = "lead"; li.textContent = "Things I can't place: the tree that was not ours"; $("#nb").appendChild(li);
+});
+
+scn("Preview: the control room, day 11", async () => {
+  hud("Day 11 · Thursday", "20:58", "Atlas House, first floor"); money(180); clearWorld(); chrome(false);
+  const f = $("#fin");
+  f.innerHTML = `<div class="top"><span class="k">Finale preview</span><span class="clock">20:58:00</span><span class="muted" style="color:var(--muted)">Forty people on the fourth floor. The handover is at 21:00.</span></div>
+  <div class="cols"><div class="feeds">${["Lobby|2 guards, bored", "Basement|4 men, long bags", "3rd floor corridor|empty", "3rd floor office|2 men, a sports bag", "4th floor landing|doors closed", "4th floor hall|40 people. Rehearsing", "Fire stair|clear", "5th floor|ON AIR", "Parking lot|Petros. 19 cars"].map(s => { const [a, b] = s.split("|"); return `<div class="feed"><b>${a}</b><span>${b}</span></div>`; }).join("")}</div>
+  <div class="side"><div><span class="k">Phone · each call costs seconds</span><ul class="ph"></ul></div><div><span class="k">Door panel</span><ul class="sw"></ul></div><div class="slot"></div></div></div>`;
+  show("#fin", true);
+  const feeds = [...f.querySelectorAll(".feed")], clock = f.querySelector(".clock"); let secs = 58 * 60;
+  const tick = n => { secs += n; clock.textContent = `2${secs >= 3600 ? 1 : 0}:${String(Math.floor(secs / 60) % 60).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")}`; };
+  const add = (sel, a, b) => { const li = document.createElement("li"); li.innerHTML = `${a}<span>${b}</span>`; f.querySelector(sel).appendChild(li); return li; };
+  note("The building as a machine", "The finale is in the same building as day 1, which the player now knows floor by floor. From the control room she can see every floor, lock doors and hold the lift.",
+    ["Go in loud by the main stair behind Khoza's badge", "Come down from the roof through the radio station", "Pull the fire alarm: empties the hall, unlocks every door for both sides"]);
+  await sleep(3500);
+  note("Who answers the phone", "What she can call on depends on eleven days of standing. Each call takes seconds off the clock.",
+    ["With low standing, Khoza comes alone and tells nobody", "If she burned Grace Tau, Grace sells the news that Ruth is coming"]);
+  for (const [who, st, res, cost] of [["Capt. Khoza", "trusts her", "On foot, 6 min. Radios Evander", 14], ["Const. Nkuna", "trusts her", "Car, behind 4 blockades", 9], ["Abel Mokoena", "knows her", "Opens one road. She owes him", 31], ["Joseph Sithole (text)", "trusts her", "Small ones first. Don't stop the music", 12]]) {
+    const li = add(".ph", `${who} <i style="color:var(--muted);font-style:normal">· ${st}</i>`, "calling…"); li.className = "on"; await sleep(1300); tick(cost); li.className = "done"; li.querySelector("span").textContent = res; await sleep(700);
+  }
+  feeds[5].querySelector("span").textContent = "34 people. Still playing"; feeds[6].querySelector("span").textContent = "6 going down, one adult"; feeds[6].classList.add("ok"); await sleep(1800);
+  for (const [a, b] of [["Main stair, level 4", "LOCKED"], ["Lift", "HELD IN BASEMENT"], ["Fire stair", "push bar, cannot lock"], ["All cameras", "RECORDING"]]) { const li = add(".sw", a, b); li.className = "done"; tick(4); await sleep(800); }
+  feeds[1].querySelector("span").textContent = "empty"; feeds[2].classList.add("hot"); feeds[2].querySelector("span").textContent = "4 men, rifles"; tick(20); await sleep(1500);
+  feeds[3].classList.add("hot"); feeds[3].querySelector("span").textContent = "shots. One down"; tick(6); await sleep(1300);
+  feeds[4].classList.add("hot"); feeds[4].querySelector("span").textContent = "a man beating on the doors"; feeds[5].querySelector("span").textContent = "14 people. Still playing"; tick(5);
+  note("The door", "The one choice in the game with a visible timer. The man on the landing hired the gunman and is the only person who can name who paid. Opening the door lets him into a room with fourteen children still in it, and four rifles after him.",
+    ["Open it: he lives, and the hall becomes the fight", "Leave it: forty walk out, and the chain to Steyn ends on that landing"]);
+  const slot = f.querySelector(".slot"); slot.innerHTML = `<div class="choice"><span class="k" style="color:var(--brick)">Main stair, level 4</span><div class="btns"><b>OPEN THE DOOR</b><b>LEAVE IT</b></div><div class="tbar"><i></i></div></div>`;
+  const bar = slot.querySelector(".tbar i"); await tween(4200, k => bar.style.width = (100 - 100 * k) + "%");
+  slot.querySelectorAll(".btns b")[1].className = "on"; tick(4); await sleep(1500);
+  feeds[4].querySelector("span").textContent = "one down"; await sleep(2200);
+  note("A standoff, not a firefight", "Whether it comes to shooting depends on what she set up. Cameras recording, a crowd in the street and nineteen sets of headlights make four men decide it is not worth it. If she had come in loud, this is where the short, ugly combat would be: everyone falls in two or three hits, Ruth included.",
+    ["Loud route: Khoza and Ruth against four, on a staircase", "Late route: the handover is over and the team is already on the stairs"]);
+  feeds[8].classList.add("ok"); feeds[8].querySelector("span").textContent = "19 cars, lights and hooters. 300 people"; feeds[4].querySelector("span").textContent = "Khoza: 'That's enough now.'"; await sleep(3600);
+  feeds[2].classList.remove("hot"); feeds[2].querySelector("span").textContent = "4 men leaving"; feeds[5].classList.add("ok"); feeds[5].querySelector("span").textContent = "1 cellist. Last eight bars"; await sleep(3800);
+  slot.innerHTML = `<div class="choice" style="border-color:var(--good)"><span class="k" style="color:var(--good)">What the game counts</span><div style="font-size:13px;line-height:1.5">Hurt, of forty: <b>0</b><br>Dead: the driver<br>Killed by Ruth: <b>0</b><br>Who can name Steyn: <b>nobody</b></div></div>`;
+  await sleep(6000); show("#fin", false); chrome(true);
+});
+
+/* ---------- runner ---------- */
+async function run(from = 0) {
+  S.token++; const my = S.token;
+  ["#plate", "#f2f", "#board", "#dream", "#fin", "#end", "#meter"].forEach(i => show(i, false)); $("#sub").innerHTML = ""; $("#card").classList.remove("in"); canvas.classList.remove("focus"); chrome(true);
+  if (from === 0) { $("#nb").innerHTML = ""; money(null); }
+  for (let i = from; i < SCENES.length; i++) {
+    S.scene = i; $("#b-sc").textContent = `${i + 1}/${SCENES.length} · ${SCENES[i].title}`;
+    try { await SCENES[i].run(); await sleep(600); } catch (e) { if (!(e instanceof Skip)) throw e; return; }
+    if (my !== S.token) return;
+  }
+  clearWorld(); chrome(false); note("End of the demo", "This was Act I and one preview, on rails.");
+  $("#end").innerHTML = `<h2>End of the demo</h2><p>Act I of the novella, played by the game, with a preview of the finale's control room. Everything here is a first pass: grey blocks for the town, placeholder portraits, no sound.</p>`;
+  show("#end", true);
+}
+$("#b-play").onclick = () => { S.paused = !S.paused; $("#b-play").textContent = S.paused ? "Play" : "Pause"; };
+[1, 2, 4].forEach(n => $("#b-" + n).onclick = () => { S.speed = n; [1, 2, 4].forEach(m => $("#b-" + m).classList.toggle("on", m === n)); });
+$("#b-next").onclick = () => run(Math.min(SCENES.length - 1, S.scene + 1));
+$("#b-re").onclick = () => run(0);
+window.__demo = { S, SCENES, run };
+requestAnimationFrame(frame); run(0);
+</script>
