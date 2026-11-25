@@ -1,4 +1,4 @@
-# SECUNDA (working title) — Game Design, v10
+# SECUNDA (working title) — Game Design, v11
 
 A detective story set in Secunda, Mpumalanga, over two weeks. Isometric, rotatable camera. Single player, one fixed main character, about five and a half hours.
 
@@ -485,7 +485,52 @@ A first draft, to show the register: plain, short, nothing explained. All of the
 >
 > She has never asked herself why.
 
-## 9. Investigation
+## 9. Set pieces
+
+The game's action happens in a small number of set pieces, built the way a famous gunfight is remembered: a long time in which everyone knows it is coming, a short time to decide how to stand, and half a minute in which it happens. Outside them, the game is walking, looking and talking.
+
+### The five beats
+
+1. **The notice.** Ruth learns that something will happen at a place and an hour. It goes in her notebook as a timed event. The gap may be days or minutes.
+2. **The preparation.** Ordinary play, now with a purpose: walking the place, learning its routines, finding a key, and above all building standing with the people she will need. Nothing here is a special mode.
+3. **The table.** Just before the hour, time stops. The place is shown cut open, with only what Ruth actually knows drawn in. Rooms she never scouted are blank. Here she decides who goes where, what gets switched and when, and what the signals are.
+4. **The run.** One continuous stretch of real time, in which three kinds of thing move at once (below).
+5. **The break and the count.** Something no plan covered, needing one decision against a timer. Then the tally of who was hurt, who is alive and what Ruth did.
+
+### Three kinds of moving part
+
+| Layer | What it is | What it depends on | What the player does about it |
+|---|---|---|---|
+| **Clockwork** | The world's own schedule: a handover at 21:00, a guard's round, a lift, an alarm that releases every lock, a bus that leaves at six | Nothing. It runs the same whoever Ruth is and whatever she has done | Learns it beforehand and plans around it |
+| **Entrusted** | What Ruth has asked other people to do: hold a stair, lock a door, open a road, move forty people | Who that person is: their standing with her, their nature, and what it costs them. Not dice | Chooses whom to ask, and lives with how they do it |
+| **In hand** | What Ruth does herself: move, hide, throw a switch, speak, shoot | The player, in real time | Plays it. She can only be in one room |
+
+The tension comes from the third row's last sentence. Ruth is in one place. The clockwork runs everywhere, and everything she entrusted is being done by people she cannot see except on a screen or through a window.
+
+**Entrusted actions are character, not chance.** Each person acts as themselves. A constable who trusts Ruth comes, but she is four blockades away, so she comes late. A sergeant with two employers freezes until he is shown what is on screen six, and then does his one job perfectly. A lender Ruth short-changed sells the news that she is coming. A miner trained in rescue does what he was asked better than she asked it. The player can predict all of this only by having paid attention to the person. During the run she can phone or signal to change an instruction, and every call costs seconds.
+
+**No statistics for Ruth.** "Dependent on character" never means her skill numbers. It means other people's characters and where she stands with them.
+
+### The set pieces in the story
+
+They teach the layers one at a time.
+
+| When | Where | Layers | Purpose |
+|---|---|---|---|
+| Day 1, night | The radio station | In hand only | Tutorial: moving unseen, with nobody to rely on |
+| Day 5, dawn | The bus rank | Clockwork, and one entrusted act | The bus leaves at six whether she is ready or not. Khoza's arrest is the first thing she asks someone else to do |
+| Day 8, night | The colliery sample store | Clockwork, in hand | A set piece she only watches. Learning to read someone else's plan |
+| Day 11, morning | Anneline's gate | All three, and they belong to the other side | The enemy's set piece. Their notice, their preparation, their run. Ruth arrives during the count. The player sees the whole form used against her before she uses it |
+| Day 11, night | Atlas House | All three, with a table | The finale |
+
+### Atlas House in these terms
+
+- **Clockwork:** the handover at 21:00; four men coming up from the basement a minute later; the rehearsal running late; the lift; the fire alarm that would unlock every door for both sides; the station's speakers in every corridor.
+- **Entrusted:** Khoza on the main stair; Nkuna and the car; Vusi on the fire stair; Joseph and the music director inside the hall; Mthembu at the door panel; Mokoena and one road; Petros and nineteen cars; the dismissed men in the street.
+- **In hand:** Ruth's own route in, the control room, and where she stands when the break comes.
+- **The break:** the driver at the locked door.
+
+## 10. Investigation
 
 The case board is the wall of Ruth's room and a full-screen view anywhere else. There is no quest log and no objective marker.
 
@@ -507,7 +552,7 @@ Rules:
 
 **Objects.** There are no quest items. Every object has what it does, what it shows, and who reacts to it. Daniel's pistol is a weapon, the murder weapon, and the thing Sam cannot look at. The crate is forty sealed tins of crushed coal and a day book, the proof, and something each of the four wants for a different reason.
 
-## 10. Conversations
+## 11. Conversations
 
 Named characters are spoken to face to face: the view cuts from the isometric town to a first-person frame, a large portrait against the room Ruth is standing in, in the manner of Dune (1992). A short list of commands sits at the bottom right.
 
@@ -520,7 +565,7 @@ Named characters are spoken to face to face: the view cuts from the isometric to
 
 **Night resolves the town.** Each of the four acts overnight on what they currently believe: who has the crate, who killed Daniel, who is talking to Ruth. The morning shows the result, such as a burned scrap yard, a missing guard, a new man on the gate, or a body. This is the engine of acts II and III, and the reason the body count is the player's.
 
-## 11. Stealth
+## 12. Stealth
 
 Used for places Ruth has no right to be (the station at night, the colliery lab, the contractor camp, the farmhouse, Mokoena's truck yard) and for all of day 11.
 
@@ -531,7 +576,7 @@ Used for places Ruth has no right to be (the station at night, the colliery lab,
 - Being seen is not instant failure. People ask what she is doing, and in daylight a good answer often works.
 - A drawn weapon changes every conversation in town.
 
-## 12. Weapons, armour, health
+## 13. Weapons, armour, health
 
 No upgrades, no attachments, no ammunition types, no experience.
 
@@ -541,24 +586,24 @@ No upgrades, no attachments, no ammunition types, no experience.
 - **Enemies** are as fragile as she is. Two or three hits ends anyone. A fight with more than four opponents is one to avoid or to arrange allies for.
 - Death reloads the start of the current block.
 
-## 13. Camera and controls
+## 14. Camera and controls
 
 - 3D town, fixed-pitch isometric camera, free rotation, three zoom steps. Walls and roofs between camera and Ruth fade.
 - WASD or click to move, mouse to aim, one interact key with a small radial (Look, Take, Use, Talk).
 - **Focus** (hold): the view desaturates and anything examinable nearby is outlined.
 - Crouch, lean at corners, and a noise ring under Ruth's feet when moving.
 
-## 14. First build
+## 15. First build
 
 Day 1 only: arrival, the crowd at the station, three conversations, the room and the board, the night entry into the station, the drive to the farm. About forty minutes. It exercises movement, Focus, conversation, clue capture, linking, stealth and one possible gunfight.
 
 Engine is still open. With co-op gone, a browser build (Three.js) remains the fastest route to something playable and testable here; Unity or Godot are equally reasonable for the full game.
 
-## 15. What the research says to leave out
+## 16. What the research says to leave out
 
 No serial killer. No occult angle for colour. No murdered woman's body as spectacle. No hostel or informal settlement as scenery. No foreign crime boss. No single corrupt official who explains everything. No quick forensic breakthrough. Ruth is not a drinker with a past in the police; she is a file-builder.
 
-## 16. Open decisions
+## 17. Open decisions
 
 - Confirm the ground rules at the top, above all the line between the real town and the invented story.
 - Who writes the dreams. They need South African writers, and people from the mining communities whose dead they are.
