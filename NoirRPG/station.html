@@ -1,0 +1,321 @@
+<title>Platform Four Sandbox</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: one screen. 3D station fills it. Left: the clock and the three layers. Bottom: the player's few actions. Overlays for the table and the count.
+   Single dark look by choice, matching the Secunda demo. */
+:root { color-scheme: dark; --bg:#14100e; --panel:rgba(24,19,16,.88); --line:#3b3029; --fg:#e9e0d4; --muted:#a59685; --ochre:#dba04a; --violet:#a58fc9; --brick:#b5553c; --good:#8fb98a;
+  --serif:"Lora",Georgia,serif; --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace; }
+html,body{height:100%} body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;overflow:hidden}
+#app{position:relative;height:100%;display:flex;flex-direction:column}
+#stage{position:relative;flex:1;min-height:0;overflow:hidden;background:#0c0a09}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#labels{position:absolute;inset:0;pointer-events:none}
+.lab{position:absolute;transform:translate(-50%,-100%);font:500 10.5px var(--mono);letter-spacing:.04em;background:rgba(12,10,9,.72);border:1px solid var(--line);padding:1px 5px;white-space:nowrap}
+.lab.you{color:var(--violet);border-color:var(--violet)} .lab.ally{color:var(--good);border-color:var(--good)} .lab.foe{color:var(--brick);border-color:var(--brick)} .lab.say{color:var(--fg);background:rgba(12,10,9,.9);font-family:var(--serif);font-size:12px}
+.panel{position:absolute;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(3px)}
+.k{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ochre)}
+#left{top:12px;left:max(12px,env(safe-area-inset-left,0px));width:270px;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+#clock{font:500 30px var(--mono);color:var(--ochre);line-height:1} #dep{font:11px var(--mono);color:var(--muted)}
+.layer{display:flex;flex-direction:column;gap:3px;font-size:12.5px;line-height:1.35} .layer ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;color:var(--muted)}
+.layer li.now{color:var(--fg)} .layer li.done{opacity:.45;text-decoration:line-through}
+#status{display:flex;gap:10px;font:11px var(--mono);color:var(--muted)} #status b{color:var(--fg);font-weight:500}
+#prompt{left:50%;top:14px;transform:translateX(-50%);padding:10px 14px;max-width:min(560px,calc(100% - 320px));text-align:center;font:15px/1.4 var(--serif);border-color:var(--brick)}
+#prompt .btns{display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+#log{right:max(12px,env(safe-area-inset-right,0px));top:12px;width:240px;max-height:46%;overflow:hidden;padding:8px 10px;display:flex;flex-direction:column-reverse;gap:3px;font:11.5px/1.35 var(--mono);color:var(--muted)}
+#log div:first-child{color:var(--fg)}
+button{font:500 12px var(--mono);color:var(--fg);background:#241c17;border:1px solid var(--line);padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--ochre)} button:focus-visible{outline:2px solid var(--ochre);outline-offset:1px} button.on{background:var(--ochre);color:var(--bg);border-color:var(--ochre)} button.hot{background:var(--brick);border-color:var(--brick)} button:disabled{opacity:.35;cursor:default}
+#bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));border-top:1px solid var(--line);background:#100d0b}
+#bar .hint{font:11px var(--mono);color:var(--muted);flex:1;min-width:0;text-align:right}
+.ov{position:absolute;inset:0;background:rgba(10,8,7,.93);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.sheet{width:min(760px,100%);display:flex;flex-direction:column;gap:16px}
+.sheet h1{margin:0;font:600 28px var(--serif)} .sheet h2{margin:0;font:600 17px var(--serif)} .sheet p{margin:0;line-height:1.5;max-width:68ch} .sheet .muted{color:var(--muted)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px} .q{display:flex;flex-direction:column;gap:6px;min-width:0}
+.opt{text-align:left;font:13px/1.35 var(--sans);padding:9px 10px;display:flex;flex-direction:column;gap:3px} .opt b{font:500 12px var(--mono);letter-spacing:.06em} .opt span{color:var(--muted);font-size:12px} .opt.on span{color:#3a2c14}
+.cardrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px} .pc{border:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.4}
+table{border-collapse:collapse;width:100%;font-size:13px} td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ochre)} td.bad{color:var(--brick)} td.ok{color:var(--good)}
+@media (max-width:760px){ #left{width:200px;padding:8px 10px;gap:6px} #clock{font-size:22px} .layer ul{display:none} #log{display:none} #prompt{max-width:calc(100% - 24px);top:auto;bottom:10px} .grid3,.cardrow{grid-template-columns:minmax(0,1fr)} #bar .hint{display:none} }
+</style>
+
+<div id="app">
+  <div id="stage">
+    <canvas id="c"></canvas><div id="labels"></div>
+    <div id="left" class="panel">
+      <div><div id="clock">23:04:00</div><div id="dep">The 23:05 leaves in 70 s</div></div>
+      <div class="layer"><span class="k">Clockwork · runs whatever you do</span><ul id="cw"></ul></div>
+      <div class="layer"><span class="k">Entrusted · Mbali, as herself</span><div id="ent">Waiting where you put her.</div></div>
+      <div class="layer"><span class="k">In hand · you</span><div id="status"><span>Health <b id="s-hp">fine</b></span><span>Rounds <b id="s-am">15</b></span><span>Gun <b id="s-gun">holstered</b></span></div></div>
+    </div>
+    <div id="log" class="panel"></div>
+    <div id="prompt" class="panel" hidden></div>
+    <div id="table" class="ov"></div>
+    <div id="count" class="ov" hidden></div>
+  </div>
+  <div id="bar">
+    <button id="b-gun" type="button">Draw (Space)</button>
+    <button id="b-help" type="button" disabled>Help with the pushchair (E)</button>
+    <button id="b-rot" type="button">Turn view (Q)</button>
+    <button id="b-plan" type="button">Back to the table</button>
+    <span class="hint">Click the floor to move, or use WASD. With the gun drawn, click a man to fire at him.</span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>window.THREE || document.write('<script src="vendor/three.min.js"><\/script>');</script>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+/* ---------- plan ---------- */
+const PLAN = { place: "top", signal: "mine", hall: "normal" };
+const OPTS = {
+  place: [["top", "Top of the stairs", "In front of them as they climb. Anyone on the stairs is in her line."], ["foot", "Foot of the stairs", "Behind a pillar, behind them once they climb. Nearest to anything that comes back down."], ["street", "Outside, by their car", "Cuts off the way back. She is out of the hall until it starts."]],
+  signal: [["mine", "When I fire", "Nothing happens until you start it."], ["stairs", "When they are on the stairs", "She starts it herself at that moment, ready or not."], ["hers", "Her judgement", "She fires the first time she has a clean shot."]],
+  hall: [["normal", "Leave the hall as it is", "People keep coming and going. The men walk in relaxed."], ["clear", "Quietly clear the hall", "No bystanders. An empty station at five to midnight makes careful men more careful."]],
+};
+function drawTable() {
+  const t = $("#table");
+  const group = (key, title) => `<div class="q"><span class="k">${title}</span>${OPTS[key].map(([v, a, b]) => `<button type="button" class="opt ${PLAN[key] === v ? "on" : ""}" data-k="${key}" data-v="${v}"><b>${a}</b><span>${b}</span></button>`).join("")}</div>`;
+  t.innerHTML = `<div class="sheet">
+    <span class="k">A set-piece sandbox · the table</span><h1>Platform Four</h1>
+    <p>A clerk who kept the books for the wrong people is leaving town on the 23:05. Three men will walk him through the hall and up the stairs to the platform. You need him alive and off that train. You have one colleague, and about a minute once the clock starts.</p>
+    <div class="cardrow">
+      <div class="pc"><span class="k">Clockwork · what you know will happen</span>23:04:08 a woman with a pushchair and two bags starts up the stairs, alone.<br>23:04:30 the four of them come in from the street.<br>23:04:40 they reach the stairs.<br>23:05:10 the train leaves.</div>
+      <div class="pc"><span class="k">Entrusted · Sgt Mbali Zondi</span>A steady shot, and slow to start one. She will not fire if a bystander is anywhere near her line. If a child is in danger she goes to the child before anything else, whatever you told her.</div>
+    </div>
+    <h2>Three decisions</h2>
+    <div class="grid3">${group("place", "Where Mbali stands")}${group("signal", "What starts it")}${group("hall", "The bystanders")}</div>
+    <div><button type="button" id="go" class="on">Start the clock</button></div>
+    <p class="muted">Nothing here is scored. Run it, read the count, come back to the table and change one thing.</p>
+  </div>`;
+  t.querySelectorAll(".opt").forEach(b => b.onclick = () => { PLAN[b.dataset.k] = b.dataset.v; drawTable(); });
+  $("#go").onclick = start;
+}
+/* ---------- stage ---------- */
+const canvas = $("#c"), renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x100e12);
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -200, 400);
+scene.add(new THREE.AmbientLight(0xb0a0b8, .95)); const sun = new THREE.DirectionalLight(0xffd0a0, .55); sun.position.set(-30, 40, 10); scene.add(sun);
+let world = new THREE.Group(); scene.add(world);
+const cam = { yaw: Math.PI * .8, zoom: 1, t: new THREE.Vector3(0, 2, 22) };
+const mat = c => new THREE.MeshLambertMaterial({ color: c });
+function box(x, z, w, d, h, c, y = 0) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c)); m.position.set(x, y + h / 2, z); world.add(m); return m; }
+const yAt = z => z < 20 ? 0 : z > 32 ? 4 : (z - 20) / 12 * 4;
+const PILLARS = [[-6, 10], [6, 10], [-6, 16], [6, 16], [-7, 35], [7, 35]];
+let labels = [];
+function build() {
+  scene.remove(world); world = new THREE.Group(); scene.add(world); labels.forEach(l => l.el.remove()); labels = [];
+  box(0, 10, 26, 20, .2, 0x4a4038, -.2);                                   // lower hall
+  for (let i = 0; i < 12; i++) box(0, 20.5 + i, 12, 1, (i + 1) / 3, 0x5c5046); // stairs
+  box(-9.5, 26, 7, 12, 4, 0x3a322c); box(9.5, 26, 7, 12, 4, 0x3a322c);      // flanks
+  box(0, 37, 26, 10, .2, 0x52463c, 3.8);                                    // upper concourse
+  box(0, 42.2, 26, .4, 5, 0x2f2823, 4); box(0, 42, 4, .5, 3, 0x7b8f9a, 4);  // platform wall and doors
+  box(0, -.2, 26, .4, 4, 0x2f2823); box(0, 0, 4, .5, 3, 0x6b5a48);          // street wall and doors
+  PILLARS.forEach(([x, z]) => box(x, z, 1.2, 1.2, 6, 0x6a5d50, yAt(z)));
+  box(-9, 6, 3.5, .8, .5, 0x3d2f22); box(9, 6, 3.5, .8, .5, 0x3d2f22);      // benches
+  const ck = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, .2, 24), new THREE.MeshBasicMaterial({ color: 0xe8dcc4 })); ck.rotation.x = Math.PI / 2; ck.position.set(0, 8.2, 41.9); world.add(ck);
+}
+function person(c, hat) {
+  const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CylinderGeometry(.32, .38, 1.25, 10), mat(c)); b.position.y = .62;
+  const h = new THREE.Mesh(new THREE.SphereGeometry(.26, 10, 8), mat(0x6b4a36)); h.position.y = 1.45; g.add(b, h);
+  if (hat) { const t = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .12, 10), mat(hat)); t.position.y = 1.7; g.add(t); }
+  world.add(g); return g;
+}
+function label(e, text, cls) { const el = document.createElement("div"); el.className = "lab " + (cls || ""); el.textContent = text; $("#labels").appendChild(el); const l = { e, el }; labels.push(l); return l; }
+/* ---------- simulation ---------- */
+let G = null, seed = 7;
+const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+function ent(name, x, z, color, o = {}) { const e = Object.assign({ name, x, z, hp: 2, down: false, gun: false, mesh: person(color, o.hat), cd: 0, tx: null, tz: null, sp: 2.2 }, o); if (o.cls) e.lab = label(e, name, o.cls); return e; }
+function log(t) { const d = document.createElement("div"); d.textContent = clockStr(G.t).slice(3) + "  " + t; $("#log").prepend(d); while ($("#log").children.length > 14) $("#log").lastChild.remove(); }
+const clockStr = t => { const s = 4 * 60 + Math.floor(t); return `23:${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; };
+function covered(from, to) { // a pillar close to the target and on the line gives cover
+  return PILLARS.some(([px, pz]) => { if (Math.hypot(px - to.x, pz - to.z) > 2.2) return false; const dx = to.x - from.x, dz = to.z - from.z, L = Math.hypot(dx, dz) || 1; const t = ((px - from.x) * dx + (pz - from.z) * dz) / (L * L); if (t < 0 || t > 1) return false; return Math.hypot(from.x + dx * t - px, from.z + dz * t - pz) < .9; });
+}
+function inLine(from, to, list) { // first person standing in the line of fire, if any
+  const dx = to.x - from.x, dz = to.z - from.z, L = Math.hypot(dx, dz) || 1;
+  return list.find(p => { if (p.down || p === to || p === from) return false; const t = ((p.x - from.x) * dx + (p.z - from.z) * dz) / (L * L); return t > .08 && t < .95 && Math.hypot(from.x + dx * t - p.x, from.z + dz * t - p.z) < .75; });
+}
+function tracer(a, b, c) { const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(a.x, yAt(a.z) + 1.2, a.z), new THREE.Vector3(b.x, yAt(b.z) + 1.1, b.z)]); const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: c })); world.add(l); setTimeout(() => world.remove(l), 130); }
+function shoot(from, to, base) {
+  if (from.down || to.down) return "none";
+  G.shots++; if (from === G.you) { G.ammo--; }
+  const d = dist(from, to); let p = base * (d < 8 ? 1 : d < 16 ? .72 : .45); if (covered(from, to)) p *= .3;
+  const civ = inLine(from, to, G.civs.concat([G.clerk]).concat(G.pram && !G.pram.safe ? [G.pram] : []));
+  if (civ && from !== G.you && from.ally) return "held";
+  let target = to; if (civ && rnd() < .45) target = civ; else if (rnd() > p) { tracer(from, { x: to.x + (rnd() - .5) * 3, z: to.z + (rnd() - .5) * 3 }, 0x777777); return "miss"; }
+  tracer(from, target, from.foe ? 0xff5030 : 0xffd070); hit(target, from); return target === to ? "hit" : "wrong";
+}
+function hit(e, by) {
+  if (e === G.pram) { G.pramHit = true; log("A round goes through the pushchair."); return; }
+  e.hp--; if (e.hp <= 0) { e.down = true; e.mesh.rotation.z = Math.PI / 2; e.mesh.position.y = yAt(e.z) + .3; if (e.lab) e.lab.el.style.opacity = .4; }
+  if (e === G.you) { $("#s-hp").textContent = e.hp >= 3 ? "fine" : e.hp === 2 ? "hurt" : e.hp === 1 ? "badly hurt" : "down"; log(e.down ? "You are down." : "You are hit."); }
+  else if (e === G.clerk) log(e.down ? "The clerk is dead." : "The clerk is hit.");
+  else if (e.civ) { G.hurt++; log(`A bystander is hit${by === G.you ? ", by you" : ""}.`); e.down = true; e.mesh.rotation.z = Math.PI / 2; }
+  else if (e.foe) log(e.down ? `${e.name} is down.` : `${e.name} is hit.`);
+  else if (e.ally) log(e.down ? "Mbali is down." : "Mbali is hit.");
+}
+function alert(why) {
+  if (G.alert) return; G.alert = true; G.alertAt = G.t; log(why);
+  G.foes.forEach(f => f.gun = true);
+  const h = G.foes[1]; if (!h.down) { h.hostage = true; log("One of them has the clerk by the collar."); h.lab.el.textContent = "Has the clerk"; }
+  G.civs.forEach(c => { if (!c.down && c !== G.mother) { c.tx = c.x < 0 ? -12 : 12; c.tz = c.z < 20 ? 3 : 38; c.sp = 4; } });
+  if (G.mother && !G.mother.down && G.mother.z > 20.4 && G.mother.z < 31.6 && !G.helping) { G.pram.loose = true; G.pram.v = .6; log("She lets go of the pushchair."); prompt("The pushchair is rolling back down the stairs.", []); setTimeout(() => $("#prompt").hidden = true, 2600); }
+}
+function prompt(text, btns) { const p = $("#prompt"); p.innerHTML = text + (btns.length ? `<div class="btns">${btns.map((b, i) => `<button type="button" data-i="${i}" class="${b.hot ? "hot" : ""}">${b.t}</button>`).join("")}</div>` : ""); p.hidden = false; p.querySelectorAll("button").forEach(b => b.onclick = () => { p.hidden = true; btns[+b.dataset.i].f(); }); }
+const CW = [[8, "A woman starts up the stairs with a pushchair"], [30, "Four men come in from the street"], [40, "They reach the stairs"], [70, "The train leaves"]];
+function start() {
+  $("#table").hidden = true; $("#count").hidden = true; $("#prompt").hidden = true; $("#log").innerHTML = ""; build(); seed = 7 + Object.values(PLAN).join("").length * 13;
+  const clear = PLAN.hall === "clear";
+  G = { t: 0, over: false, alert: false, shots: 0, ammo: 15, hurt: 0, civs: [], foes: [], helping: false, asked: false, wary: clear };
+  G.you = ent("You", -8, 14, 0x3a3350, { cls: "you", sp: 4.2, hp: 3 });
+  const mp = { top: [4, 34], foot: [6, 14.6], street: [5, -3] }[PLAN.place];
+  G.mbali = ent("Mbali", mp[0], mp[1], 0x2f5a44, { cls: "ally", ally: true, sp: 4, hp: 3 });
+  G.clerk = ent("The clerk", 0, -4, 0xb9a98a, { cls: "say", hat: 0x554433, hp: 2 });
+  [["First man", .9, -2.5], ["Second man", -.9, -4], ["Third man", .6, -5.6]].forEach(([n, x, z]) => G.foes.push(ent(n, x, z, 0x1c1c22, { cls: "foe", foe: true, hat: 0x111111 })));
+  if (!clear) {
+    G.mother = ent("Woman", 3, 19.2, 0x7a4a5a, { civ: true, cls: "say", sp: .33 }); G.civs.push(G.mother);
+    G.pram = { x: 3, z: 20, v: 0, loose: false, safe: false, mesh: box(3, 20, .7, 1, .8, 0x8fb0c4) };
+    [[-9, 6.8], [9, 6.8], [-10, 37], [2, 3]].forEach(([x, z]) => G.civs.push(ent("", x, z, [0x6b5a3b, 0x4a5a6b, 0x6b3b4a, 0x5a5a5a][G.civs.length % 4], { civ: true })));
+  }
+  $("#cw").innerHTML = CW.filter(c => !(clear && c[0] === 8)).map(c => `<li data-t="${c[0]}">${clockStr(c[0])} ${c[1]}</li>`).join("");
+  $("#s-hp").textContent = "fine"; $("#s-am").textContent = 15; $("#s-gun").textContent = "holstered"; $("#b-gun").textContent = "Draw (Space)";
+  $("#ent").textContent = "Waiting where you put her."; log(clear ? "The hall is empty. Your footsteps are very loud." : "The hall is ordinary. A cleaner, a couple on a bench.");
+  last = performance.now();
+}
+function moveTo(e, dt) {
+  if (e.down || e.tx == null) return false; const dx = e.tx - e.x, dz = e.tz - e.z, d = Math.hypot(dx, dz); if (d < .15) { e.tx = null; return false; }
+  const onStairs = e.z > 20 && e.z < 32, sp = e.sp * (onStairs && e.sp > 1 ? .62 : 1), s = Math.min(d, sp * dt); e.x += dx / d * s; e.z += dz / d * s;
+  e.x = Math.max(-12.3, Math.min(12.3, e.x)); if (e.z > 20 && e.z < 32) e.x = Math.max(-5.6, Math.min(5.6, e.x));
+  PILLARS.forEach(([px, pz]) => { const q = Math.hypot(e.x - px, e.z - pz); if (q < 1) { e.x = px + (e.x - px) / q; e.z = pz + (e.z - pz) / q; } });
+  return true;
+}
+const keys = {};
+function step(dt) {
+  G.t += dt; const t = G.t, you = G.you, mb = G.mbali, foes = G.foes, lead = foes[0], hold = foes[1];
+  $("#clock").textContent = clockStr(t); $("#dep").textContent = t < 70 ? `The 23:05 leaves in ${Math.max(0, Math.ceil(70 - t))} s` : "The train has gone";
+  document.querySelectorAll("#cw li").forEach(li => { const ct = +li.dataset.t; li.className = t > ct + 6 ? "done" : t > ct - 1 ? "now" : ""; });
+  // ---- in hand
+  let kx = (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0), kz = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0);
+  if (kx || kz) { const c = Math.cos(cam.yaw), s = Math.sin(cam.yaw); you.tx = you.x + (kx * c - kz * s) * 2; you.tz = you.z + (-kx * s - kz * c) * 2; }
+  const pram = G.pram, nearPram = pram && !pram.safe && Math.hypot(you.x - pram.x, you.z - pram.z) < 1.8;
+  $("#b-help").disabled = !nearPram || you.down; $("#b-help").textContent = G.helping ? "Let go (E)" : pram && pram.loose ? "Catch it (E)" : "Help with the pushchair (E)";
+  if (G.helping) { you.sp = 1.5; } else you.sp = you.gun ? 3.4 : 4.2;
+  moveTo(you, dt);
+  // ---- clockwork: the woman and the pushchair
+  if (G.mother && !G.mother.down && pram && !pram.safe && !pram.loose) {
+    if (t > 8 && pram.z < 33) { const sp = G.helping ? 1.25 : .33; pram.z += sp * dt; G.mother.z = pram.z - .9; G.mother.x = pram.x; if (G.helping) { you.x = pram.x - .9; you.z = pram.z; you.tx = null; } }
+    if (pram.z >= 33) { pram.safe = true; if (G.helping) { G.helping = false; log("You set the pushchair down at the top. She thanks you."); } G.mother.tx = -10; G.mother.tz = 38; G.mother.sp = 1.2; }
+  }
+  if (pram && pram.loose) { pram.v += 2.2 * dt; pram.z -= pram.v * dt; if (pram.z <= 20) { pram.z = 20; pram.loose = false; pram.crashed = true; pram.mesh.rotation.z = 1.2; log("The pushchair goes over at the foot of the stairs."); } }
+  if (pram) { pram.mesh.position.set(pram.x, yAt(pram.z) + .5, pram.z); }
+  G.civs.forEach(c => moveTo(c, dt));
+  // ---- clockwork: the four men
+  if (t > 30 && !G.alert) {
+    const zl = Math.min(41.5, (t - 30) * 2.2 > 20 ? 20 + ((t - 30) - 20 / 2.2) * 1.35 : (t - 30) * 2.2);
+    lead.z = zl; lead.x = .9; G.clerk.z = zl - 1.6; G.clerk.x = 0; hold.z = zl - 1.6; hold.x = -.9; foes[2].z = zl - 3.2; foes[2].x = .6;
+    const sight = G.wary ? 15 : 6.5;
+    [you, mb].forEach(p => { if (!p.down && p.gun && dist(p, lead) < sight && !covered(lead, p)) alert(p === you ? "They have seen your gun." : "They have seen Mbali's gun."); });
+    if (G.wary && !G.alert && dist(you, lead) < 9 && !covered(lead, you)) alert("An empty hall and one stranger. They are not fools.");
+    if (PLAN.signal === "stairs" && zl > 23 && !G.alert) { mb.gun = true; mbFire(); }
+    if (zl >= 41.5) return end("gone");
+  }
+  // ---- after it starts
+  if (G.alert) {
+    foes.forEach((f, i) => {
+      if (f.down) return; f.cd -= dt;
+      if (f.hostage) { const up = f.z > 26; f.tx = 0; f.tz = up ? 41.6 : .4; f.sp = 1.25; moveTo(f, dt); G.clerk.x = f.x + .7; G.clerk.z = f.z;
+        if (f.z > 41.4) return end("gone"); if (f.z < .6) return end("out"); return; }
+      const targets = [you, mb].filter(p => !p.down && (p !== mb || PLAN.place !== "street" || G.t > G.alertAt + 6)); if (!targets.length) return;
+      const tg = targets.sort((a, b) => dist(f, a) - dist(f, b))[0]; if (f.cd <= 0) { f.cd = 1.05 + rnd() * .6; shoot(f, tg, .3); }
+    });
+    if (G.over) return;
+    mbThink(dt);
+    if (!G.asked && !hold.down && hold.hostage && foes[0].down && foes[2].down) {
+      G.asked = true; const btns = [{ t: "Take the shot yourself", hot: true, f: () => { you.gun = true; fireAt(hold, true); } }];
+      if (!mb.down && !mb.busy) btns.push({ t: "Tell Mbali: take him", f: () => { G.mbTake = G.t; $("#ent").textContent = "Steadying. She will fire when she is sure."; log("\"You got him?\" you say. She nods."); } });
+      prompt("One man left, with the clerk in front of him. He is backing toward the door.", btns);
+    }
+    if (G.mbTake && G.t > G.mbTake + 1.6 && !hold.down && !mb.down) { G.mbTake = 0; const d = dist(mb, hold), r = shootSure(mb, hold, d < 14 ? .9 : .6); $("#ent").textContent = r === "hit" ? "She took him." : "She missed."; }
+  }
+  if (!G.alert && PLAN.signal === "hers" && t > 30) { if (dist(mb, lead) < 11 && !inLine(mb, lead, G.civs.concat([G.clerk]))) { mb.gun = true; mbFire(); } }
+  // ---- endings
+  if (you.down) return end("down"); if (G.clerk.down) return end("dead"); if (hold.down && G.alert) return end("taken"); if (t > 70 && !G.alert) return end("gone");
+  // ---- draw
+  [you, mb, G.clerk].concat(foes, G.civs).forEach(e => { if (!e.down) e.mesh.position.set(e.x, yAt(e.z), e.z); });
+  cam.t.set(you.x * .35, 2, 20 + (you.z - 20) * .35);
+}
+function mbFire() { const mb = G.mbali, lead = G.foes.find(f => !f.down && !f.hostage) || G.foes[1]; const r = shoot(mb, lead, .78); if (r === "held") { $("#ent").textContent = "No shot. Someone is in her line."; if (!G.alert) alert("Mbali has her gun out and no shot. They see her."); } else { $("#ent").textContent = "Firing."; alert("Mbali fires."); } mb.cd = 1.1; }
+function mbThink(dt) {
+  const mb = G.mbali, pram = G.pram; if (mb.down) return; mb.cd -= dt;
+  if (PLAN.place === "street" && G.t < G.alertAt + 6) { mb.tx = 2; mb.tz = 3; moveTo(mb, dt); $("#ent").textContent = "Running in from the street."; return; }
+  if (pram && pram.loose) { mb.busy = true; mb.tx = pram.x; mb.tz = Math.max(20, pram.z - 1); mb.sp = 5; moveTo(mb, dt); $("#ent").textContent = "She has gone for the pushchair.";
+    if (Math.hypot(mb.x - pram.x, mb.z - pram.z) < 1.3) { pram.loose = false; pram.safe = true; pram.caughtBy = "Mbali"; log("Mbali has the pushchair."); mb.hold = G.t + 3; } return; }
+  if (mb.hold && G.t < mb.hold) { $("#ent").textContent = "Holding the pushchair. Out of the fight for a moment."; return; } mb.busy = false; mb.gun = true;
+  if (G.mbTake) return;
+  const f = G.foes.filter(f => !f.down && !f.hostage).sort((a, b) => dist(mb, a) - dist(mb, b))[0];
+  if (f && mb.cd <= 0) { mb.cd = 1.25; const r = shoot(mb, f, .78); $("#ent").textContent = r === "held" ? "No shot. Someone is in her line." : "Firing, steadily."; }
+}
+function shootSure(from, to, p) { G.shots++; if (rnd() < p) { tracer(from, to, 0xffd070); hit(to, from); return "hit"; } tracer(from, { x: to.x + 1, z: to.z + 1 }, 0x777777); if (rnd() < .3) hit(G.clerk, from); return "miss"; }
+function fireAt(f, hostageShot) {
+  const you = G.you; if (!G || G.over || you.down || !you.gun || G.ammo <= 0 || you.cd > G.t) return; you.cd = G.t + .45;
+  if (G.helping) { G.helping = false; if (G.pram && G.pram.z > 20.4 && G.pram.z < 32.6) { G.pram.loose = true; G.pram.v = .6; log("You let go of the pushchair to fire."); } }
+  if (hostageShot || f.hostage) { G.shots++; G.ammo--; const d = dist(you, f), p = d < 8 ? .7 : .45; if (rnd() < p) { tracer(you, f, 0xffd070); hit(f, you); } else { tracer(you, G.clerk, 0xffd070); if (rnd() < .45) hit(G.clerk, you); else log("You miss."); } }
+  else { const r = shoot(you, f, .85); if (r === "miss") log("You miss."); }
+  $("#s-am").textContent = G.ammo; alert("You fire.");
+}
+function toggleGun() { if (!G || G.over) return; const y = G.you; y.gun = !y.gun; $("#s-gun").textContent = y.gun ? "drawn" : "holstered"; $("#b-gun").textContent = (y.gun ? "Holster" : "Draw") + " (Space)"; }
+function help() {
+  if (!G || G.over) return; const p = G.pram; if (!p || p.safe || Math.hypot(G.you.x - p.x, G.you.z - p.z) > 1.8) return;
+  if (p.loose) { p.loose = false; p.safe = true; p.caughtBy = "you"; log("You have the pushchair."); G.you.tx = null; return; }
+  G.helping = !G.helping; if (G.helping) { if (G.you.gun) toggleGun(); log("You take the front of the pushchair. One step at a time."); } else if (p.z > 20.4 && p.z < 32.6 && G.alert) { p.loose = true; p.v = .6; }
+}
+function end(kind) {
+  if (G.over) return; G.over = true; const p = G.pram, you = G.you, mb = G.mbali; const c = $("#count");
+  const head = { taken: "You have the clerk.", gone: "He is on the train.", out: "They took him back out the way they came.", dead: "The clerk is dead.", down: "You are down on the station floor." }[kind];
+  const row = (a, b, cls = "") => `<tr><td>${a}</td><td class="${cls}">${b}</td></tr>`;
+  const pr = !p ? ["Not in the hall", ""] : p.crashed ? ["Went over at the foot of the stairs", "bad"] : G.pramHit ? ["Hit by a round", "bad"] : p.caughtBy ? [`Caught by ${p.caughtBy}`, "ok"] : ["Never in danger", "ok"];
+  const why = [];
+  if (PLAN.hall === "clear") why.push("Clearing the hall kept bystanders out of it, and made the men wary: they saw trouble from much further away.");
+  else if (p && (p.caughtBy || p.crashed)) why.push("The woman on the stairs was clockwork. She was always going to be there at 23:04:40 unless someone carried the pushchair up first, or the hall was cleared.");
+  if (p && p.caughtBy === "Mbali") why.push("Mbali went for the pushchair before anything else. That is who she is; it was on her card.");
+  if ($("#ent").textContent.startsWith("No shot")) why.push("Mbali held her fire because someone was in her line. Where you stood her decided that.");
+  if (PLAN.place === "street") why.push("From the street Mbali could not help for the first six seconds, which is most of a gunfight.");
+  if (kind === "gone" && !G.alert) why.push("Nothing started it. With the signal set to your shot, the clock ran out while you waited.");
+  c.innerHTML = `<div class="sheet"><span class="k">The count · ${clockStr(G.t)}</span><h1>${head}</h1>
+    <table><tr><th>What</th><th>How it came out</th></tr>
+    ${row("The clerk", kind === "taken" ? "Alive, in your hands" : kind === "dead" ? "Dead" : kind === "gone" || kind === "out" ? "Gone" : "Still with them", kind === "taken" ? "ok" : "bad")}
+    ${row("Bystanders hurt", G.hurt, G.hurt ? "bad" : "ok")}${row("The pushchair", pr[0], pr[1])}
+    ${row("Mbali", mb.down ? "Down" : mb.hp < 3 ? "Hit" : "Unhurt", mb.down ? "bad" : "")}${row("You", you.down ? "Down" : you.hp < 3 ? "Hit" : "Unhurt", you.down ? "bad" : "")}
+    ${row("Men down", G.foes.filter(f => f.down).length + " of 3")}${row("Rounds fired, everyone", G.shots)}</table>
+    ${why.length ? `<h2>Why it went that way</h2>${why.map(w => `<p>${w}</p>`).join("")}` : ""}
+    <p class="muted">Your plan: Mbali ${OPTS.place.find(o => o[0] === PLAN.place)[1].toLowerCase()}; started ${OPTS.signal.find(o => o[0] === PLAN.signal)[1].toLowerCase()}; ${OPTS.hall.find(o => o[0] === PLAN.hall)[1].toLowerCase()}.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="again" class="on">Back to the table</button><button type="button" id="same">Run the same plan again</button></div></div>`;
+  c.hidden = false; $("#again").onclick = () => { c.hidden = true; $("#table").hidden = false; drawTable(); }; $("#same").onclick = start;
+}
+/* ---------- input and loop ---------- */
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(), ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), gp = new THREE.Vector3();
+canvas.addEventListener("pointerdown", ev => {
+  if (!G || G.over) return; const r = canvas.getBoundingClientRect(); ptr.set((ev.clientX - r.left) / r.width * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera);
+  if (G.you.gun) { let best = null, bd = 1.6; G.foes.forEach(f => { if (f.down) return; const p = new THREE.Vector3(f.x, yAt(f.z) + .9, f.z), d = ray.ray.distanceToPoint(p); if (d < bd) { bd = d; best = f; } }); if (best) return fireAt(best); }
+  // intersect the walking surface: try the upper level first, then the lower
+  for (const y of [4, 2, 0]) { ground.constant = -y; if (ray.ray.intersectPlane(ground, gp) && Math.abs(yAt(gp.z) - y) < 1.4) { G.you.tx = gp.x; G.you.tz = gp.z; if (G.helping) G.helping = false; return; } }
+});
+addEventListener("keydown", e => { const k = e.key.toLowerCase(); keys[k] = true; if (k === " ") { e.preventDefault(); toggleGun(); } if (k === "e") help(); if (k === "q") cam.yaw += Math.PI / 2; });
+addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+$("#b-gun").onclick = toggleGun; $("#b-help").onclick = help; $("#b-rot").onclick = () => cam.yaw += Math.PI / 2;
+$("#b-plan").onclick = () => { if (G) G.over = true; $("#count").hidden = true; $("#prompt").hidden = true; $("#table").hidden = false; drawTable(); };
+let last = performance.now(); const v3 = new THREE.Vector3();
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  if (G && !G.over) step(dt);
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { if (canvas.width !== Math.floor(w * renderer.getPixelRatio())) renderer.setSize(w, h, false); const a = w / h, vs = (a < 1 ? 30 : 21) / cam.zoom; camera.left = -vs * a; camera.right = vs * a; camera.top = vs; camera.bottom = -vs;
+    camera.position.set(cam.t.x + 100 * Math.sin(cam.yaw) * .78, cam.t.y + 62, cam.t.z + 100 * Math.cos(cam.yaw) * .78); camera.lookAt(cam.t); camera.updateProjectionMatrix(); renderer.render(scene, camera);
+    labels.forEach(l => { v3.set(l.e.x, yAt(l.e.z) + 2.3, l.e.z).project(camera); l.el.style.left = (v3.x + 1) / 2 * w + "px"; l.el.style.top = (1 - v3.y) / 2 * h + "px"; }); }
+  requestAnimationFrame(frame);
+}
+window.__sb = { PLAN, start, get G() { return G; }, fireAt, toggleGun, help, step };
+build(); drawTable(); requestAnimationFrame(frame);
+</script>
